@@ -9,17 +9,6 @@ import (
 	"os"
 )
 
-// System 定义了系统配置的结构体
-type System struct {
-	IP   string `yaml:"ip"`   // 服务器监听的IP地址
-	Port int    `yaml:"port"` // 服务器监听的端口号
-}
-
-// Config 是整个应用的配置结构体
-type Config struct {
-	System System `yaml:"system"` // 系统配置部分
-}
-
 // ReadConf 读取 settings.yaml 设置文件并解析配置
 // 如果读取或解析过程中出现错误，将会触发panic
 func ReadConf() (c *conf.Config) {
