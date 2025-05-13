@@ -4,3 +4,4 @@ local_settings.yaml
 main
 logs/*
 upload/*
+settings.yaml
