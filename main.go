@@ -4,6 +4,7 @@ import (
 	"blogX_server/core"
 	"blogX_server/flags"
 	"blogX_server/global"
+	"blogX_server/router"
 )
 
 func main() {
@@ -12,4 +13,6 @@ func main() {
 	core.InitLogrus()               // 初始化日志文件
 	global.DB = core.InitDB()       // 链接数据库
 	flags.Run()                     // 数据库迁移
+
+	router.Run() // 启动 web 服务
 }
