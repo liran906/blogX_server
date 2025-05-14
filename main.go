@@ -11,4 +11,5 @@ func main() {
 	global.Config = core.ReadConf() // 读取配置文件
 	core.InitLogrus()               // 初始化日志文件
 	global.DB = core.InitDB()       // 链接数据库
+	flags.Run()                     // 数据库迁移
 }

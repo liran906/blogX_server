@@ -6,7 +6,10 @@
 // 4. 标准化处理：使用 Go 标准库的 flag 包提供统一的参数解析和验证机制
 package flags
 
-import "flag"
+import (
+	"flag"
+	"os"
+)
 
 // Options 结构体定义了所有支持的命令行选项
 // 这个结构体集中管理所有的命令行参数，使得参数管理更加规范和统一
@@ -60,4 +63,13 @@ func Parse() {
 	// 这个调用会处理所有通过命令行传入的参数
 	// 并将结果存储在相应的变量中
 	flag.Parse()
+}
+
+// Run 调用函数，做数据库迁移
+func Run() {
+	if FlagOptions.DB {
+		FlagDB()
+		os.Exit(0)
+	}
+
 }

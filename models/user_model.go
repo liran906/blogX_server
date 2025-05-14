@@ -1,0 +1,39 @@
+package models
+
+import "time"
+
+type UserModel struct {
+	Model
+	Username       string    `gorm:"size:32; not null" json:"username"`
+	Email          string    `gorm:"size:256; unique; not null" json:"email"`
+	Password       string    `gorm:"size:64; not null" json:"-"`
+	Nickname       string    `gorm:"size:32; not null" json:"nickname"`
+	AvatarURL      string    `gorm:"size:256" json:"avatarURL"`
+	Bio            string    `gorm:"size:256" json:"bio"`
+	OpenID         string    `gorm:"size:64" json:"openid"`
+	Gender         int8      `json:"gender"`
+	Phone          string    `gorm:"size:16" json:"phone"`
+	Country        string    `gorm:"size:16" json:"country"`
+	Province       string    `gorm:"size:16" json:"province"`
+	City           string    `gorm:"size:16" json:"city"`
+	Status         int8      `json:"status"`
+	LastLoginTime  time.Time `json:"lastLoginTime"`
+	LastLoginIP    string    `gorm:"size:32" json:"lastLoginIP"`
+	RegisterSource int8      `gorm:"not null" json:"registerSource"`
+	DateOfBirth    time.Time `gorm:"not null" json:"dateOfBirth"`
+	StartCodeAt    time.Time `json:"startCodeAt"`
+	Role           int8      `gorm:"not null" json:"role"` // 角色 1管理员 2普通用户 3访客
+}
+
+type UserConfigModel struct {
+	UserID             uint       `gorm:"primaryKey" json:"userID"`
+	Tags               []string   `gorm:"type:longtext; serializer:json" json:"tags"` // 兴趣标签
+	UpdatedAt          *time.Time `json:"updatedAt"`                                  // 上次修改时间，可能为空，所以是指针
+	ThemeID            uint8      `json:"themeID"`                                    // 主页样式 id
+	DisplayCollections bool       `gorm:"default:true" json:"displayCollections"`     // 公开我的收藏
+	DisplayFans        bool       `gorm:"default:true" json:"displayFans"`            // 公开我的粉丝
+	DisplayFollowing   bool       `gorm:"default:true" json:"displayFollowing"`       // 公开我的关注
+
+	// FK
+	UserModel UserModel `gorm:"foreignKey:UserID;references:ID" json:"userModel"` // 外键关联到 User, ref 如果不写会自动关联到 ID
+}
