@@ -26,5 +26,10 @@ func IsPrivateIP(ip string) (bool, error) {
 		return true, nil
 	}
 
+	// 0.0.0.0
+	if parsed.IsUnspecified() {
+		return true, nil
+	}
+
 	return false, nil
 }

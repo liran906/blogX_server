@@ -14,7 +14,7 @@ func InitIPDB() {
 	var dbPath = "init/ip2region.xdb"
 	_searcher, err := xdb.NewWithFileOnly(dbPath)
 	if err != nil {
-		logrus.Fatalln("failed to create IP searcher: %s\n", err.Error())
+		logrus.Fatalf("failed to create IP searcher: %s\n", err.Error())
 	}
 
 	searcher = _searcher
@@ -39,9 +39,31 @@ func GetAddress(ip string) (string, error) {
 	}
 
 	_addrList := strings.Split(region, "|")
-	// 输出的格式是 国家 0 省 市 运营商
-	country, province, city := _addrList[0], _addrList[2], _addrList[3]
+	//fmt.Println(_addrList)
 
+	// 输出的格式是 国家 0 省 市 运营商
+	// 去掉末尾的“省”、“市”
+	country, province, city := _addrList[0], _addrList[2], _addrList[3]
+	if strings.HasSuffix(province, "省") {
+		province = strings.TrimSuffix(province, "省")
+	}
+	if strings.HasSuffix(city, "市") {
+		city = strings.TrimSuffix(city, "市")
+	}
+	if strings.HasSuffix(province, "县") {
+		province = strings.TrimSuffix(province, "县")
+	}
+	if strings.HasSuffix(city, "县") {
+		city = strings.TrimSuffix(city, "县")
+	}
+	if city == province || city == country {
+		city = "0"
+	}
+	//fmt.Println(country, province, city)
+
+	if province == "台湾" {
+		return country + "-" + province, nil
+	}
 	if province != "0" && city != "0" {
 		return province + "-" + city, nil
 	}
