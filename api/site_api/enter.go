@@ -5,7 +5,9 @@ package site_api
 import (
 	"blogX_server/models/enum"
 	"blogX_server/service/log_service"
+	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 )
 
 type SiteApi struct{}
@@ -17,5 +19,29 @@ func (s *SiteApi) SiteInfoView(c *gin.Context) {
 	log_service.NewLoginSuccess(c, enum.UsernamePasswordLoginType)
 	log_service.NewLoginFail(c, enum.UsernamePasswordLoginType, "login fail", "un_test", "pw_test")
 	c.JSON(200, gin.H{"message": "test: 站点信息"})
+	return
+}
+
+type SiteUpdateRequest struct {
+	Name string `json:"name"`
+}
+
+func (s *SiteApi) SiteUpdateView(c *gin.Context) {
+	// TBD
+	log := log_service.GetLog(c)
+
+	log.SetShowResponse(true)
+	log.SetShowRequest(true)
+
+	var req SiteUpdateRequest
+	err := c.ShouldBindJSON(&req)
+	if err != nil {
+		logrus.Errorf(err.Error())
+	}
+	fmt.Println(req)
+
+	//log.Save()
+
+	c.JSON(200, gin.H{"msg": "test: 更新站点信息"})
 	return
 }
