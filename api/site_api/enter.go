@@ -1,6 +1,12 @@
+// Path: ./api/site_api/enter.go
+
 package site_api
 
-import "github.com/gin-gonic/gin"
+import (
+	"blogX_server/models/enum"
+	"blogX_server/service/log_service"
+	"github.com/gin-gonic/gin"
+)
 
 type SiteApi struct{}
 
@@ -8,6 +14,8 @@ type SiteApi struct{}
 
 func (s *SiteApi) SiteInfoView(c *gin.Context) {
 	// TBD
+	log_service.NewLoginSuccess(c, enum.UsernamePasswordLoginType)
+	log_service.NewLoginFail(c, enum.UsernamePasswordLoginType, "login fail", "un_test", "pw_test")
 	c.JSON(200, gin.H{"message": "test: 站点信息"})
 	return
 }

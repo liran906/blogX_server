@@ -1,3 +1,5 @@
+// Path: ./service/log_service/login_log.go
+
 package log_service
 
 import (

@@ -1,3 +1,5 @@
+// Path: ./router/site_router.go
+
 package router
 
 import (
