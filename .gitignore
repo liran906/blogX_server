@@ -1,5 +1,6 @@
 .idea
 tmp
+testdata
 local_settings.yaml
 main
 logs/*

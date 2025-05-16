@@ -8,10 +8,12 @@ import (
 	"blogX_server/models"
 	"blogX_server/models/enum"
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"io"
+	"reflect"
 	"strings"
 )
 
@@ -24,7 +26,7 @@ type ActionLog struct {
 	log          *models.LogModel // 备份存储，检测是否已存
 	showResponse bool             // 是否显示响应体（不是所有视图都需要）
 	showRequest  bool             // 是否显示请求体（不是所有视图都需要）
-	itemList     []string         // 存放请求和响应body
+	itemList     []string         // 存放请求的content，最后和请求和响应body，合并为 content 入库
 }
 
 func (l *ActionLog) SetShowResponse(show bool) {
@@ -41,6 +43,50 @@ func (l *ActionLog) SetLevel(level enum.LogLevelType) {
 
 func (l *ActionLog) SetTitle(title string) {
 	l.title = title
+}
+
+func (l *ActionLog) setItem(label string, value any, logLevelType enum.LogLevelType) {
+	// 用 reflect 判断 value 类型
+	var v string
+	t := reflect.TypeOf(value)
+	switch t.Kind() {
+	case reflect.Struct, reflect.Map, reflect.Slice: // 这三种类型需要转换为 json
+		ByteData, _ := json.Marshal(value)
+		v = string(ByteData) // tbd
+	default:
+		v = fmt.Sprintf("%v", value)
+	}
+
+	l.itemList = append(l.itemList, fmt.Sprintf("Log level: %s; Log label: %s; Value: %s",
+		logLevelType.ToString(), label, v))
+}
+
+func (l *ActionLog) SetItem(label string, value any) {
+	l.setItem(label, value, enum.LogDebugLevel)
+}
+
+func (l *ActionLog) SetItemDebug(label string, value any) {
+	l.setItem(label, value, enum.LogDebugLevel)
+}
+
+func (l *ActionLog) SetItemInfo(label string, value any) {
+	l.setItem(label, value, enum.LogInfoLevel)
+}
+
+func (l *ActionLog) SetItemWarn(label string, value any) {
+	l.setItem(label, value, enum.LogWarnLevel)
+}
+
+func (l *ActionLog) SetItemError(label string, value any) {
+	l.setItem(label, value, enum.LogErrorLevel)
+}
+
+func (l *ActionLog) SetItemFatal(label string, value any) {
+	l.setItem(label, value, enum.LogFatalLevel)
+}
+
+func (l *ActionLog) SetItemPanic(label string, value any) {
+	l.setItem(label, value, enum.LogPanicLevel)
 }
 
 func (l *ActionLog) SetRequest(c *gin.Context) {
@@ -67,14 +113,21 @@ func (l *ActionLog) Save() {
 		return
 	}
 
+	// 设置变量存储请求和响应的 相关 head 信息和 body
+	var NewItemList []string
+
 	// 设置请求
 	if l.showRequest {
-		l.itemList = append(l.itemList, fmt.Sprintf("request method: %s; request path: %s; request body: %s",
+		NewItemList = append(NewItemList, fmt.Sprintf("request method: %s; request path: %s; request body: %s",
 			l.c.Request.Method, l.c.Request.URL.String(), string(l.requestBody)))
 	}
+
+	// 合并中间的 content
+	NewItemList = append(NewItemList, l.itemList...)
+
 	// 设置响应
 	if l.showResponse {
-		l.itemList = append(l.itemList, fmt.Sprintf("response body: %s", string(l.responseBody)))
+		NewItemList = append(NewItemList, fmt.Sprintf("response body: %s", string(l.responseBody)))
 	}
 
 	ip := l.c.ClientIP()
@@ -86,7 +139,7 @@ func (l *ActionLog) Save() {
 	log := models.LogModel{
 		LogType: enum.ActionLogType,
 		Title:   l.title,
-		Content: strings.Join(l.itemList, "\n"), // 请求+响应，换行分割
+		Content: strings.Join(NewItemList, "\n"), // 请求+content+响应，换行分割
 		Level:   l.level,
 		UserID:  userID,
 		IP:      ip,
