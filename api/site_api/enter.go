@@ -29,8 +29,10 @@ type SiteUpdateRequest struct {
 func (s *SiteApi) SiteUpdateView(c *gin.Context) {
 	log := log_service.GetLog(c)
 
-	log.SetShowResponse(true)
-	log.SetShowRequest(true)
+	log.ShowRequestHeader()
+	log.ShowRequest()
+	log.ShowResponseHeader()
+	log.ShowResponse()
 
 	// testing
 	log.SetTitle("test_更新站点")
@@ -42,13 +44,16 @@ func (s *SiteApi) SiteUpdateView(c *gin.Context) {
 	log.SetItemWarn("test:slice", []int{1, 2, 3})
 	log.SetItemError("test:string", "hello")
 	log.SetItemDebug("test:bool", true)
+	log.SetItemInfo("test:int", 1)
+	log.SetImage("/xxx/xxx.jpg")
+	log.SetLink("test_set_link", "https://www.google.com")
+	c.Header("test response header key", "test response header value")
 
 	var req SiteUpdateRequest
 	err := c.ShouldBindJSON(&req)
 	if err != nil {
 		logrus.Errorf(err.Error())
 	}
-	//fmt.Println(req)
 
 	//log.Save()
 

@@ -19,6 +19,7 @@ type LogModel struct {
 	LoginStatus bool              `gorm:"not null; default:false" json:"loginStatus"` // 登录状态
 	LoginType   enum.LoginType    `gorm:"not null" json:"loginType"`                  // 登录的类型
 	UA          string            `gorm:"size:256; not null" json:"ua"`               // 登录设备
+	ServiceName string            `gorm:"size:32" json:"serviceName"`
 
 	// FK
 	UserModel UserModel `gorm:"foreignKey:UserID;references:ID" json:"-"`

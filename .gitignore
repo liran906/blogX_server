@@ -6,3 +6,6 @@ main
 logs/*
 upload/*
 settings.yaml
+**/.DS_Store
+reference_code
+blogx_server
