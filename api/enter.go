@@ -1,3 +1,5 @@
+// Path: ./api/enter.go
+
 package api
 
 import "blogX_server/api/site_api"

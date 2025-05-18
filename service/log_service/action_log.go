@@ -170,12 +170,14 @@ func (l *ActionLog) MiddlewareSave() {
 	// 设置响应头
 	if l.showResponseHeader {
 		byteData, _ := json.Marshal(l.responseHeader)
-		l.itemList = append(l.itemList, fmt.Sprintf("test_%s", string(byteData)))
+		l.itemList = append(l.itemList, fmt.Sprintf("<div class=\"log_response_header\"><pre class=\"log_json_body\">%s</pre></div>",
+			string(byteData)))
 	}
 
 	// 设置响应
 	if l.showResponse {
-		l.itemList = append(l.itemList, fmt.Sprintf("<div class=\"log_response\"><pre class=\"log_json_body\">%s</pre></div>", string(l.responseBody)))
+		l.itemList = append(l.itemList, fmt.Sprintf("<div class=\"log_response\"><pre class=\"log_json_body\">%s</pre></div>",
+			string(l.responseBody)))
 	}
 
 	// 然后走 save
