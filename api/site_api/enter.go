@@ -6,7 +6,6 @@ import (
 	"blogX_server/models/enum"
 	"blogX_server/service/log_service"
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 	"time"
 )
 
@@ -23,11 +22,12 @@ func (s *SiteApi) SiteInfoView(c *gin.Context) {
 }
 
 type SiteUpdateRequest struct {
-	Name string `json:"name"`
+	Name string `json:"name" binding:"required"`
 }
 
 func (s *SiteApi) SiteUpdateView(c *gin.Context) {
-	log := log_service.GetLog(c)
+	// 拿取请求中间件中存储的 ActionLog 对象
+	log := log_service.GetActionLog(c)
 
 	log.ShowRequestHeader()
 	log.ShowRequest()
@@ -52,11 +52,12 @@ func (s *SiteApi) SiteUpdateView(c *gin.Context) {
 	var req SiteUpdateRequest
 	err := c.ShouldBindJSON(&req)
 	if err != nil {
-		logrus.Errorf(err.Error())
+		log.SetError("test: ShouldBindJSON error: ", err)
 	}
 
-	//log.Save()
+	id := log.Save()
 
-	c.JSON(200, gin.H{"msg": "test: 更新站点信息"})
+	c.JSON(200, gin.H{"msg": "test: 更新站点信息", "id": id})
+	// end of testing
 	return
 }

@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	e "github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"io"
 	"net/http"
@@ -30,8 +31,8 @@ type ActionLog struct {
 	showRequest        bool             // 是否显示请求体（不是所有视图都需要）
 	showResponseHeader bool             // 是否显示响应头（不是所有视图都需要）
 	showResponse       bool             // 是否显示响应体（不是所有视图都需要）
-
-	itemList []string // 存放请求的content，最后和请求和响应body，合并为 content 入库
+	itemList           []string         // 存放请求的content，最后和请求和响应body，合并为 content 入库
+	isMiddlewareSave   bool             // 判断是否是在中间件中保存
 }
 
 func (l *ActionLog) ShowRequestHeader() {
@@ -112,7 +113,12 @@ func (l *ActionLog) SetLink(label string, href string) {
 		label, href, href))
 }
 
-// 还有几个 TBD 都在教程 35 & 36
+func (l *ActionLog) SetError(label string, err error) {
+	msg := e.WithStack(err)
+	logrus.Errorf("%s: %s", label, err.Error())
+	l.itemList = append(l.itemList, fmt.Sprintf("<div class=\"log_error\"><div class=\"line\"><div class=\"label\">%s</div><div class=\"value\">%s</div><div class=\"type\">%T</div></div><div class=\"stack\">%+v</div></div>",
+		label, err, err, msg))
+}
 
 func (l *ActionLog) SetRequest(c *gin.Context) {
 	// 读取 Body 并且回填到 Body（应对其阅后即焚的特性）
@@ -135,46 +141,89 @@ func (l *ActionLog) SetResponse(data []byte) {
 	l.responseBody = data
 }
 
-func (l *ActionLog) MiddlewareSave() {
-	// TBD 教程 36 & 37
-}
+/*
+Save 目前的问题：
+	如果是在view 中去 save，那么是拿不到响应的，
+	此时就算在响应中间件中再次去 save，响应数据也是没法写入的
+所以解决为了解决这个问题：
+	方法 1：只在响应中间件中调用 save。（不在 view 中调用）
+	方法 2：在 view 中调用 save，需要返回日志的 id，其他接口可以根据 id 针对性修改这个 log 对象
+*/
 
-func (l *ActionLog) Save() {
-	if l.log != nil {
-		// Log 不为空，证明之前已经存过 Log 了
-		global.DB.Model(l.log).Update("title", "test: 已更新") // tbd
+func (l *ActionLog) MiddlewareSave() {
+	// 每一个中间件都会生成一个 action log 对象，但不一定每个 view 都需要一个 action log
+	// 所以这里判断是否有 savedLog 字段（在 GetActionLog 方法中会设为 true）
+	// 所以如果这里不为 true，则没有必要继续走下去了，直接 return
+	_savedLog, _ := l.c.Get("savedLog") // 读取
+	savedLog, _ := _savedLog.(bool)     // 断言
+	if !savedLog {
 		return
 	}
 
+	if l.log == nil {
+		// 创建
+		l.isMiddlewareSave = true
+		l.Save()
+	}
+
+	// 在 view 中 save 过，属于更新，要增加响应信息
+	// 设置响应头
+	if l.showResponseHeader {
+		byteData, _ := json.Marshal(l.responseHeader)
+		l.itemList = append(l.itemList, fmt.Sprintf("test_%s", string(byteData)))
+	}
+
+	// 设置响应
+	if l.showResponse {
+		l.itemList = append(l.itemList, fmt.Sprintf("<div class=\"log_response\"><pre class=\"log_json_body\">%s</pre></div>", string(l.responseBody)))
+	}
+
+	// 然后走 save
+	l.Save()
+}
+
+func (l *ActionLog) Save() uint {
+	if l.log != nil {
+		// Log 不为空，证明之前已经存过 Log 了，本次更新 content
+		newContent := strings.Join(l.itemList, "\n")
+		content := l.log.Content + "\n" + newContent
+		global.DB.Model(l.log).Update("content", content)
+		// 清空 itemList 以便下次保存增加新内容
+		l.itemList = []string{}
+		return l.log.ID
+	}
+
 	// 设置变量存储请求和响应的 相关 head 信息和 body
-	var NewItemList []string
+	var requestItemList []string
 
 	// 设置请求头
 	if l.showRequestHeader {
 		byteData, _ := json.Marshal(l.c.Request.Header)
-		NewItemList = append(NewItemList, fmt.Sprintf("<div class=\"log_response_header\"><pre class=\"log_json_body\">%s</pre></div>",
+		requestItemList = append(requestItemList, fmt.Sprintf("<div class=\"log_response_header\"><pre class=\"log_json_body\">%s</pre></div>",
 			string(byteData)))
 	}
 
 	// 设置请求
 	if l.showRequest {
-		NewItemList = append(NewItemList, fmt.Sprintf("<div class=\"log_request\"><div class=\"log_request_head\"><span class=\"log_request_method %s\">%s</span><span class=\"log_request_path\">%s</span></div><div class=\"log_request_body\"><pre class=\"log_json_body\">%s</pre></div></div>",
+		requestItemList = append(requestItemList, fmt.Sprintf("<div class=\"log_request\"><div class=\"log_request_head\"><span class=\"log_request_method %s\">%s</span><span class=\"log_request_path\">%s</span></div><div class=\"log_request_body\"><pre class=\"log_json_body\">%s</pre></div></div>",
 			strings.ToLower(l.c.Request.Method), l.c.Request.Method, l.c.Request.URL.String(), string(l.requestBody)))
 	}
 
 	// 合并中间的 content
-	NewItemList = append(NewItemList, l.itemList...)
+	l.itemList = append(requestItemList, l.itemList...)
 
-	// 设置响应头
-	if l.showResponseHeader {
-		fmt.Println("this is the test: ", l.responseHeader)
-		byteData, _ := json.Marshal(l.responseHeader)
-		NewItemList = append(NewItemList, fmt.Sprintf("test_%s", string(byteData)))
-	}
+	// 在响应中间件中保存才有可能拿到响应信息
+	if l.isMiddlewareSave {
+		// 设置响应头
+		if l.showResponseHeader {
+			byteData, _ := json.Marshal(l.responseHeader)
+			l.itemList = append(l.itemList, fmt.Sprintf("test_%s", string(byteData)))
+		}
 
-	// 设置响应
-	if l.showResponse {
-		NewItemList = append(NewItemList, fmt.Sprintf("<div class=\"log_response\"><pre class=\"log_json_body\">%s</pre></div>", string(l.responseBody)))
+		// 设置响应
+		if l.showResponse {
+			l.itemList = append(l.itemList, fmt.Sprintf("<div class=\"log_response\"><pre class=\"log_json_body\">%s</pre></div>", string(l.responseBody)))
+		}
 	}
 
 	ip := l.c.ClientIP()
@@ -186,7 +235,7 @@ func (l *ActionLog) Save() {
 	log := models.LogModel{
 		LogType: enum.ActionLogType,
 		Title:   l.title,
-		Content: strings.Join(NewItemList, "\n"), // 请求+content+响应，换行分割
+		Content: strings.Join(l.itemList, "\n"), // 请求+content+响应，换行分割
 		Level:   l.level,
 		UserID:  userID,
 		IP:      ip,
@@ -194,6 +243,8 @@ func (l *ActionLog) Save() {
 		IsRead:  false,
 		UA:      ua,
 	}
+
+	// 入库
 	err := global.DB.Create(&log).Error
 	if err != nil {
 		logrus.Errorf("failed to create Log: %s\n", err)
@@ -201,14 +252,20 @@ func (l *ActionLog) Save() {
 
 	// 写入 Log 字段（作为提醒已存过）
 	l.log = &log
+
+	// 清空 itemList 以便下次保存增加新内容
+	l.itemList = []string{}
+
+	return log.ID
 }
 
 func NewActionLogByGin(c *gin.Context) *ActionLog {
 	return &ActionLog{c: c}
 }
 
-func GetLog(c *gin.Context) *ActionLog {
-	_log, ok := c.Get("Log")
+// GetActionLog 拿取对应 gin.Context 的 ActionLog 对象（如有）
+func GetActionLog(c *gin.Context) *ActionLog {
+	_log, ok := c.Get("log")
 	if !ok {
 		return NewActionLogByGin(c)
 	}
@@ -216,5 +273,10 @@ func GetLog(c *gin.Context) *ActionLog {
 	if !ok {
 		return NewActionLogByGin(c)
 	}
+
+	// 每一个中间件都会生成一个 action log 对象，但不一定每个 view 都需要一个 action log
+	// 所以这里定义一个 savedLog 字段，在响应中间件中可以检测，若不为 true，则不用保存 action log
+	c.Set("savedLog", true)
+
 	return log
 }

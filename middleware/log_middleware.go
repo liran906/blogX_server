@@ -4,7 +4,6 @@ package middleware
 
 import (
 	"blogX_server/service/log_service"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -34,7 +33,9 @@ func LogMiddleware(c *gin.Context) {
 	log := log_service.NewActionLogByGin(c)
 
 	log.SetRequest(c)
-	// 吧 log 对象存入 context 的 log 字段中， 后续可以通过查询 log 字段判断是否为第一次创建
+
+	// 把 log 对象存入 context 的 log 字段中，
+	// 后续可以通过 log_service.GetActionLog() 方法，查询 log 字段判断是否为第一次创建
 	// 以免在视图中重新创建一个 c，并重复入库
 	c.Set("log", log)
 
@@ -46,8 +47,7 @@ func LogMiddleware(c *gin.Context) {
 	c.Next()
 
 	// 响应中间件
-	fmt.Println("test2: ", res.Head)
 	log.SetResponse(res.Body)
 	log.SetResponseHeader(res.Head)
-	log.Save()
+	log.MiddlewareSave()
 }
