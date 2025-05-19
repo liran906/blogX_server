@@ -76,7 +76,7 @@ func (l *ActionLog) setItem(label string, value any, logLevelType enum.LogLevelT
 }
 
 func (l *ActionLog) SetItem(label string, value any) {
-	l.setItem(label, value, enum.LogDebugLevel)
+	l.setItem(label, value, enum.LogInfoLevel)
 }
 
 func (l *ActionLog) SetItemDebug(label string, value any) {
@@ -190,6 +190,7 @@ func (l *ActionLog) Save() uint {
 		newContent := strings.Join(l.itemList, "\n")
 		content := l.log.Content + "\n" + newContent
 		global.DB.Model(l.log).Update("content", content)
+
 		// 清空 itemList 以便下次保存增加新内容
 		l.itemList = []string{}
 		return l.log.ID
