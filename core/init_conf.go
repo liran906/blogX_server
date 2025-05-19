@@ -1,3 +1,5 @@
+// Path: ./core/init_conf.go
+
 // Package core 提供了博客服务器的核心功能
 package core
 
@@ -18,6 +20,7 @@ func ReadConf() (c *conf.Config) {
 		panic(err)
 	}
 
+	// new 返回的就是指针
 	c = new(conf.Config)
 
 	// 将YAML格式的配置文件内容解析到config结构体中
