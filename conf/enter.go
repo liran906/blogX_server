@@ -1,3 +1,5 @@
+// Path: ./blogX_server/conf/enter.go
+
 package conf
 
 // Config 是整个应用的配置结构体

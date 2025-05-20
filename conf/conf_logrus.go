@@ -1,3 +1,5 @@
+// Path: ./blogX_server/conf/conf_logrus.go
+
 package conf
 
 // Log 定义了日志配置的结构体

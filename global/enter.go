@@ -1,3 +1,5 @@
+// Path: ./global/enter.go
+
 package global
 
 import (

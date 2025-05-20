@@ -4,7 +4,7 @@ testdata
 local_settings.yaml
 main
 logs/*
-upload/*
+uploads/*
 settings.yaml
 **/.DS_Store
 reference_code

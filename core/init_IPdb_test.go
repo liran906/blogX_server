@@ -88,6 +88,12 @@ func TestGetAddress(t *testing.T) {
 		},
 		{
 			name:    "国内IP  5",
+			ip:      "153.3.126.142",
+			want:    "江苏-南京",
+			wantErr: false,
+		},
+		{
+			name:    "国内IP  6",
 			ip:      "134.208.0.0",
 			want:    "中国-台湾",
 			wantErr: false,

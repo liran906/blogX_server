@@ -1,3 +1,5 @@
+// Path: ./blogX_server/conf/conf_db.go
+
 package conf
 
 import "fmt"
