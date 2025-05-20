@@ -1,0 +1,124 @@
+// Path: ./blogX_server/api/log_api/enter.go
+
+package log_api
+
+import (
+	"blogX_server/common"
+	"blogX_server/common/res"
+	"blogX_server/models"
+	"blogX_server/models/enum"
+	"github.com/gin-gonic/gin"
+)
+
+type LogApi struct {
+}
+
+type LogListRequest struct {
+	common.PageInfo
+	LogType     enum.LogType      `form:"logType"`
+	Level       enum.LogLevelType `form:"level"`
+	UserID      uint              `form:"userID"`
+	Username    string            `form:"username"`
+	IP          string            `form:"ip"`
+	Address     string            `form:"address"`
+	ServiceName string            `form:"serviceName"`
+}
+
+// LogListResponse 查询用户时候除了 id，再附带一些其他想展示的信息
+type LogListResponse struct {
+	models.LogModel
+	Username      string `json:"username"`
+	UserNickName  string `json:"userNickName"`
+	UserAvatarURL string `json:"userAvatarURL"`
+}
+
+func (l *LogApi) LogListView(c *gin.Context) {
+	// 分页 查询（精确查询 模糊匹配）
+	var req LogListRequest
+	err := c.ShouldBindQuery(&req)
+	if err != nil {
+		res.FailWithError(err, c)
+		return
+	}
+
+	list, count, err := common.ListQuery(
+		models.LogModel{ // 精确匹配参数
+			LogType:     req.LogType,
+			Level:       req.Level,
+			UserID:      req.UserID,
+			Username:    req.Username,
+			IP:          req.IP,
+			Address:     req.Address,
+			ServiceName: req.ServiceName,
+		},
+		common.Options{ // 模糊匹配及其他参数
+			PageInfo:     req.PageInfo,
+			Likes:        []string{"title"},
+			Preloads:     []string{"UserModel"},
+			Debug:        true,
+			DefaultOrder: "id desc",
+		},
+	)
+
+	// 下面注释的代码，已经封装到 common.ListQuery() 中了
+
+	/*
+		// 每一页超过 100 条则按 100 条
+		if req.Limit > 100 {
+			req.Limit = 100
+		}
+		// 每一页默认 10，若小于 0 条则按默认
+		if req.Limit <= 0 {
+			req.Limit = 10
+		}
+		// 默认第一页开始
+		if req.Page <= 0 {
+			req.Page = 1
+		}
+
+		model := models.LogModel{
+			LogType:     req.LogType,
+			Level:       req.Level,
+			UserID:      req.UserID,
+			Username:    req.Username,
+			IP:          req.IP,
+			Address:     req.Address,
+			ServiceName: req.ServiceName,
+		}
+
+		// 模糊查询语句生成
+		like := global.DB.
+			// Model() 指定要查询的数据模型是 LogModel，相当于指定 FROM log_models
+			Model(models.LogModel{}).
+			// Where() 构建 WHERE 条件：title LIKE '%key%'
+			// fmt.Sprintf("%%%s%%", req.Key) 会将 req.Key 包装成 SQL 的模糊匹配格式
+			Where("title like ?", fmt.Sprintf("%%%s%%", req.Key))
+
+		// 查询数据库
+		var list []models.LogModel
+		global.DB.
+			Preload("UserModel").     // Preload() 预加载关联数据（比如 FK），这里会同时加载每条日志关联的用户信息
+			Model(models.LogModel{}). // 再次指定要查询的数据模型（此处可以省略）
+			Where(like).              // 使用上面构建的模糊查询条件
+			Where(model).             // 使用传入的 model 参数作为精确匹配条件。非零值字段都会作为 WHERE 条件
+			Offset((req.Page - 1) * req.Limit).
+			Limit(req.Limit).
+			Find(&list) // 执行查询并将结果存入 list 切片中
+
+		// 统计数量
+		var count int64
+		global.DB.Model(models.LogModel{}).Where(like).Where(model).Count(&count)
+	*/
+
+	var _list = make([]LogListResponse, 0)
+	for _, logModel := range list {
+		_list = append(_list, LogListResponse{
+			LogModel:      logModel,
+			Username:      logModel.UserModel.Username,
+			UserNickName:  logModel.UserModel.Nickname,
+			UserAvatarURL: logModel.UserModel.AvatarURL,
+		})
+	}
+
+	res.SuccessWithList(_list, count, c)
+}

@@ -49,6 +49,13 @@ func SuccessWithMsg(msg string, c *gin.Context) {
 	Response{SuccessCode, empty, msg}.Json(c)
 }
 
+func SuccessWithList(list any, count int, c *gin.Context) {
+	Response{SuccessCode, map[string]any{
+		"list":  list,
+		"count": count,
+	}, "Success"}.Json(c)
+}
+
 func FailWithMsg(msg string, c *gin.Context) {
 	Response{FailValidationCode, empty, msg}.Json(c)
 }
@@ -59,4 +66,8 @@ func FailWithData(data any, msg string, c *gin.Context) {
 
 func FailWithCode(code Code, c *gin.Context) {
 	Response{code, empty, code.ToString()}.Json(c)
+}
+
+func FailWithError(err error, c *gin.Context) {
+	FailWithMsg(err.Error(), c)
 }
