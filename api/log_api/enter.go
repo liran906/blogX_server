@@ -5,6 +5,7 @@ package log_api
 import (
 	"blogX_server/common"
 	"blogX_server/common/res"
+	"blogX_server/global"
 	"blogX_server/models"
 	"blogX_server/models/enum"
 	"github.com/gin-gonic/gin"
@@ -52,10 +53,10 @@ func (l *LogApi) LogListView(c *gin.Context) {
 			ServiceName: req.ServiceName,
 		},
 		common.Options{ // 模糊匹配及其他参数
-			PageInfo:     req.PageInfo,
-			Likes:        []string{"title"},
-			Preloads:     []string{"UserModel"},
-			Debug:        true,
+			PageInfo: req.PageInfo,
+			Likes:    []string{"title"},
+			Preloads: []string{"UserModel"},
+			//Debug:        true,
 			DefaultOrder: "id desc",
 		},
 	)
@@ -121,4 +122,26 @@ func (l *LogApi) LogListView(c *gin.Context) {
 	}
 
 	res.SuccessWithList(_list, count, c)
+}
+
+func (l *LogApi) LogReadView(c *gin.Context) {
+	var req models.IDRequest
+	err := c.ShouldBindUri(&req)
+	if err != nil {
+		res.FailWithError(err, c)
+		return
+	}
+
+	var log models.LogModel
+	err = global.DB.Take(&log, req.ID).Error
+	if err != nil {
+		res.FailWithError(err, c)
+		return
+	}
+
+	if !log.IsRead {
+		global.DB.Model(&log).Update("is_read", true)
+	}
+
+	res.Success(log, "读取日志成功", c)
 }

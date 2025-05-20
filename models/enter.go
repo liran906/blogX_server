@@ -1,3 +1,5 @@
+// Path: ./blogX_server/models/enter.go
+
 package models
 
 import (
@@ -8,4 +10,8 @@ type Model struct {
 	ID        uint `gorm:"primaryKey"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
+}
+
+type IDRequest struct {
+	ID uint `uri:"id" json:"id" form:"id"`
 }
