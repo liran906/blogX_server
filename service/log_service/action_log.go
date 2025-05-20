@@ -279,6 +279,7 @@ func GetActionLog(c *gin.Context) *ActionLog {
 
 	// 每一个中间件都会生成一个 action log 对象，但不一定每个 view 都需要一个 action log
 	// 所以这里定义一个 savedLog 字段，在响应中间件中可以检测，若不为 true，则不用保存 action log
+	// 也就是说，只有调用了这个 GetActionLog 方法，中间件的 save 才会保存 action log
 	c.Set("savedLog", true)
 
 	return log
