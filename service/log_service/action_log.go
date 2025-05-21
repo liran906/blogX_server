@@ -3,10 +3,12 @@
 package log_service
 
 import (
+	"blogX_server/common/res"
 	"blogX_server/core"
 	"blogX_server/global"
 	"blogX_server/models"
 	"blogX_server/models/enum"
+	"blogX_server/utils/jwts"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -164,6 +166,7 @@ func (l *ActionLog) MiddlewareSave() {
 		// 创建
 		l.isMiddlewareSave = true
 		l.Save()
+		return
 	}
 
 	// 在 view 中 save 过，属于更新，要增加响应信息
@@ -233,7 +236,17 @@ func (l *ActionLog) Save() uint {
 	ua := l.c.Request.UserAgent()
 	addr, _ := core.GetAddress(ip)
 
-	userID := uint(1) // tbd
+	// 从 token 中读取 uid
+	var userID uint
+	claim, err := jwts.ParseTokenFromGin(l.c)
+	if claim != nil && err == nil {
+		userID = claim.UserID
+	} else {
+		// 这里按照教程没有，但我觉得应该报错+终止函数
+		logrus.Errorf("failed to parse token: %v\n", err)
+		res.FailWithError(err, l.c)
+		return 0
+	}
 
 	log := models.LogModel{
 		LogType: enum.ActionLogType,
@@ -248,7 +261,7 @@ func (l *ActionLog) Save() uint {
 	}
 
 	// 入库
-	err := global.DB.Create(&log).Error
+	err = global.DB.Create(&log).Error
 	if err != nil {
 		logrus.Errorf("failed to create Log: %s\n", err)
 	}
