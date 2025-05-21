@@ -7,6 +7,7 @@ type Config struct {
 	System System `yaml:"system"` // 系统配置部分
 	Jwt    Jwt    `yaml:"jwt"`    // jwt配置
 	Log    Log    `yaml:"log"`
+	Redis  Redis  `yaml:"redis"`
 	DB_r   DB     `yaml:"dbr"` // 读库，这里是读写分离，也可以不分
 	DB_w   DB     `yaml:"dbw"` // 写库
 }
