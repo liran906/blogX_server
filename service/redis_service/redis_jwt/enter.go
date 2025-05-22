@@ -6,6 +6,7 @@ import (
 	"blogX_server/global"
 	"blogX_server/utils/jwts"
 	"fmt"
+	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"time"
 )
@@ -20,6 +21,18 @@ const (
 
 func (b BlockType) String() string {
 	return fmt.Sprintf("%d", b)
+}
+
+func (b BlockType) Msg() string {
+	switch b {
+	case UserBlockType:
+		return "已注销"
+	case AdminBlockType:
+		return "禁止登录"
+	case DeviceBlockType:
+		return "设备下线"
+	}
+	return "已注销"
 }
 
 // ParseBlockType 从字符串类型解析到 BlockType 类型
@@ -73,4 +86,12 @@ func IsBlockedJWTToken(token string) (blockType BlockType, ok bool) {
 	blockType = ParseBlockType(val)
 
 	return blockType, true
+}
+
+func IsBlockedJWTTokenByGin(c *gin.Context) (blockType BlockType, ok bool) {
+	token := c.GetHeader("token")
+	if token == "" {
+		token = c.Query("token")
+	}
+	return IsBlockedJWTToken(token)
 }

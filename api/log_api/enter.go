@@ -13,8 +13,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type LogApi struct {
-}
+type LogApi struct{}
 
 type LogListRequest struct {
 	common.PageInfo

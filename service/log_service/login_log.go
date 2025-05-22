@@ -25,7 +25,7 @@ func NewLoginSuccess(c *gin.Context, loginType enum.LoginType) {
 	if claim != nil && err == nil {
 		userID, username = claim.UserID, claim.Username
 	} else {
-		// 这里按照教程没有，但我觉得应该报错+终止函数
+		// 这里按照教程没有，但我觉得应该报错+终止函数 TBD
 		logrus.Errorf("failed to parse token: %v\n", err)
 		res.FailWithError(err, c)
 		return

@@ -7,11 +7,10 @@ import (
 	"blogX_server/models"
 	"blogX_server/models/enum"
 	"errors"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"strings"
 	"time"
-
-	"github.com/dgrijalva/jwt-go"
 )
 
 type Claims struct {
@@ -78,7 +77,7 @@ func ParseTokenFromGin(c *gin.Context) (*MyClaims, error) {
 	return ParseToken(token)
 }
 
-func GetClaims(c *gin.Context) (claims *MyClaims) {
+func GetClaimsFromGin(c *gin.Context) (claims *MyClaims) {
 	_claims, ok := c.Get("claims")
 	if !ok {
 		return
