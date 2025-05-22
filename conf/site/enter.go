@@ -29,7 +29,7 @@ type Seo struct {
 type About struct {
 	SiteDate  string `yaml:"siteDate" json:"siteDate"`   // 年月日
 	QQURL     string `yaml:"qqURL" json:"qqURL"`         // QQ二维码
-	Version   string `yaml:"-" json:"version"`           // 版本
+	Version   string `yaml:"-" json:"version"`           // 版本，要写死在代码中，所以 yaml 为 -
 	WechatURL string `yaml:"wechatURL" json:"wechatURL"` // 微信二维码
 	Gitee     string `yaml:"gitee" json:"gitee"`         // 网址
 	Bilibili  string `yaml:"bilibili" json:"bilibili"`   // 网址

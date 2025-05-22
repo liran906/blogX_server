@@ -37,6 +37,13 @@ type ActionLog struct {
 	isMiddlewareSave   bool             // 判断是否是在中间件中保存
 }
 
+func (l *ActionLog) ShowAll() {
+	l.showRequestHeader = true
+	l.showRequest = true
+	l.showResponseHeader = true
+	l.showResponse = true
+}
+
 func (l *ActionLog) ShowRequestHeader() {
 	l.showRequestHeader = true
 }

@@ -6,7 +6,9 @@ package core
 import (
 	"blogX_server/conf"
 	"blogX_server/flags"
+	"blogX_server/global"
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 	"os"
 )
@@ -33,4 +35,18 @@ func ReadConf() (c *conf.Config) {
 	fmt.Printf("configuration of: %s success!\n", flags.FlagOptions.File)
 
 	return
+}
+
+func SetConf() {
+	byteData, err := yaml.Marshal(global.Config)
+	if err != nil {
+		logrus.Errorln("yaml marshal err: ", err)
+		return
+	}
+	err = os.WriteFile("settings.yaml", byteData, 0666)
+	if err != nil {
+		logrus.Errorln("yaml write err: ", err)
+		return
+	}
+	logrus.Info("settings.yaml write successful")
 }
