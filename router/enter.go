@@ -1,4 +1,4 @@
-// Path: ./router/enter.go
+// Path: ./blogX_server/router/enter.go
 
 package router
 
@@ -17,8 +17,9 @@ func Run() {
 	nr := r.Group("/api")
 
 	//nr.Use(middleware.LogMiddleware)
-	SiteRouter(nr)
 	LogRouter(nr)
+	ImageRouter(nr)
+	SiteRouter(nr)
 
 	addr := global.Config.System.Addr()
 	err := r.Run(addr)

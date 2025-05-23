@@ -14,9 +14,10 @@ type Config struct {
 	DB_w  DB    `yaml:"dbw"` // 写库
 
 	// 站点设置
-	Site  Site  `yaml:"site"`
-	Ai    Ai    `yaml:"ai"`
-	Cloud Cloud `yaml:"cloud"`
-	QQ    QQ    `yaml:"qq"`
-	Email Email `yaml:"email"`
+	Site   Site   `yaml:"site"`
+	Ai     Ai     `yaml:"ai"`
+	Cloud  Cloud  `yaml:"cloud"`
+	QQ     QQ     `yaml:"qq"`
+	Email  Email  `yaml:"email"`
+	Upload Upload `yaml:"upload"`
 }
