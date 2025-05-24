@@ -2,7 +2,10 @@
 
 package res
 
-import "github.com/gin-gonic/gin"
+import (
+	"fmt"
+	"github.com/gin-gonic/gin"
+)
 
 type Code uint
 
@@ -50,10 +53,12 @@ func SuccessWithMsg(msg string, c *gin.Context) {
 }
 
 func SuccessWithList(list any, count int, c *gin.Context) {
-	Response{SuccessCode, map[string]any{
-		"list":  list,
-		"count": count,
-	}, "Success"}.Json(c)
+	Response{SuccessCode,
+		map[string]any{
+			"list":  list,
+			"count": count,
+		},
+		"Success"}.Json(c)
 }
 
 func FailWithMsg(msg string, c *gin.Context) {
@@ -70,4 +75,15 @@ func FailWithCode(code Code, c *gin.Context) {
 
 func FailWithError(err error, c *gin.Context) {
 	FailWithMsg(err.Error(), c)
+}
+
+func WithList(list any, total, success int, c *gin.Context) {
+	Response{FailServiceCode,
+		map[string]any{
+			"list":           list,
+			"count(total)":   total,
+			"count(success)": success,
+			"count(fail)":    total - success,
+		},
+		fmt.Sprintf("%d out of %d succeed", success, total)}.Json(c)
 }

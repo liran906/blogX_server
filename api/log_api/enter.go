@@ -54,16 +54,15 @@ func (l *LogApi) LogListView(c *gin.Context) {
 			ServiceName: req.ServiceName,
 		},
 		common.Options{ // 模糊匹配及其他参数
-			PageInfo: req.PageInfo,
-			Likes:    []string{"title"},
-			Preloads: []string{"UserModel"},
-			//Debug:        true,
+			PageInfo:     req.PageInfo,
+			Likes:        []string{"title"},
+			Preloads:     []string{"UserModel"},
+			Debug:        false,
 			DefaultOrder: "id desc",
 		},
 	)
 
 	// 下面注释的代码，已经封装到 common.ListQuery() 中了
-
 	/*
 		// 每一页超过 100 条则按 100 条
 		if req.Limit > 100 {

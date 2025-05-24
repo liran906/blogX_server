@@ -46,6 +46,7 @@ type Options struct {
 	DefaultOrder string   // 顺序，这个前端可覆盖
 }
 
+// ListQuery performs a database query with support for pagination, filtering, ordering, and preloading related data.
 func ListQuery[T any](model T, options Options) (list []T, count int, err error) {
 	// 基础查询
 	query := global.DB.Model(model)
