@@ -4,6 +4,7 @@ package router
 
 import (
 	"blogX_server/global"
+	"blogX_server/middleware"
 	"github.com/gin-gonic/gin"
 	"log"
 )
@@ -16,7 +17,7 @@ func Run() {
 
 	nr := r.Group("/api")
 
-	//nr.Use(middleware.LogMiddleware)
+	nr.Use(middleware.LogMiddleware)
 	LogRouter(nr)
 	ImageRouter(nr)
 	SiteRouter(nr)

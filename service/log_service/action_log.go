@@ -212,7 +212,7 @@ func (l *ActionLog) Save() uint {
 	// 设置请求头
 	if l.showRequestHeader {
 		byteData, _ := json.Marshal(l.c.Request.Header)
-		requestItemList = append(requestItemList, fmt.Sprintf("<div class=\"log_response_header\"><pre class=\"log_json_body\">%s</pre></div>",
+		requestItemList = append(requestItemList, fmt.Sprintf("<div class=\"log_request_header\"><pre class=\"log_json_body\">%s</pre></div>",
 			string(byteData)))
 	}
 
@@ -230,7 +230,7 @@ func (l *ActionLog) Save() uint {
 		// 设置响应头
 		if l.showResponseHeader {
 			byteData, _ := json.Marshal(l.responseHeader)
-			l.itemList = append(l.itemList, fmt.Sprintf("test_%s", string(byteData)))
+			l.itemList = append(l.itemList, fmt.Sprintf("<div class=\"log_response_header\"><pre class=\"log_json_body\">%s</pre></div>", string(byteData)))
 		}
 
 		// 设置响应
