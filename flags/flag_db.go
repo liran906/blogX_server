@@ -23,6 +23,7 @@ func FlagDB() {
 		&models.LogModel{},
 		&models.UserLoginModel{},
 		&models.GlobalNotificationModel{},
+		&models.UserUploadImage{},
 	)
 	if err != nil {
 		logrus.Errorf("failed to migrate DB: %s\n", err)

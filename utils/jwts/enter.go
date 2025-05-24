@@ -29,8 +29,8 @@ func (m MyClaims) GetUser() (user models.UserModel, err error) {
 	return
 }
 
-// GetToken 服务器生成 token
-func GetToken(claims Claims) (string, error) {
+// GenerateToken 服务器生成 token
+func GenerateToken(claims Claims) (string, error) {
 	cla := MyClaims{
 		Claims: claims,
 		StandardClaims: jwt.StandardClaims{

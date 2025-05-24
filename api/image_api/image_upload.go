@@ -8,6 +8,7 @@ import (
 	"blogX_server/models"
 	"blogX_server/service/log_service"
 	"blogX_server/utils"
+	"blogX_server/utils/jwts"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
@@ -25,43 +26,7 @@ type ImageUploadResponse struct {
 	Error    string `json:"error"`
 }
 
-func (i *ImageApi) ImageUploadView(c *gin.Context) {
-	form, err := c.MultipartForm()
-	if err != nil {
-		res.FailWithError(err, c)
-		return
-	}
-
-	files := form.File["file"] // 前端上传时使用 file 作为 key
-	if len(files) == 0 {
-		res.FailWithMsg("没有上传任何文件", c)
-		return
-	}
-	if len(files) > 10 {
-		res.FailWithMsg("一次上传不能超过10张", c)
-		return
-	}
-
-	// 记录日志
-	log := log_service.GetActionLog(c)
-	log.ShowRequestHeader()
-	log.ShowResponseHeader()
-	log.ShowResponse()
-	log.SetTitle("上传图片")
-
-	var list []*ImageUploadResponse
-	var count int
-	for _, fileHeader := range files {
-		uploadImage(fileHeader, log, &list, &count, c)
-	}
-
-	if count == len(files) {
-		res.SuccessWithList(list, count, c)
-	} else {
-		res.WithList(list, len(files), count, c)
-	}
-}
-
+// uploadImage 上传单张图像
 func uploadImage(fileHeader *multipart.FileHeader, log *log_service.ActionLog, list *[]*ImageUploadResponse, count *int, c *gin.Context) {
 	uploadResp := &ImageUploadResponse{
 		Filename: fileHeader.Filename,
@@ -97,6 +62,8 @@ func uploadImage(fileHeader *multipart.FileHeader, log *log_service.ActionLog, l
 	byteData, _ := io.ReadAll(file)
 	hash := utils.Md5(byteData)
 
+	uploadResp.Hash = hash
+
 	// 入库
 	model := models.ImageModel{
 		Filename: fileHeader.Filename,
@@ -104,7 +71,13 @@ func uploadImage(fileHeader *multipart.FileHeader, log *log_service.ActionLog, l
 		Size:     fileHeader.Size,
 		Hash:     hash,
 	}
-	uploadResp.Hash = hash
+
+	_claims, _ := c.Get("claims")
+	fmt.Println("fetching the claims", _claims)
+	claims, ok := _claims.(*jwts.MyClaims)
+	if !ok {
+		fmt.Println(ok)
+	}
 
 	err = global.DB.Create(&model).Error
 	if err != nil {
@@ -112,6 +85,26 @@ func uploadImage(fileHeader *multipart.FileHeader, log *log_service.ActionLog, l
 			// 找出重复的那个
 			var _model models.ImageModel
 			global.DB.Take(&_model, "hash = ?", hash)
+
+			// 首先判断是不是同一个用户上传的
+			// 如果不是，则加入关系表中
+			relation := models.UserUploadImage{
+				UserID:  claims.UserID,
+				ImageID: _model.ID,
+			}
+
+			_err := global.DB.Create(&relation).Error
+			if _err != nil {
+				if strings.Contains(_err.Error(), "Duplicate entry") {
+					logrus.Infof("相同用户%d %s && 相同图片%d", claims.UserID, claims.Username, model.ID)
+					log.SetItemInfo("失败", "相同用户&&相同图片")
+					uploadResp.Message = "请不要上传重复图片"
+				} else {
+					uploadResp.Message, uploadResp.Error = "失败", _err.Error()
+				}
+				*list = append(*list, uploadResp)
+				return
+			}
 
 			// 返回提示
 			msg := fmt.Sprintf("上传的%s 与已有%s 重复，hash: %s", fileHeader.Filename, _model.Filename, hash)
@@ -124,6 +117,19 @@ func uploadImage(fileHeader *multipart.FileHeader, log *log_service.ActionLog, l
 		}
 		*list = append(*list, uploadResp)
 		return
+	}
+
+	relation := models.UserUploadImage{
+		UserID:  claims.UserID,
+		ImageID: model.ID,
+	}
+
+	err = global.DB.Create(&relation).Error
+	if err != nil {
+		if strings.Contains(err.Error(), "Duplicate entry") {
+			res.FailWithMsg("请不要上传相同的文件", c)
+			logrus.Info("请不要上传相同的文件")
+		}
 	}
 
 	// 创建文件
