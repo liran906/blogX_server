@@ -12,4 +12,5 @@ func ImageRouter(r *gin.RouterGroup) {
 	app := api.App.ImageAip
 
 	r.POST("images", middleware.AuthMiddleware, app.ImageUploadView)
+	r.GET("images", middleware.AdminMiddleware, app.ImageListView)
 }

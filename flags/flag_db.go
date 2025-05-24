@@ -1,3 +1,5 @@
+// Path: ./blogX_server/flags/flag_db.go
+
 package flags
 
 import (
@@ -7,7 +9,14 @@ import (
 )
 
 func FlagDB() {
-	err := global.DB.AutoMigrate(
+	// 映射自定义多对多关系
+	err := ManyToManyInit()
+	if err != nil {
+		return
+	}
+
+	// 表迁移
+	err = global.DB.AutoMigrate(
 		&models.UserModel{},
 		&models.UserConfigModel{},
 		&models.ArticleModel{},

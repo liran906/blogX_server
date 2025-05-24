@@ -28,6 +28,9 @@ type UserModel struct {
 	DateOfBirth    time.Time     `gorm:"not null" json:"dateOfBirth"`
 	StartCodeAt    time.Time     `json:"startCodeAt"`
 	Role           enum.RoleType `gorm:"not null" json:"role"` // 角色 1管理员 2普通用户 3访客
+
+	// M2M
+	Images []ImageModel `gorm:"many2many:user_upload_images;joinForeignKey:UserID;JoinReferences:ImageID" json:"images"`
 }
 
 type UserConfigModel struct {

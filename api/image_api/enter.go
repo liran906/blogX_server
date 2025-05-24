@@ -6,6 +6,7 @@ import (
 	"blogX_server/common"
 	"blogX_server/common/res"
 	"blogX_server/models"
+	"blogX_server/models/enum"
 	"blogX_server/service/log_service"
 	"github.com/gin-gonic/gin"
 )
@@ -14,25 +15,26 @@ type ImageApi struct{}
 
 type ImageListRequest struct {
 	common.PageInfo
-	Filename    string `form:"filename"`
-	Path        string `form:"path"`
-	Hash        string `form:"hash"`
-	UserID      uint   `form:"userID"`
-	Username    string `form:"username"`
-	IP          string `form:"ip"`
-	Address     string `form:"address"`
-	ServiceName string `form:"serviceName"`
-	UA          string `form:"ua"`
+	Filename string `form:"filename"`
+	Path     string `form:"path"`
+	Hash     string `form:"hash"`
+	//UserID      uint   `form:"userID"`
+	//Username    string `form:"username"`
+	//IP          string `form:"ip"`
+	//Address     string `form:"address"`
+	//ServiceName string `form:"serviceName"`
+	//UA          string `form:"ua"`
 }
 
 type ImageListResponse struct {
 	models.ImageModel
-	UserID      uint   `json:"userID"`
-	Username    string `json:"username"`
-	IP          string `json:"ip"`
-	Address     string `json:"address"`
-	ServiceName string `json:"serviceName"`
-	UA          string `json:"ua"`
+	Users []UserInfo `json:"users"`
+}
+
+type UserInfo struct {
+	UserID   uint          `json:"userID"`
+	Username string        `json:"username"`
+	Role     enum.RoleType `json:"role"`
 }
 
 func (i *ImageApi) ImageUploadView(c *gin.Context) {
@@ -72,36 +74,47 @@ func (i *ImageApi) ImageUploadView(c *gin.Context) {
 	}
 }
 
-//func (i *ImageApi) ImageListView(c *gin.Context) {
-//	var req ImageListRequest
-//	err := c.ShouldBindQuery(&req)
-//	if err != nil {
-//		res.FailWithError(err, c)
-//		return
-//	}
-//
-//	_list, count, err := common.ListQuery(models.ImageModel{
-//		Filename: req.Filename,
-//		Path:     req.Path,
-//		Hash:     req.Hash,
-//		//UserID: req.UserID,
-//		//Username: req.Username,
-//		//IP: req.IP,
-//		//Address: req.Address,
-//		//ServiceName: req.ServiceName,
-//		//UA: req.UA,
-//	},
-//		common.Options{
-//			PageInfo: req.PageInfo,
-//			Likes:    []string{"filename"},
-//			Preloads: []string{"UserModel"},
-//		})
-//
-//	var list = make([]ImageListResponse, 0)
-//	for _, resp := range _list {
-//		list = append(list, ImageListResponse{
-//			ImageModel: resp,
-//			Username:
-//		})
-//	}
-//}
+func (i *ImageApi) ImageListView(c *gin.Context) {
+	var req ImageListRequest
+	err := c.ShouldBindQuery(&req)
+	if err != nil {
+		res.FailWithError(err, c)
+		return
+	}
+
+	_list, count, err := common.ListQuery(models.ImageModel{
+		Filename: req.Filename,
+		Path:     req.Path,
+		Hash:     req.Hash,
+	},
+		common.Options{
+			PageInfo: req.PageInfo,
+			Likes:    []string{"filename"},
+			Preloads: []string{"Users"},
+			Debug:    true, //
+		})
+	if err != nil {
+		res.FailWithError(err, c)
+		return
+	}
+
+	var list = make([]ImageListResponse, 0)
+	for _, model := range _list {
+		model.Path = model.WebPath()
+		var users []UserInfo
+		for _, user := range model.Users {
+			users = append(users, UserInfo{
+				UserID:   user.ID,
+				Username: user.Username,
+				Role:     user.Role,
+			})
+		}
+
+		list = append(list, ImageListResponse{
+			ImageModel: model,
+			Users:      users,
+		})
+	}
+
+	res.SuccessWithList(list, count, c)
+}

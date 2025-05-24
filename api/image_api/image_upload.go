@@ -73,12 +73,12 @@ func uploadImage(fileHeader *multipart.FileHeader, log *log_service.ActionLog, l
 	}
 
 	_claims, _ := c.Get("claims")
-	fmt.Println("fetching the claims", _claims)
 	claims, ok := _claims.(*jwts.MyClaims)
 	if !ok {
 		fmt.Println(ok)
 	}
 
+	// 尝试入库，靠数据库 `hash` 字段 `unique` 去重
 	err = global.DB.Create(&model).Error
 	if err != nil {
 		if strings.Contains(err.Error(), "Duplicate entry") {
@@ -98,7 +98,7 @@ func uploadImage(fileHeader *multipart.FileHeader, log *log_service.ActionLog, l
 				if strings.Contains(_err.Error(), "Duplicate entry") {
 					logrus.Infof("相同用户%d %s && 相同图片%d", claims.UserID, claims.Username, model.ID)
 					log.SetItemInfo("失败", "相同用户&&相同图片")
-					uploadResp.Message = "请不要上传重复图片"
+					uploadResp.Message, uploadResp.Error = "失败", "请不要上传重复图片"
 				} else {
 					uploadResp.Message, uploadResp.Error = "失败", _err.Error()
 				}
