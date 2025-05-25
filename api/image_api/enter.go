@@ -5,10 +5,14 @@ package image_api
 import (
 	"blogX_server/common"
 	"blogX_server/common/res"
+	"blogX_server/global"
 	"blogX_server/models"
 	"blogX_server/models/enum"
 	"blogX_server/service/log_service"
+	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
+	"os"
 )
 
 type ImageApi struct{}
@@ -18,12 +22,7 @@ type ImageListRequest struct {
 	Filename string `form:"filename"`
 	Path     string `form:"path"`
 	Hash     string `form:"hash"`
-	//UserID      uint   `form:"userID"`
-	//Username    string `form:"username"`
-	//IP          string `form:"ip"`
-	//Address     string `form:"address"`
-	//ServiceName string `form:"serviceName"`
-	//UA          string `form:"ua"`
+	// TBD 根据用户 id 搜索？
 }
 
 type ImageListResponse struct {
@@ -117,4 +116,52 @@ func (i *ImageApi) ImageListView(c *gin.Context) {
 	}
 
 	res.SuccessWithList(list, count, c)
+}
+
+func (i *ImageApi) ImageRemoveView(c *gin.Context) {
+	var req models.RemoveRequest
+	err := c.ShouldBindJSON(&req)
+	if err != nil {
+		res.FailWithError(err, c)
+		return
+	}
+
+	var imageList []models.ImageModel
+	var idList []uint
+	global.DB.Find(&imageList, "id in ?", req.IDList)
+
+	for _, image := range imageList {
+		idList = append(idList, image.ID)
+
+		// 物理删除文件
+		err := os.Remove(image.Path)
+		if err != nil {
+			msg := fmt.Sprintf("删除文件失败: %v, 路径: %s", err, image.Path)
+			logrus.Warnf(msg)
+		}
+	}
+
+	if len(imageList) > 0 {
+		// 使用 Select("Users").Unscoped()
+		// 这里的 "Users" 对应的是 ImageModel 中定义的字段名`Users []UserModel`
+		err := global.DB.Select("Users").Unscoped().Delete(&imageList).Error
+		// 会同时删除：
+		// 1. image_models 表中的记录
+		// 2. user_upload_images 表中关联的记录
+		if err != nil {
+			res.FailWithError(err, c)
+			return
+		}
+
+		// 日志
+		log := log_service.GetActionLog(c)
+		log.ShowAll()
+		log.SetTitle("图片删除")
+		log.SetItem("删除列表", imageList)
+
+		msg := fmt.Sprintf("图片 %v 删除成功，共计 %d 条", idList, len(imageList))
+		res.SuccessWithMsg(msg, c)
+	} else {
+		res.FailWithMsg("图片 id 不存在", c)
+	}
 }

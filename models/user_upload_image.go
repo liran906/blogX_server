@@ -5,8 +5,8 @@ package models
 import "time"
 
 type UserUploadImage struct {
-	UserID    uint      `gorm:"primaryKey" json:"userID"`
-	ImageID   uint      `gorm:"primaryKey" json:"imageID"`
+	UserID    uint      `gorm:"primaryKey;not null;constraint:OnDelete:CASCADE" json:"userID"`  // 设置 on delete cascade
+	ImageID   uint      `gorm:"primaryKey;not null;constraint:OnDelete:CASCADE" json:"imageID"` // 设置 on delete cascade
 	CreatedAt time.Time `json:"createdAt"`
 
 	// FK

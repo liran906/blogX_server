@@ -167,10 +167,9 @@ func (l *LogApi) LogRemoveView(c *gin.Context) {
 
 		// 记录删除记录进入日志
 		log := log_service.GetActionLog(c)
+		log.ShowAll()
 		log.SetTitle("日志删除")
-		log.ShowRequest()
-		log.ShowResponse()
-		log.SetItem("删除日志: ", logList)
+		log.SetItem("删除列表: ", logList)
 
 		msg := fmt.Sprintf("日志 %v 删除成功，共计 %d 条", idList, len(logList))
 		res.SuccessWithMsg(msg, c)

@@ -17,7 +17,7 @@ type PageInfo struct {
 
 // GetPage 确保 page 合理
 func (p *PageInfo) GetPage() int {
-	if p.Page < 1 || p.Page > 100 {
+	if p.Page < 1 {
 		p.Page = 1
 	}
 	return p.Page

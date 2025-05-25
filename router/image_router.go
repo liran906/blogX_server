@@ -13,4 +13,5 @@ func ImageRouter(r *gin.RouterGroup) {
 
 	r.POST("images", middleware.AuthMiddleware, app.ImageUploadView)
 	r.GET("images", middleware.AdminMiddleware, app.ImageListView)
+	r.DELETE("images", middleware.AdminMiddleware, app.ImageRemoveView)
 }
