@@ -1,6 +1,10 @@
 package models
 
-import "fmt"
+import (
+	"fmt"
+	"gorm.io/gorm"
+	"os"
+)
 
 type ImageModel struct {
 	Model
@@ -15,4 +19,15 @@ type ImageModel struct {
 
 func (i *ImageModel) WebPath() string {
 	return fmt.Sprintf("/" + i.Path) // tbd
+}
+
+// BeforeDelete 是 GORM 的钩子（Hook）方法，在记录被删除之前会自动调用
+func (i *ImageModel) BeforeDelete(tx *gorm.DB) error {
+	// 如果错误不是"文件不存在"，才返回错误，
+	// 这样即使文件不存在，数据库记录也能正常删除。
+	// 而如果是其他错误（比如权限问题），则会阻止删除操作。
+	if err := os.Remove(i.Path); err != nil && !os.IsNotExist(err) {
+		return err
+	}
+	return nil
 }

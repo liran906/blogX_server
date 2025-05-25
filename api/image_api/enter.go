@@ -11,8 +11,6 @@ import (
 	"blogX_server/service/log_service"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
-	"os"
 )
 
 type ImageApi struct{}
@@ -27,7 +25,8 @@ type ImageListRequest struct {
 
 type ImageListResponse struct {
 	models.ImageModel
-	Users []UserInfo `json:"users"`
+	WebPath string     `json:"webPath"`
+	Users   []UserInfo `json:"users"`
 }
 
 type UserInfo struct {
@@ -99,7 +98,6 @@ func (i *ImageApi) ImageListView(c *gin.Context) {
 
 	var list = make([]ImageListResponse, 0)
 	for _, model := range _list {
-		model.Path = model.WebPath()
 		var users []UserInfo
 		for _, user := range model.Users {
 			users = append(users, UserInfo{
@@ -111,6 +109,7 @@ func (i *ImageApi) ImageListView(c *gin.Context) {
 
 		list = append(list, ImageListResponse{
 			ImageModel: model,
+			WebPath:    model.WebPath(),
 			Users:      users,
 		})
 	}
@@ -133,14 +132,15 @@ func (i *ImageApi) ImageRemoveView(c *gin.Context) {
 	for _, image := range imageList {
 		idList = append(idList, image.ID)
 
-		// 物理删除文件
-		err := os.Remove(image.Path)
-		if err != nil {
-			msg := fmt.Sprintf("删除文件失败: %v, 路径: %s", err, image.Path)
-			logrus.Warnf(msg)
-		}
+		// 有钩子函数就不用显示物理删除文件
+		/*
+			err := os.Remove(image.Path)
+			if err != nil {
+				msg := fmt.Sprintf("删除文件失败: %v, 路径: %s", err, image.Path)
+				logrus.Warnf(msg)
+			}
+		*/
 	}
-
 	if len(imageList) > 0 {
 		// 使用 Select("Users").Unscoped()
 		// 这里的 "Users" 对应的是 ImageModel 中定义的字段名`Users []UserModel`
