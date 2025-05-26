@@ -62,7 +62,7 @@ func (s *SiteApi) SiteInfoView(c *gin.Context) {
 		rep.SecretKey = "******" // 保护敏感信息
 		data = rep
 	case "cloud":
-		rep := global.Config.Cloud
+		rep := global.Config.Cloud.QNY
 		rep.SecretKey = "******" // 保护敏感信息
 		data = rep
 	case "qq":
@@ -149,8 +149,8 @@ func (s *SiteApi) SiteUpdateView(c *gin.Context) {
 		}
 		global.Config.Ai = s
 	case conf.Cloud:
-		if s.SecretKey == "******" {
-			s.SecretKey = global.Config.Cloud.SecretKey
+		if s.QNY.SecretKey == "******" {
+			s.QNY.SecretKey = global.Config.Cloud.QNY.SecretKey
 		}
 		global.Config.Cloud = s
 	case conf.Email:

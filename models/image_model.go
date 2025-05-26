@@ -2,6 +2,7 @@ package models
 
 import (
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 	"os"
 )
@@ -9,7 +10,8 @@ import (
 type ImageModel struct {
 	Model
 	Filename string `gorm:"size:64; not null" json:"filename"`
-	Path     string `gorm:"size:256; not null" json:"path"`
+	Path     string `gorm:"size:256" json:"path"`
+	Url      string `gorm:"size:256" json:"url"`
 	Size     int64  `gorm:"not null" json:"size"`
 	Hash     string `gorm:"size:64; not null; unique" json:"hash"`
 
@@ -26,8 +28,13 @@ func (i *ImageModel) BeforeDelete(tx *gorm.DB) error {
 	// 如果错误不是"文件不存在"，才返回错误，
 	// 这样即使文件不存在，数据库记录也能正常删除。
 	// 而如果是其他错误（比如权限问题），则会阻止删除操作。
-	if err := os.Remove(i.Path); err != nil && !os.IsNotExist(err) {
-		return err
+	if err := os.Remove(i.Path); err != nil {
+		if os.IsNotExist(err) {
+			logrus.Warnf("file not exist: %s\n", err)
+		} else {
+			logrus.Errorf("failed to remove file: %s\n", err)
+			return err
+		}
 	}
 	return nil
 }

@@ -11,6 +11,7 @@ import (
 	"blogX_server/service/log_service"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 )
 
 type ImageApi struct{}
@@ -149,6 +150,7 @@ func (i *ImageApi) ImageRemoveView(c *gin.Context) {
 		// 1. image_models 表中的记录
 		// 2. user_upload_images 表中关联的记录
 		if err != nil {
+			logrus.Errorf("删除图片失败 %s", err.Error())
 			res.FailWithError(err, c)
 			return
 		}
