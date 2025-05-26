@@ -25,6 +25,7 @@ func Run() {
 	ImageRouter(nr)
 	SiteRouter(nr)
 	BannerRouter(nr)
+	CaptchaRouter(nr)
 
 	addr := global.Config.System.Addr()
 	err := r.Run(addr)
