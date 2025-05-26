@@ -9,7 +9,7 @@ import (
 )
 
 func ImageRouter(r *gin.RouterGroup) {
-	app := api.App.ImageAip
+	app := api.App.ImageApi
 
 	r.POST("images", middleware.AuthMiddleware, app.ImageUploadView)
 	r.GET("images", middleware.AdminMiddleware, app.ImageListView)

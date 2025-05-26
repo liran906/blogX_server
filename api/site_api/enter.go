@@ -28,7 +28,7 @@ type SiteInfoRequest struct {
 // 每个路由绑定到一个视图（View），也就是对应一个页面
 
 // SiteInfoView 查看站点配置
-func (s *SiteApi) SiteInfoView(c *gin.Context) {
+func (SiteApi) SiteInfoView(c *gin.Context) {
 	var req SiteInfoRequest
 	err := c.ShouldBindUri(&req)
 	if err != nil {
@@ -82,7 +82,7 @@ func (s *SiteApi) SiteInfoView(c *gin.Context) {
 }
 
 // SiteInfoQQView qq登录
-func (s *SiteApi) SiteInfoQQView(c *gin.Context) {
+func (SiteApi) SiteInfoQQView(c *gin.Context) {
 	res.SuccessWithData(global.Config.QQ.Url(), c)
 }
 
@@ -91,18 +91,18 @@ type SiteUpdateRequest struct {
 }
 
 // SiteUpdateView 更新站点配置
-func (s *SiteApi) SiteUpdateView(c *gin.Context) {
-	// 写入日志
-	log := log_service.GetActionLog(c)
-	log.ShowAll()
-	log.SetTitle("站点配置更新失败")
-
+func (SiteApi) SiteUpdateView(c *gin.Context) {
 	var r SiteInfoRequest
 	err := c.ShouldBindUri(&r)
 	if err != nil {
 		res.FailWithError(err, c)
 		return
 	}
+
+	// 写入日志
+	log := log_service.GetActionLog(c)
+	log.ShowAll()
+	log.SetTitle("站点配置更新失败")
 
 	var rep any
 	switch r.Name {

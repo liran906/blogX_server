@@ -38,7 +38,7 @@ type UserInfo struct {
 	Role     enum.RoleType `json:"role"`
 }
 
-func (i *ImageApi) ImageUploadView(c *gin.Context) {
+func (ImageApi) ImageUploadView(c *gin.Context) {
 	form, err := c.MultipartForm()
 	if err != nil {
 		res.FailWithError(err, c)
@@ -75,7 +75,7 @@ func (i *ImageApi) ImageUploadView(c *gin.Context) {
 	}
 }
 
-func (i *ImageApi) ImageListView(c *gin.Context) {
+func (ImageApi) ImageListView(c *gin.Context) {
 	var req ImageListRequest
 	err := c.ShouldBindQuery(&req)
 	if err != nil {
@@ -120,7 +120,7 @@ func (i *ImageApi) ImageListView(c *gin.Context) {
 	res.SuccessWithList(list, count, c)
 }
 
-func (i *ImageApi) ImageRemoveView(c *gin.Context) {
+func (ImageApi) ImageRemoveView(c *gin.Context) {
 	var req models.RemoveRequest
 	err := c.ShouldBindJSON(&req)
 	if err != nil {
@@ -128,12 +128,12 @@ func (i *ImageApi) ImageRemoveView(c *gin.Context) {
 		return
 	}
 
-	var imageList []models.ImageModel
-	var idList []uint
-	global.DB.Find(&imageList, "id in ?", req.IDList)
+	var removeList []models.ImageModel
+	global.DB.Find(&removeList, "id in ?", req.IDList)
 
-	for _, image := range imageList {
-		idList = append(idList, image.ID)
+	var validIDList []uint
+	for _, item := range removeList {
+		validIDList = append(validIDList, item.ID)
 
 		// 有钩子函数就不用显示物理删除文件
 		/*
@@ -145,12 +145,12 @@ func (i *ImageApi) ImageRemoveView(c *gin.Context) {
 		*/
 
 		// 如果云端有，也要同步删除，这里只考虑七牛云
-		if image.Url != "" {
+		if item.Url != "" {
 			// 七牛云
-			if strings.Contains(image.Url, global.Config.Cloud.QNY.Uri) {
-				err := qny_cloud_service.RemoveFile(image.Url)
+			if strings.Contains(item.Url, global.Config.Cloud.QNY.Uri) {
+				err := qny_cloud_service.RemoveFile(item.Url)
 				if err != nil {
-					msg := fmt.Sprintf("云端删除文件失败: %v, 路径: %s", err, image.Url)
+					msg := fmt.Sprintf("云端删除文件失败: %v, 路径: %s", err, item.Url)
 					logrus.Error(msg)
 					res.FailWithMsg(msg, c)
 					// 这里不返回了
@@ -158,10 +158,10 @@ func (i *ImageApi) ImageRemoveView(c *gin.Context) {
 			}
 		}
 	}
-	if len(imageList) > 0 {
+	if len(removeList) > 0 {
 		// 使用 Select("Users").Unscoped()
 		// 这里的 "Users" 对应的是 ImageModel 中定义的字段名`Users []UserModel`
-		err := global.DB.Select("Users").Unscoped().Delete(&imageList).Error
+		err := global.DB.Select("Users").Unscoped().Delete(&removeList).Error
 		// 会同时删除：
 		// 1. image_models 表中的记录
 		// 2. user_upload_images 表中关联的记录
@@ -174,12 +174,12 @@ func (i *ImageApi) ImageRemoveView(c *gin.Context) {
 		// 日志
 		log := log_service.GetActionLog(c)
 		log.ShowAll()
-		log.SetTitle("图片删除")
-		log.SetItem("删除列表", imageList)
+		log.SetTitle("删除图片")
+		log.SetItem("删除列表: ", removeList)
 
-		msg := fmt.Sprintf("图片 %v 删除成功，共计 %d 条", idList, len(imageList))
+		msg := fmt.Sprintf("图片删除: 请求 %d 条，成功删除 %d 条，已删除列表: %v", len(req.IDList), len(removeList), validIDList)
 		res.SuccessWithMsg(msg, c)
 	} else {
-		res.FailWithMsg("图片 id 不存在", c)
+		res.FailWithMsg("无匹配图片", c)
 	}
 }

@@ -10,9 +10,6 @@ import (
 
 // SiteRouter 处理 api 路由分组
 func SiteRouter(r *gin.RouterGroup) {
-	// 绑定中间件
-	r.Use(middleware.LogMiddleware)
-
 	// app 指向全局变量 App 的 SiteApi 字段（SiteApi 结构体，有对应方法）
 	app := api.App.SiteApi
 

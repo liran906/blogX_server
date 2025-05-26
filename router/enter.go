@@ -24,6 +24,7 @@ func Run() {
 	LogRouter(nr)
 	ImageRouter(nr)
 	SiteRouter(nr)
+	BannerRouter(nr)
 
 	addr := global.Config.System.Addr()
 	err := r.Run(addr)

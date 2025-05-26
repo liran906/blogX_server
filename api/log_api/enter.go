@@ -34,7 +34,7 @@ type LogListResponse struct {
 	UserAvatarURL string `json:"userAvatarURL"`
 }
 
-func (l *LogApi) LogListView(c *gin.Context) {
+func (LogApi) LogListView(c *gin.Context) {
 	// 分页 查询（精确查询 模糊匹配）
 	var req LogListRequest
 	err := c.ShouldBindQuery(&req)
@@ -124,7 +124,7 @@ func (l *LogApi) LogListView(c *gin.Context) {
 	res.SuccessWithList(_list, count, c)
 }
 
-func (l *LogApi) LogReadView(c *gin.Context) {
+func (LogApi) LogReadView(c *gin.Context) {
 	var req models.IDRequest
 	err := c.ShouldBindUri(&req)
 	if err != nil {
@@ -146,7 +146,7 @@ func (l *LogApi) LogReadView(c *gin.Context) {
 	res.Success(log, "读取日志成功", c)
 }
 
-func (l *LogApi) LogRemoveView(c *gin.Context) {
+func (LogApi) LogRemoveView(c *gin.Context) {
 	var req models.RemoveRequest
 	err := c.ShouldBindJSON(&req)
 	if err != nil {
@@ -154,26 +154,28 @@ func (l *LogApi) LogRemoveView(c *gin.Context) {
 		return
 	}
 
-	var logList []models.LogModel
-	var idList []uint
+	var removeList []models.LogModel
+	global.DB.Find(&removeList, "id in ?", req.IDList)
 
-	global.DB.Find(&logList, "id in ?", req.IDList)
-	for _, log := range logList {
-		idList = append(idList, log.ID)
+	var validIDList []uint
+	for _, item := range removeList {
+		validIDList = append(validIDList, item.ID)
 	}
 
-	if len(logList) > 0 {
-		global.DB.Delete(&logList)
+	if len(removeList) > 0 {
+		global.DB.Delete(&removeList)
 
 		// 记录删除记录进入日志
 		log := log_service.GetActionLog(c)
 		log.ShowAll()
 		log.SetTitle("日志删除")
-		log.SetItem("删除列表: ", logList)
+		log.SetItem("删除列表: ", removeList)
 
-		msg := fmt.Sprintf("日志 %v 删除成功，共计 %d 条", idList, len(logList))
+		msg := fmt.Sprintf("日志删除: 请求 %d 条，成功删除 %d 条，已删除列表: %v", len(req.IDList), len(removeList), validIDList)
 		res.SuccessWithMsg(msg, c)
 	} else {
 		res.FailWithMsg("无匹配日志", c)
 	}
 }
+
+//删除成功，共计 %d 条
