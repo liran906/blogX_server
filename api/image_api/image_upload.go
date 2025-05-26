@@ -91,7 +91,6 @@ func uploadImage(fileHeader *multipart.FileHeader, log *log_service.ActionLog, l
 
 	// 尝试入库，靠数据库 `hash` 字段 `unique` 去重
 	err = global.DB.Create(&model).Error
-	fmt.Println("===>>> HERE IS THE ERROR 1: ", err) //
 	if err != nil {
 		if strings.Contains(err.Error(), "Duplicate entry") {
 			// 找出重复的那个
@@ -106,7 +105,6 @@ func uploadImage(fileHeader *multipart.FileHeader, log *log_service.ActionLog, l
 			}
 
 			_err := global.DB.Create(&relation).Error
-			fmt.Println("===>>> HERE IS THE ERROR 2: ", _err) //
 			if _err != nil {
 				if strings.Contains(_err.Error(), "Duplicate entry") {
 					logrus.Infof("相同用户%d %s && 相同图片%d", claims.UserID, claims.Username, model.ID)

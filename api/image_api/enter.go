@@ -8,10 +8,12 @@ import (
 	"blogX_server/global"
 	"blogX_server/models"
 	"blogX_server/models/enum"
+	"blogX_server/service/cloud_service/qny_cloud_service"
 	"blogX_server/service/log_service"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+	"strings"
 )
 
 type ImageApi struct{}
@@ -141,6 +143,20 @@ func (i *ImageApi) ImageRemoveView(c *gin.Context) {
 				logrus.Warnf(msg)
 			}
 		*/
+
+		// 如果云端有，也要同步删除，这里只考虑七牛云
+		if image.Url != "" {
+			// 七牛云
+			if strings.Contains(image.Url, global.Config.Cloud.QNY.Uri) {
+				err := qny_cloud_service.RemoveFile(image.Url)
+				if err != nil {
+					msg := fmt.Sprintf("云端删除文件失败: %v, 路径: %s", err, image.Url)
+					logrus.Error(msg)
+					res.FailWithMsg(msg, c)
+					// 这里不返回了
+				}
+			}
+		}
 	}
 	if len(imageList) > 0 {
 		// 使用 Select("Users").Unscoped()
