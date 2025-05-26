@@ -30,12 +30,20 @@ func (BannerApi) BannerCreateView(c *gin.Context) {
 		return
 	}
 
+	fmt.Println(req)
+
 	// 日志
 	log := log_service.GetActionLog(c)
 	log.ShowAll()
 	log.SetTitle("创建 banner")
 
-	err = global.DB.Create(&req).Error
+	model := models.BannerModel{
+		Activated: req.Activated,
+		URL:       req.URL,
+		Href:      req.Href,
+	}
+	fmt.Println(model)
+	err = global.DB.Create(&model).Error
 	if err != nil {
 		res.FailWithError(err, c)
 		return

@@ -8,14 +8,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func BannerRouter(rg *gin.RouterGroup) {
-	// 绑定中间件，注意不能直接在传入的指针上使用，否则其他视图都会被绑定
-	r := rg.Group("").Use(middleware.AdminMiddleware)
-
+func BannerRouter(r *gin.RouterGroup) {
 	app := api.App.BannerApi
 
 	r.POST("banners", app.BannerCreateView)
-	r.GET("banners", app.BannerListView)
-	r.DELETE("banners", app.BannerRemoveView)
-	r.PUT("banners", app.BannerUpdateView)
+	r.GET("banners", middleware.AdminMiddleware, app.BannerListView)
+	r.DELETE("banners", middleware.AdminMiddleware, app.BannerRemoveView)
+	r.PUT("banners/:id", middleware.AdminMiddleware, app.BannerUpdateView)
 }
