@@ -5,7 +5,7 @@ package site
 // SiteInfo 网站设置
 type SiteInfo struct {
 	Title        string `yaml:"title" json:"title"`                   // 标题
-	EnglistTitle string `yaml:"englistTitle" json:"englistTitle"`     // 英文标题
+	EnglishTitle string `yaml:"englishTitle" json:"englishTitle"`     // 英文标题
 	Slogan       string `yaml:"slogan" json:"slogan"`                 // 标语
 	LogoURL      string `yaml:"logoURL" json:"logoURL"`               // logo url
 	Archive      string `yaml:"archive" json:"archive"`               // 备案号
