@@ -1,4 +1,4 @@
-// Path: ./service/log_service/action_log.go
+// Path: ./blogX_server/service/log_service/action_log.go
 
 package log_service
 
@@ -131,11 +131,12 @@ func (l *ActionLog) SetError(label string, err error) {
 
 func (l *ActionLog) SetRequest(c *gin.Context) {
 	// 读取 Body 并且回填到 Body（应对其阅后即焚的特性）
-	byteData, err := io.ReadAll(c.Request.Body)
+	byteData, err := c.GetRawData()
 	if err != nil {
 		logrus.Errorf(err.Error())
+		return
 	}
-	// 回填到 Log 的RequestBody字段
+	// 写入到 Log 的RequestBody字段
 	l.requestBody = byteData
 
 	// Body 是阅后即焚（像 Python 中的迭代器） 所以要重新把内容回填进去

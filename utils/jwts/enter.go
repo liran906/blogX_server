@@ -77,7 +77,7 @@ func ParseTokenFromGin(c *gin.Context) (*MyClaims, error) {
 	return ParseToken(token)
 }
 
-func GetClaimsFromGin(c *gin.Context) (claims *MyClaims) {
+func GetClaimsFromGin(c *gin.Context) (claims *MyClaims, ok bool) {
 	_claims, ok := c.Get("claims")
 	if !ok {
 		return

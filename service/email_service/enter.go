@@ -4,6 +4,7 @@ package email_service
 
 import (
 	"blogX_server/global"
+	"errors"
 	"fmt"
 	"github.com/jordan-wright/email"
 	"github.com/sirupsen/logrus"
@@ -19,13 +20,16 @@ func SendRegisterCode(to, code string) error {
 }
 
 // SendResetPasswordCode 重置密码
-func SendResetPasswordCode(to, id, code string) error {
+func SendResetPasswordCode(to, code string, uid uint) error {
 	subject := fmt.Sprintf("%s 密码重置", global.Config.Site.SiteInfo.EnglishTitle)
-	text := fmt.Sprintf("你正在重置 %s 密码，会员id: %s，验证码: %s，十分钟内有效", global.Config.Site.SiteInfo.EnglishTitle, id, code)
+	text := fmt.Sprintf("你正在重置 %s 密码，会员id: %d，验证码: %s，十分钟内有效", global.Config.Site.SiteInfo.EnglishTitle, uid, code)
 	return SendEmail(to, subject, text)
 }
 
 func SendEmail(to, subject, text string) error {
+	if !IsValidWithDomain(to) {
+		return errors.New("非法邮箱地址")
+	}
 	em := global.Config.Email
 	e := email.NewEmail()
 	e.From = fmt.Sprintf("%s <%s>", em.Alias, em.SendEmail)

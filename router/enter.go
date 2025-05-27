@@ -26,6 +26,7 @@ func Run() {
 	SiteRouter(nr)
 	BannerRouter(nr)
 	CaptchaRouter(nr)
+	UserRouter(nr)
 
 	addr := global.Config.System.Addr()
 	err := r.Run(addr)
