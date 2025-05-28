@@ -15,14 +15,14 @@ import (
 // SendRegisterCode 注册验证码
 func SendRegisterCode(to, code string) error {
 	subject := fmt.Sprintf("%s 注册验证码", global.Config.Site.SiteInfo.EnglishTitle)
-	text := fmt.Sprintf("你正在注册 %s 会员，验证码: %s，十分钟内有效", global.Config.Site.SiteInfo.EnglishTitle, code)
+	text := fmt.Sprintf("你正在注册 %s 会员，验证码: %s，%d分钟内有效", global.Config.Site.SiteInfo.EnglishTitle, code, global.Config.Email.CodeExpiry)
 	return SendEmail(to, subject, text)
 }
 
 // SendResetPasswordCode 重置密码
 func SendResetPasswordCode(to, code string, uid uint) error {
 	subject := fmt.Sprintf("%s 密码重置", global.Config.Site.SiteInfo.EnglishTitle)
-	text := fmt.Sprintf("你正在重置 %s 密码，会员id: %d，验证码: %s，十分钟内有效", global.Config.Site.SiteInfo.EnglishTitle, uid, code)
+	text := fmt.Sprintf("你正在重置 %s 密码，会员id: %d，验证码: %s，%d分钟内有效", global.Config.Site.SiteInfo.EnglishTitle, uid, code, global.Config.Email.CodeExpiry)
 	return SendEmail(to, subject, text)
 }
 

@@ -1,4 +1,4 @@
-// Path: ./global/enter.go
+// Path: ./blogX_server/global/enter.go
 
 package global
 
@@ -16,4 +16,5 @@ var (
 	DB           *gorm.DB
 	Redis        *redis.Client
 	CaptchaStore = base64Captcha.DefaultMemStore
+	Test         string
 )

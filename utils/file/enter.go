@@ -22,7 +22,7 @@ func ImageSuffix(filename string) (suffix string, err error) {
 	}
 
 	suffix = _list[len(_list)-1]
-	whiteList := global.Config.Upload.ValidImageSuffixes
+	whiteList := global.Config.Filter.ValidImageSuffix
 
 	if !utils.InList(suffix, whiteList) {
 		err = errors.New("非法文件格式")

@@ -9,25 +9,25 @@ import (
 
 type UserModel struct {
 	Model
-	Username       string        `gorm:"size:32; not null" json:"username"`
-	Email          string        `gorm:"size:256; unique; not null" json:"email"`
-	Password       string        `gorm:"size:64; not null" json:"-"`
-	Nickname       string        `gorm:"size:32; not null" json:"nickname"`
-	AvatarURL      string        `gorm:"size:256" json:"avatarURL"`
-	Bio            string        `gorm:"size:256" json:"bio"`
-	OpenID         string        `gorm:"size:64" json:"openid"`
-	Gender         int8          `json:"gender"`
-	Phone          string        `gorm:"size:16" json:"phone"`
-	Country        string        `gorm:"size:16" json:"country"`
-	Province       string        `gorm:"size:16" json:"province"`
-	City           string        `gorm:"size:16" json:"city"`
-	Status         int8          `json:"status"`
-	LastLoginTime  time.Time     `json:"lastLoginTime"`
-	LastLoginIP    string        `gorm:"size:32" json:"lastLoginIP"`
-	RegisterSource int8          `gorm:"not null" json:"registerSource"`
-	DateOfBirth    time.Time     `gorm:"not null" json:"dateOfBirth"`
-	StartCodeAt    time.Time     `json:"startCodeAt"`
-	Role           enum.RoleType `gorm:"not null" json:"role"` // 角色 1管理员 2普通用户 3访客
+	Username       string                  `gorm:"size:32; unique; not null" json:"username"`
+	Email          string                  `gorm:"size:256; unique; not null" json:"email"`
+	Password       string                  `gorm:"size:64; not null" json:"-"`
+	Nickname       string                  `gorm:"size:32; not null" json:"nickname"`
+	AvatarURL      string                  `gorm:"size:256" json:"avatarURL"`
+	Bio            string                  `gorm:"size:256" json:"bio"`
+	OpenID         string                  `gorm:"size:64" json:"openid"`
+	Gender         int8                    `json:"gender"`
+	Phone          string                  `gorm:"size:16" json:"phone"`
+	Country        string                  `gorm:"size:16" json:"country"`
+	Province       string                  `gorm:"size:16" json:"province"`
+	City           string                  `gorm:"size:16" json:"city"`
+	Status         int8                    `json:"status"`
+	LastLoginTime  time.Time               `json:"lastLoginTime"`
+	LastLoginIP    string                  `gorm:"size:32" json:"lastLoginIP"`
+	RegisterSource enum.RegisterSourceType `gorm:"not null" json:"registerSource"`
+	DateOfBirth    time.Time               `gorm:"default:null" json:"dateOfBirth"`
+	StartCodeAt    time.Time               `gorm:"default:null" json:"startCodeAt"`
+	Role           enum.RoleType           `gorm:"not null" json:"role"` // 角色 1管理员 2普通用户 3访客
 
 	// M2M
 	Images []ImageModel `gorm:"many2many:user_upload_images;joinForeignKey:UserID;JoinReferences:ImageID" json:"images"`

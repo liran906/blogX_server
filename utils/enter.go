@@ -5,11 +5,22 @@ package utils
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"strings"
 )
 
-func InList[T comparable](suffix T, validSuffixList []T) bool {
-	for _, s := range validSuffixList {
-		if s == suffix {
+func InList[T comparable](item T, list []T) bool {
+	for _, s := range list {
+		if s == item {
+			return true
+		}
+	}
+	return false
+}
+
+func InStringList(item string, list []string) bool {
+	item = strings.ToLower(item)
+	for _, s := range list {
+		if strings.Contains(item, s) {
 			return true
 		}
 	}

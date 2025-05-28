@@ -1,0 +1,47 @@
+// Path: ./blogX_server/middleware/email_verify_middleware.go
+
+package middleware
+
+import (
+	"blogX_server/common/res"
+	"blogX_server/utils/email"
+	"bytes"
+	"github.com/gin-gonic/gin"
+	"io"
+)
+
+type EmailVerifyMiddlewareRequest struct {
+	EmailID   string `json:"emailID" binding:"required"`
+	EmailCode string `json:"emailCode" binding:"required"`
+}
+
+func EmailVerifyMiddleware(c *gin.Context) {
+	// 注意 c 阅后即焚的特性，所以读取出来，后面每次读取都要再重新写入 c
+	byteData, err := c.GetRawData()
+	if err != nil {
+		res.FailWithError(err, c)
+		c.Abort()
+		return
+	}
+	c.Request.Body = io.NopCloser(bytes.NewReader(byteData)) // 写回 c
+
+	var req EmailVerifyMiddlewareRequest
+	err = c.ShouldBindJSON(&req)
+	if err != nil {
+		res.FailWithError(err, c)
+		c.Abort()
+		return
+	}
+
+	// 校验验证码
+	emailAddr, msg, ok := email.IsValidEmailCode(req.EmailID, req.EmailCode)
+	if !ok {
+		res.FailWithMsg(msg, c)
+		c.Abort()
+		return
+	}
+
+	c.Set("email", emailAddr)
+	c.Set("emailID", req.EmailID)
+	c.Request.Body = io.NopCloser(bytes.NewReader(byteData)) // 写回 c
+}

@@ -7,6 +7,7 @@ type Config struct {
 	System System `yaml:"system"` // 系统配置
 	Jwt    Jwt    `yaml:"jwt"`    // jwt配置
 	Log    Log    `yaml:"log"`    // 日志
+	Filter Filter `yaml:"filter"` // 非法字段过滤
 
 	// 数据库
 	Redis Redis `yaml:"redis"`

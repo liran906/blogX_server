@@ -7,10 +7,13 @@ import (
 	"blogX_server/global"
 	"blogX_server/models"
 	"blogX_server/service/email_service"
+	"blogX_server/utils/email"
+	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/mojocn/base64Captcha"
 	"strings"
+	"time"
 )
 
 type SendEmailRequest struct {
@@ -35,14 +38,9 @@ func (UserApi) SendEmailView(c *gin.Context) {
 		return
 	}
 
-	// 这里借用一下验证码现成的方法
-	code := base64Captcha.RandText(4, "1234567890")
-	key := base64Captcha.RandomId()
-	err = global.CaptchaStore.Set(key, code) // 这个 captchaStore 就是一个内存存储
-	if err != nil {
-		res.FailWithError(err, c)
-		return
-	}
+	// 这里借用一下验证码现成的方法，生成存储
+	code := base64Captcha.RandText(4, "1234567890") // 生成随机验证码
+	key := base64Captcha.RandomId()                 // 生成不重复 id
 
 	// 获取邮箱对应的用户信息
 	var user models.UserModel
@@ -76,5 +74,23 @@ func (UserApi) SendEmailView(c *gin.Context) {
 		res.FailWithError(err, c)
 		return
 	}
-	res.SuccessWithData(SendEmailResponse{EmailID: key}, c)
+
+	// 存入 redis
+	emStruct := email.EmailStore{Email: req.Email, Code: code}
+	jsonStr, err := json.Marshal(emStruct)
+	if err != nil {
+		res.FailWithError(err, c)
+		return
+	}
+	_, err = global.Redis.Set(
+		key,
+		jsonStr,
+		(time.Duration(global.Config.Email.CodeExpiry))*time.Minute,
+	).Result()
+	if err != nil {
+		res.FailWithError(err, c)
+		return
+	}
+
+	res.SuccessWithMsg("成功发送邮件 id: "+key, c)
 }
