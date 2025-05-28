@@ -12,6 +12,9 @@ import (
 // IsValidUsername validates the given username to ensure it contains only alphanumeric characters and underscores.
 // It also checks against a blacklist of invalid usernames. Returns a message and a boolean indicating validity.
 func IsValidUsername(username string) (msg string, ok bool) {
+	if len(username) < 3 || len(username) > 32 {
+		return "用户名长度为 3-32 字符", false
+	}
 	var usernameRegex = regexp.MustCompile(`^[a-zA-Z0-9_]+$`)
 	if !usernameRegex.MatchString(username) {
 		return "用户名含有非法字符", false
@@ -36,11 +39,18 @@ func IsAvailableUsername(username string) (msg string, ok bool) {
 	return "", true
 }
 
-// IsValidPassword checks if the given password meets the validity criteria: at least 8 characters, containing letters and digits.
+// IsValidPassword checks if a password meets specific criteria: minimum 8 characters, contains letters and digits, and is ASCII.
 func IsValidPassword(password string) bool {
 	if len(password) < 8 {
 		return false
 	}
+
+	// 只包含常见的符号（ASCII 33–126）
+	reg := regexp.MustCompile(`^[\x21-\x7E]+$`)
+	if !reg.MatchString(password) {
+		return false
+	}
+
 	// 至少包含一个字母
 	hasLetter, _ := regexp.MatchString(`[a-zA-Z]`, password)
 	// 至少包含一个数字

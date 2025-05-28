@@ -28,6 +28,14 @@ type Options struct {
 	// 可以通过 -v 参数控制，默认为 false
 	// 使用示例：./program -v
 	Version bool
+
+	// Type 针对哪个类型进行操作
+	// 可以通过 -t 参数控制
+	Type string
+
+	// Sub 针对哪个子类进行操作
+	// 可以通过 -s 参数控制
+	Sub string
 }
 
 // FlagOptions 是一个全局变量，用于存储解析后的命令行参数值
@@ -46,6 +54,7 @@ var FlagOptions = new(Options)
 // 数据库迁移：./program -db
 // 查看版本：./program -v
 // 组合使用：./program -f custom-config.yaml -db
+// 命令行创建用户：./program -t user -s create （可用于远程部署后创建一个管理员）
 func Parse() {
 	// 定义 -f 参数，用于指定配置文件路径
 	// 当用户未指定时，默认使用 "settings.yaml" 作为配置文件
@@ -58,6 +67,9 @@ func Parse() {
 	// 定义 -v 参数，用于控制是否显示版本信息
 	// 这是一个布尔类型参数，默认为 false
 	flag.BoolVar(&FlagOptions.Version, "v", false, "show version")
+
+	flag.StringVar(&FlagOptions.Type, "t", "", "type")
+	flag.StringVar(&FlagOptions.Sub, "s", "", "subtype")
 
 	// 解析命令行参数
 	// 这个调用会处理所有通过命令行传入的参数
@@ -72,4 +84,13 @@ func Run() {
 		os.Exit(0)
 	}
 
+	switch FlagOptions.Type {
+	case "user":
+		u := FlagUser{}
+		switch FlagOptions.Sub {
+		case "create":
+			u.Create()
+			os.Exit(0)
+		}
+	}
 }

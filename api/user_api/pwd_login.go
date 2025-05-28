@@ -31,7 +31,7 @@ func (UserApi) PwdLoginView(c *gin.Context) {
 
 	var user models.UserModel
 	var loginType enum.LoginType // 为了日志记录类型
-	
+
 	// 判断是邮箱还是用户名
 	if email_service.IsValidEmail(req.Username) {
 		loginType = enum.EmailPasswordLoginType
@@ -62,7 +62,7 @@ func (UserApi) PwdLoginView(c *gin.Context) {
 	}
 
 	// 登录成功
-	global.DB.Updates(map[string]interface{}{
+	global.DB.Model(&user).Updates(map[string]interface{}{
 		"last_login_ip":   c.ClientIP(),
 		"last_login_time": time.Now(),
 	})
