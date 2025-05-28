@@ -4,6 +4,7 @@ package middleware
 
 import (
 	"blogX_server/common/res"
+	"blogX_server/global"
 	"blogX_server/utils/email"
 	"bytes"
 	"github.com/gin-gonic/gin"
@@ -44,4 +45,12 @@ func EmailVerifyMiddleware(c *gin.Context) {
 	c.Set("email", emailAddr)
 	c.Set("emailID", req.EmailID)
 	c.Request.Body = io.NopCloser(bytes.NewReader(byteData)) // 写回 c
+}
+
+func EmailRegisterMiddleware(c *gin.Context) {
+	if !global.Config.Site.Login.EmailRegister {
+		res.FailWithMsg("站点未启用邮箱注册", c)
+		c.Abort()
+		return
+	}
 }

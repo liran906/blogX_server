@@ -122,7 +122,6 @@ func (UserApi) RegisterEmailView(c *gin.Context) {
 		return
 	}
 
-	fmt.Println(token)
 	global.Redis.Del(req.EmailID)
 	// 返回 token 与成功信息
 	res.Success(token, "成功创建用户", c)

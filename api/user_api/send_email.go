@@ -32,6 +32,14 @@ func (UserApi) SendEmailView(c *gin.Context) {
 		res.FailWithError(err, c)
 		return
 	}
+
+	// 站点未启用邮箱注册
+	if req.Type == 1 && !global.Config.Site.Login.EmailRegister {
+		res.FailWithMsg("站点未启用邮箱注册", c)
+		c.Abort()
+		return
+	}
+
 	// 验证地址合法
 	if !email_service.IsValidWithDomain(req.Email) {
 		res.FailWithMsg("非法邮箱地址", c)

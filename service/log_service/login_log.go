@@ -3,50 +3,50 @@
 package log_service
 
 import (
-	"blogX_server/common/res"
 	"blogX_server/core"
 	"blogX_server/global"
 	"blogX_server/models"
 	"blogX_server/models/enum"
-	"blogX_server/utils/jwts"
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 )
 
 // NewLoginSuccess 记录一条成功登录的登录日志
-func NewLoginSuccess(c *gin.Context, loginType enum.LoginType) {
-	ip := c.ClientIP()
-	address, _ := core.GetAddress(ip)
-
-	// 从 token 中读取 uid
-	var userID uint
-	var username string
-	claim, err := jwts.ParseTokenFromGin(c)
-	if claim != nil && err == nil {
-		userID, username = claim.UserID, claim.Username
-	} else {
-		// 这里按照教程没有，但我觉得应该报错+终止函数 TBD
-		logrus.Errorf("failed to parse token: %v\n", err)
-		res.FailWithError(err, c)
-		return
-	}
+func NewLoginSuccess(user models.UserModel, loginType enum.LoginType, c *gin.Context) {
+	//这里有问题啊，我就是因为没有 token 才需要登录
+	/*
+		// 从 token 中读取 uid
+		var userID uint
+		var username string
+		claim, err := jwts.ParseTokenFromGin(c)
+		if claim != nil && err == nil {
+			userID, username = claim.UserID, claim.Username
+		} else {
+			// 这里按照教程没有，但我觉得应该报错+终止函数 TBD
+			logrus.Errorf("failed to parse token: %v\n", err)
+			res.FailWithError(err, c)
+			return
+		}
+	*/
 
 	// 入库
+	ip := c.ClientIP()
+	addr, _ := core.GetAddress(ip)
 	global.DB.Create(&models.LogModel{
 		LogType:     enum.LoginLogType,
 		Title:       "登录成功",
 		Content:     "",
-		UserID:      userID,
+		UserID:      user.ID,
 		IP:          ip,
-		Address:     address,
+		Address:     addr,
 		LoginStatus: true,
-		Username:    username,
+		Username:    user.Username,
 		Password:    "", // 成功登录不记录
 		LoginType:   loginType,
+		UA:          c.Request.UserAgent(),
 	})
 }
 
-func NewLoginFail(c *gin.Context, loginType enum.LoginType, errMsg string, username string, pwd string) {
+func NewLoginFail(loginType enum.LoginType, errMsg string, username string, pwd string, c *gin.Context) {
 	ip := c.ClientIP()
 	address, _ := core.GetAddress(ip)
 
@@ -61,5 +61,6 @@ func NewLoginFail(c *gin.Context, loginType enum.LoginType, errMsg string, usern
 		Username:    username,
 		Password:    pwd,
 		LoginType:   loginType,
+		UA:          c.Request.UserAgent(),
 	})
 }

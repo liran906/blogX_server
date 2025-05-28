@@ -40,7 +40,7 @@ type About struct {
 type Login struct {
 	QQLogin          bool `yaml:"qqLogin" json:"qqLogin"`                   // qq 登录
 	UsernamePwdLogin bool `yaml:"usernamePwdLogin" json:"usernamePwdLogin"` // 用户名密码登录
-	EmailLogin       bool `yaml:"emailLogin" json:"emailLogin"`             // 邮箱登录
+	EmailRegister    bool `yaml:"emailRegister" json:"emailRegister"`       // 邮箱登录
 	Captcha          bool `yaml:"captcha" json:"captcha"`                   // 图片验证码
 }
 
