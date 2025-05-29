@@ -8,11 +8,12 @@ import (
 )
 
 type EmailStore struct {
-	Email string // 邮箱地址
-	Code  string // 验证码
+	Email  string // 邮箱地址
+	Code   string // 验证码
+	UserID uint   // 用户 id
 }
 
-func IsValidEmailCode(emailID, code string) (email, msg string, ok bool) {
+func IsValidEmailCode(emailID, code string) (email, msg string, uid uint, ok bool) {
 	// 从 redis 取
 	val, err := global.Redis.Get(emailID).Result()
 	if err != nil {
@@ -29,5 +30,5 @@ func IsValidEmailCode(emailID, code string) (email, msg string, ok bool) {
 		msg = "邮箱验证码错误"
 		return
 	}
-	return storedData.Email, "", true
+	return storedData.Email, "", storedData.UserID, true
 }

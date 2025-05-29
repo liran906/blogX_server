@@ -16,7 +16,6 @@ import (
 )
 
 type ResetPasswordRequest struct {
-	EmailID  string `json:"emailID" binding:"required"`
 	Password string `json:"password" binding:"required"`
 }
 
@@ -69,7 +68,8 @@ func (UserApi) ResetPasswordView(c *gin.Context) {
 		return
 	}
 
-	global.Redis.Del(req.EmailID)
+	eid := c.MustGet("emailID").(string)
+	global.Redis.Del(eid)
 
 	// 日志
 	log := log_service.GetActionLog(c)

@@ -5,9 +5,11 @@ package user_api
 import (
 	"blogX_server/common/res"
 	"blogX_server/global"
+	"blogX_server/middleware"
 	"blogX_server/models"
 	"blogX_server/service/email_service"
 	"blogX_server/utils/email"
+	"blogX_server/utils/jwts"
 	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"github.com/mojocn/base64Captcha"
@@ -52,6 +54,7 @@ func (UserApi) SendEmailView(c *gin.Context) {
 
 	// 获取邮箱对应的用户信息
 	var user models.UserModel
+	var userID uint = 0
 	err = global.DB.Take(&user, "email = ?", req.Email).Error
 	switch req.Type {
 	case 1:
@@ -74,14 +77,23 @@ func (UserApi) SendEmailView(c *gin.Context) {
 		}
 		// 发送
 		err = email_service.SendResetPasswordCode(req.Email, code, user.ID)
+		userID = user.ID
 	case 3:
 		// 检查是否已注册
 		if err == nil {
 			res.FailWithMsg("该邮箱已被注册", c)
 			return
 		}
+
+		// 取用户信息
+		middleware.AuthMiddleware(c)
+		claims, ok := jwts.GetClaimsFromGin(c)
+		if !ok {
+			return
+		}
+		userID = claims.UserID
 		// 发送
-		err = email_service.SendVerifyCode(req.Email, code, user.ID)
+		err = email_service.SendVerifyCode(req.Email, code, userID)
 	}
 	if err != nil {
 		res.FailWithError(err, c)
@@ -89,7 +101,7 @@ func (UserApi) SendEmailView(c *gin.Context) {
 	}
 
 	// 存入 redis
-	emStruct := email.EmailStore{Email: req.Email, Code: code}
+	emStruct := email.EmailStore{Email: req.Email, Code: code, UserID: userID}
 	jsonStr, err := json.Marshal(emStruct)
 	if err != nil {
 		res.FailWithError(err, c)

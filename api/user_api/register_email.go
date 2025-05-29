@@ -18,7 +18,6 @@ import (
 )
 
 type RegisterEmailRequest struct {
-	EmailID  string `json:"emailID" binding:"required"`
 	Username string `json:"username" binding:"required"`
 	Password string `json:"password" binding:"required"`
 }
@@ -130,7 +129,9 @@ func (UserApi) RegisterEmailView(c *gin.Context) {
 		return
 	}
 
-	global.Redis.Del(req.EmailID)
+	eid := c.MustGet("emailID").(string)
+	global.Redis.Del(eid)
+
 	// 返回 token 与成功信息
 	res.Success(token, "成功创建用户", c)
 }

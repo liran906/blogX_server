@@ -35,7 +35,7 @@ func EmailVerifyMiddleware(c *gin.Context) {
 	}
 
 	// 校验验证码
-	emailAddr, msg, ok := email.IsValidEmailCode(req.EmailID, req.EmailCode)
+	emailAddr, msg, uid, ok := email.IsValidEmailCode(req.EmailID, req.EmailCode)
 	if !ok {
 		res.FailWithMsg(msg, c)
 		c.Abort()
@@ -44,6 +44,7 @@ func EmailVerifyMiddleware(c *gin.Context) {
 
 	c.Set("email", emailAddr)
 	c.Set("emailID", req.EmailID)
+	c.Set("userIDFromEmailVerify", uid)
 	c.Request.Body = io.NopCloser(bytes.NewReader(byteData)) // 写回 c
 }
 
