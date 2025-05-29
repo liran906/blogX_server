@@ -26,8 +26,11 @@ type UserModel struct {
 	LastLoginIP    string                  `gorm:"size:32" json:"lastLoginIP"`
 	RegisterSource enum.RegisterSourceType `gorm:"not null" json:"registerSource"`
 	DateOfBirth    time.Time               `gorm:"default:null" json:"dateOfBirth"`
-	StartCodeAt    time.Time               `gorm:"default:null" json:"startCodeAt"`
 	Role           enum.RoleType           `gorm:"not null" json:"role"` // 角色 1管理员 2普通用户 3访客
+	UserConfigID   uint                    `json:"userConfigID"`
+
+	// FK
+	UserConfigModel *UserConfigModel `gorm:"foreignKey:UserConfigID;references:UserID" json:"-"` // 注意是指针，否则会报错：嵌套循环
 
 	// M2M
 	Images []ImageModel `gorm:"many2many:user_upload_images;joinForeignKey:UserID;JoinReferences:ImageID" json:"images"`

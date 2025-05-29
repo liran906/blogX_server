@@ -3,6 +3,7 @@
 package user_api
 
 import (
+	"blogX_server/common"
 	"blogX_server/common/res"
 	"blogX_server/global"
 	"blogX_server/models"
@@ -12,7 +13,6 @@ import (
 	"blogX_server/utils/pwd"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 	"math/rand"
 	"time"
 )
@@ -104,10 +104,16 @@ func (UserApi) RegisterEmailView(c *gin.Context) {
 		LastLoginIP:    c.ClientIP(),
 		LastLoginTime:  time.Now(),
 	}
-	err = global.DB.Create(&user).Error
+	userConf := models.UserConfigModel{
+		Tags:               []string{},
+		ThemeID:            1, // 默认主题
+		DisplayCollections: true,
+		DisplayFans:        true,
+		DisplayFollowing:   true,
+	}
+	err = common.CreateUserAndUserConfig(user, userConf)
 	if err != nil {
-		logrus.Error(err)
-		res.FailWithMsg("创建用户失败: "+err.Error(), c)
+		res.FailWithError(err, c)
 		return
 	}
 

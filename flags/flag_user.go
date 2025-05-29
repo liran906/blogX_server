@@ -3,6 +3,7 @@
 package flags
 
 import (
+	"blogX_server/common"
 	"blogX_server/global"
 	"blogX_server/models"
 	"blogX_server/models/enum"
@@ -88,9 +89,17 @@ func (FlagUser) Create() {
 	u.RegisterSource = enum.RegisterSourceTerminalType
 	u.Email = "-" //tbd
 	u.LastLoginTime = time.Now()
+	// 配置信息
+	userConf := models.UserConfigModel{
+		Tags:               []string{},
+		ThemeID:            1, // 默认主题
+		DisplayCollections: true,
+		DisplayFans:        true,
+		DisplayFollowing:   true,
+	}
 
 	// 入库
-	err := global.DB.Create(&u).Error
+	err := common.CreateUserAndUserConfig(u, userConf)
 	if err != nil {
 		fmt.Println("入库失败")
 		return
