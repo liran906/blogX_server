@@ -24,7 +24,7 @@ type MyClaims struct {
 	jwt.StandardClaims
 }
 
-func (m MyClaims) GetUser() (user models.UserModel, err error) {
+func (m MyClaims) GetUserFromClaims() (user models.UserModel, err error) {
 	err = global.DB.Take(&user, m.UserID).Error
 	return
 }

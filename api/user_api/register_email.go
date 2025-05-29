@@ -77,7 +77,9 @@ func (UserApi) RegisterEmailView(c *gin.Context) {
 
 	// 日志
 	log := log_service.GetActionLog(c)
-	log.ShowAll()
+	log.ShowRequestHeader()
+	log.ShowResponseHeader()
+	log.ShowResponse()
 	log.SetTitle("邮箱注册")
 
 	// 从中间件存储的 email 字段中拿取 email 地址
