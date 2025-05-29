@@ -246,7 +246,7 @@ func (l *ActionLog) Save() uint {
 
 	// 从 token 中读取 uid
 	var userID uint
-	claim, err := jwts.ParseTokenFromGin(l.c)
+	claim, err := jwts.ParseTokenFromRequest(l.c)
 	if claim != nil && err == nil {
 		userID = claim.UserID
 	} else {

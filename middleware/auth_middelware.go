@@ -4,6 +4,7 @@ package middleware
 
 import (
 	"blogX_server/common/res"
+	"blogX_server/global"
 	"blogX_server/models/enum"
 	"blogX_server/service/redis_service/redis_jwt"
 	"blogX_server/utils/jwts"
@@ -12,7 +13,7 @@ import (
 )
 
 func AuthMiddleware(c *gin.Context) {
-	claims, ok := getClaims(c)
+	claims, ok := getValidClaims(c)
 	if !ok {
 		c.Abort()
 		return
@@ -21,7 +22,7 @@ func AuthMiddleware(c *gin.Context) {
 }
 
 func AdminMiddleware(c *gin.Context) {
-	claims, ok := getClaims(c)
+	claims, ok := getValidClaims(c)
 	if !ok {
 		c.Abort()
 		return
@@ -34,16 +35,34 @@ func AdminMiddleware(c *gin.Context) {
 	c.Set("claims", claims)
 }
 
-func getClaims(c *gin.Context) (claims *jwts.MyClaims, ok bool) {
-	claims, err := jwts.ParseTokenFromGin(c)
+// getValidClaims extracts and validates JWT claims from the request, returning them if valid or responding with failure on error.
+func getValidClaims(c *gin.Context) (claims *jwts.MyClaims, ok bool) {
+	claims, err := jwts.ParseTokenFromRequest(c)
 	if err != nil {
 		res.FailWithError(err, c)
 		return
 	}
+	if isExpiredToken(claims) {
+		res.FailWithMsg("登录已过期", c)
+		return
+	}
 	blockType, isBlocked := redis_jwt.IsBlockedJWTTokenByGin(c)
 	if isBlocked {
-		res.FailWithMsg(fmt.Sprintf("token is blocked: %s", blockType.Msg()), c)
+		res.FailWithMsg(fmt.Sprintf("token 无效: %s", blockType.Msg()), c)
 		return
 	}
 	return claims, true
+}
+
+// isExpiredToken checks if a token is expired by comparing its issued time with the password update timestamp in Redis.
+func isExpiredToken(claims *jwts.MyClaims) bool {
+	key := fmt.Sprintf("%dpassword_update", claims.UserID)
+	// 先从 Redis 获取
+	updateUnix, err := global.Redis.Get(key).Int64()
+	if err == nil { // 找到了
+		if updateUnix > claims.IssuedAt {
+			return true
+		}
+	}
+	return false
 }

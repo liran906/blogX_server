@@ -9,7 +9,10 @@ import (
 	"blogX_server/utils/jwts"
 	"blogX_server/utils/pwd"
 	"blogX_server/utils/user"
+	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
+	"time"
 )
 
 type ChangePasswordRequest struct {
@@ -22,6 +25,11 @@ func (UserApi) ChangePasswordView(c *gin.Context) {
 	err := c.ShouldBindJSON(&req)
 	if err != nil {
 		res.FailWithError(err, c)
+		return
+	}
+
+	if req.OldPassword == req.Password {
+		res.FailWithMsg("修改后的密码不能相同", c)
 		return
 	}
 
@@ -65,9 +73,21 @@ func (UserApi) ChangePasswordView(c *gin.Context) {
 	}
 
 	// 入库
-	err = global.DB.Model(&u).Update("password", hashPwd).Error
+	err = global.DB.Model(&u).Updates(map[string]interface{}{
+		"password":        hashPwd,
+		"password_update": time.Now().Unix(),
+	}).Error
 	if err != nil {
 		res.FailWithError(err, c)
+		return
+	}
+
+	// redis 缓存一个更新时间，以便验证之前签发的 token 为失效
+	key := fmt.Sprintf("%dpassword_update", u.ID)
+	err = global.Redis.Set(key, time.Now().Unix(), time.Duration(global.Config.Jwt.Expire)*time.Hour).Err()
+	if err != nil {
+		logrus.Error("缓存密码更新时间失败:", err)
+		res.FailWithMsg("缓存密码更新时间失败: "+err.Error(), c)
 		return
 	}
 
