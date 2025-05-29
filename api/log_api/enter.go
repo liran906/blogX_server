@@ -11,6 +11,7 @@ import (
 	"blogX_server/service/log_service"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"time"
 )
 
 type LogApi struct{}
@@ -24,6 +25,8 @@ type LogListRequest struct {
 	IP          string            `form:"ip"`
 	Address     string            `form:"address"`
 	ServiceName string            `form:"serviceName"`
+	StartTime   string            `form:"startTime"`
+	EndTime     string            `form:"endTime"`
 }
 
 // LogListResponse 查询用户时候除了 id，再附带一些其他想展示的信息
@@ -43,7 +46,26 @@ func (LogApi) LogListView(c *gin.Context) {
 		return
 	}
 
-	list, count, err := common.ListQuery(
+	// 解析时间戳并查询
+	query := global.DB.Where("")
+	if req.StartTime != "" {
+		_, err := time.Parse("2006-01-02 15:04:05", req.StartTime)
+		if err != nil {
+			res.FailWithMsg("开始时间格式错误", c)
+			return
+		}
+		query = query.Where("created_at >= ?", req.StartTime)
+	}
+	if req.EndTime != "" {
+		_, err := time.Parse("2006-01-02 15:04:05", req.EndTime)
+		if err != nil {
+			res.FailWithMsg("结束时间格式错误", c)
+			return
+		}
+		query = query.Where("created_at <= ?", req.EndTime)
+	}
+
+	_list, count, err := common.ListQuery(
 		models.LogModel{ // 精确匹配参数
 			LogType:     req.LogType,
 			Level:       req.Level,
@@ -57,6 +79,7 @@ func (LogApi) LogListView(c *gin.Context) {
 			PageInfo:     req.PageInfo,
 			Likes:        []string{"title"},
 			Preloads:     []string{"UserModel"},
+			Where:        query,
 			Debug:        false,
 			DefaultOrder: "id desc",
 		},
@@ -111,9 +134,9 @@ func (LogApi) LogListView(c *gin.Context) {
 		global.DB.Model(models.LogModel{}).Where(like).Where(model).Count(&count)
 	*/
 
-	var _list = make([]LogListResponse, 0)
-	for _, logModel := range list {
-		_list = append(_list, LogListResponse{
+	var list = make([]LogListResponse, 0)
+	for _, logModel := range _list {
+		list = append(list, LogListResponse{
 			LogModel:      logModel,
 			Username:      logModel.UserModel.Username,
 			UserNickName:  logModel.UserModel.Nickname,
@@ -121,7 +144,7 @@ func (LogApi) LogListView(c *gin.Context) {
 		})
 	}
 
-	res.SuccessWithList(_list, count, c)
+	res.SuccessWithList(list, count, c)
 }
 
 func (LogApi) LogReadView(c *gin.Context) {

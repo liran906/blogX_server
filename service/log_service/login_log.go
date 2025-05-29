@@ -30,14 +30,14 @@ func NewLoginSuccess(user models.UserModel, loginType enum.LoginType, c *gin.Con
 
 	// 入库
 	ip := c.ClientIP()
-	addr, _ := core.GetLocationFromIP(ip)
+	location, _ := core.GetLocationFromIP(ip)
 	global.DB.Create(&models.LogModel{
 		LogType:     enum.LoginLogType,
 		Title:       "登录成功",
 		Content:     "",
 		UserID:      user.ID,
 		IP:          ip,
-		IPLocation:  addr,
+		IPLocation:  location,
 		LoginStatus: true,
 		Username:    user.Username,
 		Password:    "", // 成功登录不记录
@@ -48,15 +48,14 @@ func NewLoginSuccess(user models.UserModel, loginType enum.LoginType, c *gin.Con
 
 func NewLoginFail(loginType enum.LoginType, errMsg string, username string, pwd string, c *gin.Context) {
 	ip := c.ClientIP()
-	address, _ := core.GetLocationFromIP(ip)
-
+	location, _ := core.GetLocationFromIP(ip)
 	// 入库
 	global.DB.Create(&models.LogModel{
 		LogType:     enum.LoginLogType,
 		Title:       "登录失败",
 		Content:     errMsg,
 		IP:          ip,
-		IPLocation:  address,
+		IPLocation:  location,
 		LoginStatus: false,
 		Username:    username,
 		Password:    pwd,

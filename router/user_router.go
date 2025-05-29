@@ -16,4 +16,5 @@ func UserRouter(rg *gin.RouterGroup) {
 	rg.POST("user/login", middleware.UsernamePwdLoginMiddleware, middleware.CaptchaMiddleware, app.PwdLoginView)
 	rg.GET("user/:id", middleware.AuthMiddleware, app.UserDetailView)
 	rg.GET("user", app.UserBriefInfoView)
+	rg.GET("user/list", middleware.AuthMiddleware, app.UserLoginListView)
 }

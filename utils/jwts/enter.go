@@ -73,7 +73,6 @@ func ParseTokenFromGin(c *gin.Context) (*MyClaims, error) {
 	if token == "" {
 		token = c.Query("token")
 	}
-
 	return ParseToken(token)
 }
 
