@@ -9,15 +9,15 @@ import (
 	"blogX_server/service/email_service"
 	"blogX_server/utils/email"
 	"encoding/json"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/mojocn/base64Captcha"
+	"strconv"
 	"strings"
 	"time"
 )
 
 type SendEmailRequest struct {
-	Type  int8   `json:"type" binding:"oneof= 1 2"` // 1注册 2密码重置
+	Type  int8   `json:"type" binding:"oneof= 1 2 3"` // 1注册 2密码重置 3绑定邮箱
 	Email string `json:"email" binding:"required"`
 }
 
@@ -47,15 +47,12 @@ func (UserApi) SendEmailView(c *gin.Context) {
 	}
 
 	// 这里借用一下验证码现成的方法，生成存储
-	code := base64Captcha.RandText(4, "1234567890") // 生成随机验证码
-	key := base64Captcha.RandomId()                 // 生成不重复 id
+	code := base64Captcha.RandText(4, "1234567890")               // 生成随机验证码
+	key := base64Captcha.RandomId() + strconv.Itoa(int(req.Type)) // 生成不重复 id
 
 	// 获取邮箱对应的用户信息
 	var user models.UserModel
 	err = global.DB.Take(&user, "email = ?", req.Email).Error
-
-	fmt.Println(user.Email)
-
 	switch req.Type {
 	case 1:
 		// 检查是否已注册
@@ -77,6 +74,14 @@ func (UserApi) SendEmailView(c *gin.Context) {
 		}
 		// 发送
 		err = email_service.SendResetPasswordCode(req.Email, code, user.ID)
+	case 3:
+		// 检查是否已注册
+		if err == nil {
+			res.FailWithMsg("该邮箱已被注册", c)
+			return
+		}
+		// 发送
+		err = email_service.SendVerifyCode(req.Email, code, user.ID)
 	}
 	if err != nil {
 		res.FailWithError(err, c)
@@ -100,5 +105,5 @@ func (UserApi) SendEmailView(c *gin.Context) {
 		return
 	}
 
-	res.SuccessWithMsg("成功发送邮件 id: "+key, c)
+	res.Success(key, "成功发送邮件", c)
 }

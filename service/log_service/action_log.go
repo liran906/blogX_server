@@ -35,6 +35,7 @@ type ActionLog struct {
 	showResponse       bool             // 是否显示响应体（不是所有视图都需要）
 	itemList           []string         // 存放请求的content，最后和请求和响应body，合并为 content 入库
 	isMiddlewareSave   bool             // 判断是否是在中间件中保存
+	UID                uint             // 某些未登录情况下写入
 }
 
 func (l *ActionLog) ShowAll() {
@@ -62,6 +63,10 @@ func (l *ActionLog) ShowResponse() {
 
 func (l *ActionLog) SetLevel(level enum.LogLevelType) {
 	l.level = level
+}
+
+func (l *ActionLog) SetUID(uid uint) {
+	l.UID = uid
 }
 
 func (l *ActionLog) SetTitle(title string) {
@@ -244,16 +249,21 @@ func (l *ActionLog) Save() uint {
 	ua := l.c.Request.UserAgent()
 	addr, _ := core.GetLocationFromIP(ip)
 
-	// 从 token 中读取 uid
 	var userID uint
-	claim, err := jwts.ParseTokenFromRequest(l.c)
-	if claim != nil && err == nil {
-		userID = claim.UserID
+	if l.UID == 0 {
+		// 没有提前写入情况下从 token 中读取 uid
+		claim, err := jwts.ParseTokenFromRequest(l.c)
+		if claim != nil && err == nil {
+			userID = claim.UserID
+		} else {
+			// 这里按照教程没有，但我觉得应该报错+终止函数
+			logrus.Errorf("failed to parse token: %v\n", err)
+			res.FailWithError(err, l.c)
+			return 0
+		}
 	} else {
-		// 这里按照教程没有，但我觉得应该报错+终止函数
-		logrus.Errorf("failed to parse token: %v\n", err)
-		res.FailWithError(err, l.c)
-		return 0
+		// 否则就按写入的值
+		userID = l.UID
 	}
 
 	log := models.LogModel{
@@ -269,7 +279,7 @@ func (l *ActionLog) Save() uint {
 	}
 
 	// 入库
-	err = global.DB.Create(&log).Error
+	err := global.DB.Create(&log).Error
 	if err != nil {
 		logrus.Errorf("failed to create Log: %s\n", err)
 	}

@@ -51,7 +51,7 @@ func RegisterVerifyMiddleware(c *gin.Context) {
 
 	// 判断密码强度
 	if !user.IsValidPassword(req.Password) {
-		res.SuccessWithMsg("密码不符合要求", c)
+		res.FailWithMsg("密码不符合要求", c)
 		c.Abort()
 		return
 	}
