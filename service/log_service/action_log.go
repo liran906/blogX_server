@@ -242,7 +242,7 @@ func (l *ActionLog) Save() uint {
 
 	ip := l.c.ClientIP()
 	ua := l.c.Request.UserAgent()
-	addr, _ := core.GetAddress(ip)
+	addr, _ := core.GetLocationFromIP(ip)
 
 	// 从 token 中读取 uid
 	var userID uint
@@ -257,15 +257,15 @@ func (l *ActionLog) Save() uint {
 	}
 
 	log := models.LogModel{
-		LogType: enum.ActionLogType,
-		Title:   l.title,
-		Content: strings.Join(l.itemList, "\n"), // 请求+content+响应，换行分割
-		Level:   l.level,
-		UserID:  userID,
-		IP:      ip,
-		Address: addr,
-		IsRead:  false,
-		UA:      ua,
+		LogType:    enum.ActionLogType,
+		Title:      l.title,
+		Content:    strings.Join(l.itemList, "\n"), // 请求+content+响应，换行分割
+		Level:      l.level,
+		UserID:     userID,
+		IP:         ip,
+		IPLocation: addr,
+		IsRead:     false,
+		UA:         ua,
 	}
 
 	// 入库

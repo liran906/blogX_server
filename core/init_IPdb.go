@@ -20,7 +20,7 @@ func InitIPDB() {
 	searcher = _searcher
 }
 
-func GetAddress(ip string) (string, error) {
+func GetLocationFromIP(ip string) (string, error) {
 	// 先判断是否是内网
 	isPrivate, err := IPutil.IsPrivateIP(ip)
 	if err != nil {

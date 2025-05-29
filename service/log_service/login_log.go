@@ -1,4 +1,4 @@
-// Path: ./service/log_service/login_log.go
+// Path: ./blogX_server/service/log_service/login_log.go
 
 package log_service
 
@@ -30,14 +30,14 @@ func NewLoginSuccess(user models.UserModel, loginType enum.LoginType, c *gin.Con
 
 	// 入库
 	ip := c.ClientIP()
-	addr, _ := core.GetAddress(ip)
+	addr, _ := core.GetLocationFromIP(ip)
 	global.DB.Create(&models.LogModel{
 		LogType:     enum.LoginLogType,
 		Title:       "登录成功",
 		Content:     "",
 		UserID:      user.ID,
 		IP:          ip,
-		Address:     addr,
+		IPLocation:  addr,
 		LoginStatus: true,
 		Username:    user.Username,
 		Password:    "", // 成功登录不记录
@@ -48,7 +48,7 @@ func NewLoginSuccess(user models.UserModel, loginType enum.LoginType, c *gin.Con
 
 func NewLoginFail(loginType enum.LoginType, errMsg string, username string, pwd string, c *gin.Context) {
 	ip := c.ClientIP()
-	address, _ := core.GetAddress(ip)
+	address, _ := core.GetLocationFromIP(ip)
 
 	// 入库
 	global.DB.Create(&models.LogModel{
@@ -56,7 +56,7 @@ func NewLoginFail(loginType enum.LoginType, errMsg string, username string, pwd 
 		Title:       "登录失败",
 		Content:     errMsg,
 		IP:          ip,
-		Address:     address,
+		IPLocation:  address,
 		LoginStatus: false,
 		Username:    username,
 		Password:    pwd,

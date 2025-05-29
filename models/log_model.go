@@ -14,7 +14,7 @@ type LogModel struct {
 	Username    string            `gorm:"size:32" json:"username"` // 登录日志的用户名
 	Password    string            `gorm:"size:32" json:"password"` // 登录日志的密码
 	IP          string            `gorm:"size:32" json:"ip"`
-	Address     string            `gorm:"size:64" json:"address"`
+	IPLocation  string            `gorm:"size:64" json:"ipLocation"`
 	IsRead      bool              `gorm:"not null; default:false" json:"isRead"`
 	LoginStatus bool              `gorm:"not null; default:false" json:"loginStatus"` // 登录状态
 	LoginType   enum.LoginType    `gorm:"not null" json:"loginType"`                  // 登录的类型

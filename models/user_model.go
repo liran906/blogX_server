@@ -48,3 +48,7 @@ type UserConfigModel struct {
 	// FK
 	UserModel UserModel `gorm:"foreignKey:UserID;references:ID" json:"userModel"` // 外键关联到 User, ref 如果不写会自动关联到 ID
 }
+
+func (u *UserModel) SiteAge() uint {
+	return uint(time.Now().Sub(u.CreatedAt).Hours() / 24 / 365)
+}

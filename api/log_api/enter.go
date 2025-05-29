@@ -50,7 +50,7 @@ func (LogApi) LogListView(c *gin.Context) {
 			UserID:      req.UserID,
 			Username:    req.Username,
 			IP:          req.IP,
-			Address:     req.Address,
+			IPLocation:  req.Address,
 			ServiceName: req.ServiceName,
 		},
 		common.Options{ // 模糊匹配及其他参数
@@ -83,7 +83,7 @@ func (LogApi) LogListView(c *gin.Context) {
 			UserID:      req.UserID,
 			Username:    req.Username,
 			IP:          req.IP,
-			Address:     req.Address,
+			IPLocation:     req.IPLocation,
 			ServiceName: req.ServiceName,
 		}
 

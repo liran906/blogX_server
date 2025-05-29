@@ -133,13 +133,13 @@ func TestGetAddress(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := GetAddress(tt.ip)
+			got, err := GetLocationFromIP(tt.ip)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("GetAddress() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("GetLocationFromIP() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if got != tt.want {
-				t.Errorf("GetAddress() = %v, want %v", got, tt.want)
+				t.Errorf("GetLocationFromIP() = %v, want %v", got, tt.want)
 			}
 		})
 	}

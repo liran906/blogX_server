@@ -84,8 +84,6 @@ func (UserApi) UserDetailView(c *gin.Context) {
 		return
 	}
 
-	siteAge := uint(time.Now().Sub(u.CreatedAt).Hours() / 24 / 365)
-
 	// 如果是自己看自己，或者是管理员看任何人，都能看到完整信息
 	if req.ID == uid || role == enum.AdminRoleType {
 		var resp = UserDetailResponse{
@@ -108,7 +106,7 @@ func (UserApi) UserDetailView(c *gin.Context) {
 			RegisterSource: u.RegisterSource,
 			DateOfBirth:    u.DateOfBirth,
 			Role:           u.Role,
-			SiteAge:        siteAge,
+			SiteAge:        u.SiteAge(),
 		}
 		// 判断空指针的情况
 		if u.UserConfigModel != nil || u.UserConfigID != 0 {
@@ -135,7 +133,7 @@ func (UserApi) UserDetailView(c *gin.Context) {
 			Status:        u.Status,
 			LastLoginTime: u.LastLoginTime,
 			Role:          u.Role,
-			SiteAge:       siteAge,
+			SiteAge:       u.SiteAge(),
 		}
 		// 判断空指针的情况
 		if u.UserConfigModel != nil || u.UserConfigID != 0 {
