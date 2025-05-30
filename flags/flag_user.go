@@ -7,6 +7,7 @@ import (
 	"blogX_server/global"
 	"blogX_server/models"
 	"blogX_server/models/enum"
+	"blogX_server/service/email_service"
 	"blogX_server/utils/pwd"
 	"blogX_server/utils/user"
 	"fmt"
@@ -78,6 +79,17 @@ func (FlagUser) Create() {
 		u.Password, err = pwd.GenerateFromPassword(string(pswd))
 		if err != nil {
 			fmt.Println("密码哈希错误")
+			continue
+		}
+		break
+	}
+
+	// 邮箱
+	for {
+		fmt.Println("请输入邮箱:")
+		_, err := fmt.Scanln(&u.Email)
+		if err != nil || len(u.Username) > 256 || !email_service.IsValidEmail(u.Email) {
+			fmt.Println("邮箱输入错误")
 			continue
 		}
 		break
