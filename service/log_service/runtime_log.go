@@ -59,7 +59,7 @@ func (l *RuntimeLog) GetSqlDelta() string {
 func (l *RuntimeLog) Save() {
 	// 记录保存时间
 	l.SetNowTime()
-	
+
 	// 判断是更新还是创建
 	var log *models.LogModel
 

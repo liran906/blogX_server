@@ -8,5 +8,5 @@ uploads/*
 settings.yaml
 **/.DS_Store
 reference_code
-blogx_server
+blogX_server
 todo.md
