@@ -14,6 +14,7 @@ type UserModel struct {
 	Password       string                  `gorm:"size:64" json:"-"`      // 密码可以null，比如通过 qq 注册
 	PasswordUpdate int64                   `gorm:"default:null" json:"-"` // 密码更新时间 秒级时间戳
 	Nickname       string                  `gorm:"size:32; not null" json:"nickname"`
+	NicknameUpdate int64                   `gorm:"default:null" json:"-"` // 昵称更新时间 秒级时间戳
 	AvatarURL      string                  `gorm:"size:256" json:"avatarURL"`
 	Bio            string                  `gorm:"size:256" json:"bio"`
 	OpenID         string                  `gorm:"size:64" json:"openid"`

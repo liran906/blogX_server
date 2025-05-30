@@ -13,7 +13,6 @@ import (
 	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"github.com/mojocn/base64Captcha"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -49,8 +48,8 @@ func (UserApi) SendEmailView(c *gin.Context) {
 	}
 
 	// 这里借用一下验证码现成的方法，生成存储
-	code := base64Captcha.RandText(4, "1234567890")               // 生成随机验证码
-	key := base64Captcha.RandomId() + strconv.Itoa(int(req.Type)) // 生成不重复 id
+	code := base64Captcha.RandText(4, "1234567890") // 生成随机验证码
+	key := base64Captcha.RandomId()                 // 生成不重复 id; tbd：在这里或者其他地方最好保存下 type。也是边界情况之一。
 
 	// 获取邮箱对应的用户信息
 	var user models.UserModel
