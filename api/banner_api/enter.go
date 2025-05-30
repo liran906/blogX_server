@@ -23,12 +23,7 @@ type BannerCreateReq struct {
 }
 
 func (BannerApi) BannerCreateView(c *gin.Context) {
-	var req BannerCreateReq
-	err := c.ShouldBindJSON(&req)
-	if err != nil {
-		res.FailWithError(err, c)
-		return
-	}
+	req := c.MustGet("bindReq").(BannerCreateReq)
 
 	fmt.Println(req)
 
@@ -43,7 +38,7 @@ func (BannerApi) BannerCreateView(c *gin.Context) {
 		Href:      req.Href,
 	}
 	fmt.Println(model)
-	err = global.DB.Create(&model).Error
+	err := global.DB.Create(&model).Error
 	if err != nil {
 		res.FailWithError(err, c)
 		return
@@ -57,12 +52,7 @@ type BannerListReq struct {
 }
 
 func (BannerApi) BannerListView(c *gin.Context) {
-	var req BannerListReq
-	err := c.ShouldBindQuery(&req)
-	if err != nil {
-		res.FailWithError(err, c)
-		return
-	}
+	req := c.MustGet("bindReq").(BannerListReq)
 
 	list, count, err := common.ListQuery(
 		models.BannerModel{
@@ -81,12 +71,7 @@ func (BannerApi) BannerListView(c *gin.Context) {
 }
 
 func (BannerApi) BannerRemoveView(c *gin.Context) {
-	var req models.RemoveRequest
-	err := c.ShouldBindJSON(&req)
-	if err != nil {
-		res.FailWithError(err, c)
-		return
-	}
+	req := c.MustGet("bindReq").(models.RemoveRequest)
 
 	var removeList []models.BannerModel
 	global.DB.Find(&removeList, "id in ?", req.IDList)
@@ -97,7 +82,7 @@ func (BannerApi) BannerRemoveView(c *gin.Context) {
 	}
 
 	if len(removeList) > 0 {
-		err = global.DB.Delete(&removeList).Error
+		err := global.DB.Delete(&removeList).Error
 		if err != nil {
 			res.FailWithError(err, c)
 			return

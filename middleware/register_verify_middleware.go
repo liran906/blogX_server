@@ -1,6 +1,6 @@
 // Path: ./blogX_server/middleware/register_verify_middleware.go
 
-package middleware
+package mdw
 
 import (
 	"blogX_server/common/res"

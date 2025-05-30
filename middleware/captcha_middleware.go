@@ -1,6 +1,6 @@
 // Path: ./blogX_server/middleware/captcha_middleware.go
 
-package middleware
+package mdw
 
 import (
 	"blogX_server/common/res"

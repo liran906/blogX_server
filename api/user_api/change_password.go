@@ -15,18 +15,13 @@ import (
 	"time"
 )
 
-type ChangePasswordRequest struct {
+type ChangePasswordReq struct {
 	OldPassword string `json:"oldPassword"`
 	Password    string `json:"password"`
 }
 
 func (UserApi) ChangePasswordView(c *gin.Context) {
-	var req ChangePasswordRequest
-	err := c.ShouldBindJSON(&req)
-	if err != nil {
-		res.FailWithError(err, c)
-		return
-	}
+	req := c.MustGet("bindReq").(ChangePasswordReq)
 
 	if req.OldPassword == req.Password {
 		res.FailWithMsg("修改后的密码不能相同", c)

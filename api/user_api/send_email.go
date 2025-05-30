@@ -17,22 +17,17 @@ import (
 	"time"
 )
 
-type SendEmailRequest struct {
+type SendEmailReq struct {
 	Type  int8   `json:"type" binding:"oneof= 1 2 3"` // 1注册 2密码重置 3绑定邮箱
 	Email string `json:"email" binding:"required"`
 }
 
-type SendEmailResponse struct {
-	EmailID string `json:"emailID"`
-}
+//type SendEmailResponse struct {
+//	EmailID string `json:"emailID"`
+//}
 
 func (UserApi) SendEmailView(c *gin.Context) {
-	var req SendEmailRequest
-	err := c.ShouldBindJSON(&req)
-	if err != nil {
-		res.FailWithError(err, c)
-		return
-	}
+	req := c.MustGet("bindReq").(SendEmailReq)
 
 	// 站点未启用邮箱注册
 	if req.Type == 1 && !global.Config.Site.Login.EmailRegister {
@@ -54,7 +49,7 @@ func (UserApi) SendEmailView(c *gin.Context) {
 	// 获取邮箱对应的用户信息
 	var user models.UserModel
 	var userID uint = 0
-	err = global.DB.Take(&user, "email = ?", req.Email).Error
+	err := global.DB.Take(&user, "email = ?", req.Email).Error
 	switch req.Type {
 	case 1:
 		// 检查是否已注册
@@ -85,7 +80,7 @@ func (UserApi) SendEmailView(c *gin.Context) {
 		}
 
 		// 取用户信息
-		middleware.AuthMiddleware(c)
+		mdw.AuthMiddleware(c)
 		claims, ok := jwts.GetClaimsFromGin(c)
 		if !ok {
 			return

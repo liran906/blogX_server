@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-type UserInfoUpdateRequest struct {
+type UserInfoUpdateReq struct {
 	// 批量更新，需要指针判断是没传还是传空值
 	Nickname    *string    `json:"nickname" s-u:"nickname"`
 	AvatarURL   *string    `json:"avatarURL" s-u:"avatar_url"`
@@ -34,12 +34,7 @@ type UserInfoUpdateRequest struct {
 }
 
 func (UserApi) UserInfoUpdateView(c *gin.Context) {
-	var req UserInfoUpdateRequest
-	err := c.ShouldBindJSON(&req)
-	if err != nil {
-		res.FailWithError(err, c)
-		return
-	}
+	req := c.MustGet("bindReq").(UserInfoUpdateReq)
 
 	claims, ok := jwts.GetClaimsFromGin(c)
 	if !ok {
@@ -60,7 +55,7 @@ func (UserApi) UserInfoUpdateView(c *gin.Context) {
 	// 更新用户表
 	if len(userMap) > 0 {
 		var u models.UserModel
-		err = global.DB.Take(&u, claims.UserID).Error
+		err := global.DB.Take(&u, claims.UserID).Error
 		if err != nil {
 			res.FailWithError(err, c)
 			return
@@ -90,7 +85,7 @@ func (UserApi) UserInfoUpdateView(c *gin.Context) {
 	// 更新 config 表
 	if len(userConfMap) > 0 {
 		var uc models.UserConfigModel
-		err = global.DB.Take(&uc, claims.UserID).Updates(userConfMap).Error
+		err := global.DB.Take(&uc, claims.UserID).Updates(userConfMap).Error
 		if err != nil {
 			res.FailWithMsg("写入数据库失败: "+err.Error(), c)
 			return

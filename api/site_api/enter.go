@@ -43,7 +43,7 @@ func (SiteApi) SiteInfoView(c *gin.Context) {
 	}
 
 	// 其余需要管理员权限，所以要先判断身份
-	middleware.AdminMiddleware(c)
+	mdw.AdminMiddleware(c)
 	_cla, ok := c.Get("claims")
 	if !ok {
 		return

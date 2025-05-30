@@ -15,17 +15,12 @@ import (
 	"time"
 )
 
-type ResetPasswordRequest struct {
+type ResetPasswordReq struct {
 	Password string `json:"password" binding:"required"`
 }
 
 func (UserApi) ResetPasswordView(c *gin.Context) {
-	var req ResetPasswordRequest
-	err := c.ShouldBindJSON(&req)
-	if err != nil {
-		res.FailWithError(err, c)
-		return
-	}
+	req := c.MustGet("bindReq").(ResetPasswordReq)
 
 	// 判断密码强度
 	if !user.IsValidPassword(req.Password) {
@@ -36,7 +31,7 @@ func (UserApi) ResetPasswordView(c *gin.Context) {
 	// 读库
 	email := c.MustGet("email").(string)
 	var u models.UserModel
-	err = global.DB.Take(&u, "email = ?", email).Error
+	err := global.DB.Take(&u, "email = ?", email).Error
 	if err != nil {
 		res.FailWithMsg("读取邮箱错误 "+err.Error(), c)
 		return

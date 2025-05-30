@@ -16,5 +16,5 @@ func SiteRouter(rg *gin.RouterGroup) {
 	// 下面通过 app（SiteApi）的方法，将对应视图分别绑定到路由
 	rg.GET("/site/qq_url", app.SiteInfoQQView)
 	rg.GET("/site/:name", app.SiteInfoView)
-	rg.PUT("/site/:name", middleware.AdminMiddleware, app.SiteUpdateView)
+	rg.PUT("/site/:name", mdw.AdminMiddleware, app.SiteUpdateView)
 }

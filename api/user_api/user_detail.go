@@ -61,12 +61,7 @@ type OtherUserDetailResponse struct {
 }
 
 func (UserApi) UserDetailView(c *gin.Context) {
-	var req models.IDRequest
-	err := c.ShouldBindUri(&req)
-	if err != nil {
-		res.FailWithError(err, c)
-		return
-	}
+	req := c.MustGet("bindReq").(models.IDRequest)
 
 	claims, ok := jwts.GetClaimsFromGin(c)
 	if !ok {
@@ -78,7 +73,7 @@ func (UserApi) UserDetailView(c *gin.Context) {
 
 	// 读库
 	var u models.UserModel
-	err = global.DB.Preload("UserConfigModel").Take(&u, "id = ?", req.ID).Error
+	err := global.DB.Preload("UserConfigModel").Take(&u, "id = ?", req.ID).Error
 	if err != nil {
 		res.FailWithMsg("读取用户信息失败: "+err.Error(), c)
 		return

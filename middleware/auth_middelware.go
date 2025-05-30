@@ -1,6 +1,6 @@
 // Path: ./blogX_server/middleware/auth_middelware.go
 
-package middleware
+package mdw
 
 import (
 	"blogX_server/common/res"

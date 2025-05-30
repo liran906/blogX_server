@@ -1,6 +1,6 @@
 // Path: ./middleware/log_middleware.go
 
-package middleware
+package mdw
 
 import (
 	"blogX_server/service/log_service"

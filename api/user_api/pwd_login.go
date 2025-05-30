@@ -16,23 +16,18 @@ import (
 	"time"
 )
 
-type PwdLoginRequest struct {
+type PwdLoginReq struct {
 	Username string `json:"username" binding:"required"` // 可能是 username 也可能是邮箱地址
 	Password string `json:"password" binding:"required"`
 }
 
 func (UserApi) PwdLoginView(c *gin.Context) {
-	var req PwdLoginRequest
-	err := c.ShouldBindJSON(&req)
-	if err != nil {
-		res.FailWithError(err, c)
-		return
-	}
-
+	req := c.MustGet("bindReq").(PwdLoginReq)
 	var user models.UserModel
 	var loginType enum.LoginType // 为了日志记录类型
 
 	// 判断是邮箱还是用户名
+	var err error
 	if email_service.IsValidEmail(req.Username) {
 		loginType = enum.EmailPasswordLoginType
 		err = global.DB.Take(&user, "email = ?", req.Username).Error

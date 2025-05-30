@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-type AdminUpdateUserRequest struct {
+type AdminUpdateUserReq struct {
 	UserID      uint           `json:"userID" binding:"required"`
 	Username    *string        `json:"username" s-u:"username"`
 	Nickname    *string        `json:"nickname" s-u:"nickname"`
@@ -29,12 +29,7 @@ type AdminUpdateUserRequest struct {
 }
 
 func (UserApi) AdminUpdateUserView(c *gin.Context) {
-	var req AdminUpdateUserRequest
-	err := c.ShouldBindJSON(&req)
-	if err != nil {
-		res.FailWithError(err, c)
-		return
-	}
+	req := c.MustGet("bindReq").(AdminUpdateUserReq)
 
 	userMap := mps.StructToMap(req, "s-u")
 
@@ -43,7 +38,7 @@ func (UserApi) AdminUpdateUserView(c *gin.Context) {
 		return
 	}
 
-	err = global.DB.Take(&models.UserModel{}, req.UserID).Updates(userMap).Error
+	err := global.DB.Take(&models.UserModel{}, req.UserID).Updates(userMap).Error
 	if err != nil {
 		res.FailWithMsg("更新用户信息失败: "+err.Error(), c)
 		return

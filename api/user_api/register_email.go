@@ -17,19 +17,13 @@ import (
 	"time"
 )
 
-type RegisterEmailRequest struct {
+type RegisterEmailReq struct {
 	Username string `json:"username" binding:"required"`
 	Password string `json:"password" binding:"required"`
 }
 
 func (UserApi) RegisterEmailView(c *gin.Context) {
-	var req RegisterEmailRequest
-	err := c.ShouldBindJSON(&req)
-	if err != nil {
-		res.FailWithError(err, c)
-		return
-	}
-
+	req := c.MustGet("bindReq").(RegisterEmailReq)
 	// 注释的逻辑用中间件实现了
 	/*
 		// 判断是合法 username

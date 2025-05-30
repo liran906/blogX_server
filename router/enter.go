@@ -18,7 +18,7 @@ func Run() {
 	nr := r.Group("/api")
 
 	// 全部记录日志
-	nr.Use(middleware.LogMiddleware)
+	nr.Use(mdw.LogMiddleware)
 
 	// 具体路由
 	LogRouter(nr)

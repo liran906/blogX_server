@@ -23,15 +23,10 @@ type UserBriefInfoResponse struct {
 }
 
 func (UserApi) UserBriefInfoView(c *gin.Context) {
-	var req models.IDRequest
-	err := c.ShouldBindQuery(&req)
-	if err != nil {
-		res.FailWithError(err, c)
-		return
-	}
+	req := c.MustGet("bindReq").(models.IDRequest)
 
 	var u models.UserModel
-	err = global.DB.Take(&u, req.ID).Error
+	err := global.DB.Take(&u, req.ID).Error
 	if err != nil {
 		res.FailWithMsg("用户不存在: "+err.Error(), c)
 		return

@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-type UserLoginListRequest struct {
+type UserLoginListReq struct {
 	common.PageInfo
 	UserID     uint   `form:"userID"`
 	IP         string `form:"ip"`
@@ -36,12 +36,7 @@ type UserLoginListResponse struct {
 }
 
 func (UserApi) UserLoginListView(c *gin.Context) {
-	var req UserLoginListRequest
-	err := c.ShouldBindQuery(&req)
-	if err != nil {
-		res.FailWithError(err, c)
-		return
-	}
+	req := c.MustGet("bindReq").(UserLoginListReq)
 
 	claims, ok := jwts.GetClaimsFromGin(c)
 	if !ok {
@@ -55,6 +50,7 @@ func (UserApi) UserLoginListView(c *gin.Context) {
 		req.UserID = claims.UserID
 		preloads = []string{}
 	}
+	// 如果不指定，就看自己
 	if req.UserID == 0 {
 		req.UserID = claims.UserID
 	}
