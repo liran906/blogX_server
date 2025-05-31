@@ -1,0 +1,58 @@
+{
+  "mappings": {
+    "properties": {
+      "id": {
+        "type": "integer"
+      },
+      "created_at": {
+        "type": "date",
+        "null_value": "null"
+      },
+      "updated_at": {
+        "type": "date",
+        "null_value": "null"
+      },
+      "title": {
+        "type": "text",
+        "fields": {
+          "keyword": {
+            "type": "keyword"
+          }
+        }
+      },
+      "abstract": {
+        "type": "text"
+      },
+      "cover_url": {
+        "type": "keyword"
+      },
+      "content": {
+        "type": "text"
+      },
+      "category_id": {
+        "type": "integer"
+      },
+      "tags": {
+        "type": "keyword"
+      },
+      "user_id": {
+        "type": "integer"
+      },
+      "read_count": {
+        "type": "integer"
+      },
+      "like_count": {
+        "type": "integer"
+      },
+      "comment_count": {
+        "type": "integer"
+      },
+      "status": {
+        "type": "integer"
+      },
+      "open_for_comment": {
+        "type": "integer"
+      }
+    }
+  }
+}

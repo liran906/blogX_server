@@ -1,5 +1,7 @@
 package models
 
+import _ "embed"
+
 type ArticleModel struct {
 	Model
 	Title          string   `gorm:"size:128; not null" json:"title"`
@@ -17,4 +19,17 @@ type ArticleModel struct {
 
 	// FK
 	UserModel UserModel `gorm:"foreignKey:UserID;references:ID" json:"-"`
+}
+
+// `go:embed`用于在 编译时 把文件内容打包进 Go 二进制文件 中。这样就不需要在运行时再去加载外部文件了。
+
+//go:embed mappings/article_mapping.json
+var articleMapping string
+
+func (ArticleModel) Mapping() string {
+	return articleMapping
+}
+
+func (ArticleModel) Index() string {
+	return "article_index"
 }

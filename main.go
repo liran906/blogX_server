@@ -15,7 +15,7 @@ func main() {
 	core.InitLogrus()                          // 初始化日志文件
 	global.DB, global.DBMaster = core.InitDB() // 连接 mysql
 	global.Redis = core.InitRedis()            // 连接 redis
-	flags.Run()                                // 数据库迁移
 	global.ESClient = core.InitES()            // 连接 es
+	flags.Run()                                // 命令行操作: 数据库迁移 ES建索引等
 	router.Run()                               // 启动 web 服务
 }

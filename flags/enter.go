@@ -29,6 +29,8 @@ type Options struct {
 	// 使用示例：./program -v
 	Version bool
 
+	ES bool
+
 	// Type 针对哪个类型进行操作
 	// 可以通过 -t 参数控制
 	Type string
@@ -64,6 +66,9 @@ func Parse() {
 	// 这是一个布尔类型参数，默认为 false
 	flag.BoolVar(&FlagOptions.DB, "db", false, "database migration")
 
+	// 建立索引，如果之前有就把之前的删除（导出）重新建立（再导入之前的数据）
+	flag.BoolVar(&FlagOptions.ES, "es", false, "ES init index")
+
 	// 定义 -v 参数，用于控制是否显示版本信息
 	// 这是一个布尔类型参数，默认为 false
 	flag.BoolVar(&FlagOptions.Version, "v", false, "show version")
@@ -81,6 +86,11 @@ func Parse() {
 func Run() {
 	if FlagOptions.DB {
 		FlagDB()
+		os.Exit(0)
+	}
+
+	if FlagOptions.ES {
+		ESInitIndex()
 		os.Exit(0)
 	}
 
