@@ -1,7 +1,7 @@
 version: '3.2'
 services:
   mysql-master:
-    image: "mysql:5.7"
+    image: "mysql:8.0"
     container_name: mysql-master
     restart: always
     privileged: true
@@ -25,7 +25,7 @@ services:
       blogx_network:
         ipv4_address: 10.2.0.2
   mysql-slave:
-    image: "mysql:5.7"
+    image: "mysql:8.0"
     container_name: mysql-slave
     restart: always
     privileged: true

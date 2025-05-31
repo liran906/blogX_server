@@ -99,7 +99,6 @@ func (FlagUser) Create() {
 	// 注意这里邮箱的逻辑没写
 	u.Nickname = fmt.Sprintf("用户%05d", rand.Intn(100000))
 	u.RegisterSource = enum.RegisterSourceTerminalType
-	u.Email = "-" //tbd
 	u.LastLoginTime = time.Now()
 	// 配置信息
 	userConf := models.UserConfigModel{
