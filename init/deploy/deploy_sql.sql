@@ -3,16 +3,18 @@
 
 -- 安装 配置好 mysql 的 docker 之后
 
-$ cd /opt/blogx/blogX_server/init/deploy
+cd /opt/blogx/blogX_server/init/deploy
 
-$ docker compose up -d
+docker compose up -d
 
 -- 跑起来
 -- 进主节点的mysql
 
-$ docker exec -it mysql-master bash
+docker exec -it mysql-master bash
 
-$ mysql -uroot -p
+mysql -uroot -p123456
+
+docker exec -it mysql-slave bash
 
 -- ============================
 -- 💻 在主库 (10.2.0.2:3406) 执行
@@ -57,7 +59,7 @@ CHANGE MASTER TO
     MASTER_LOG_POS=1182;                 -- 从主库 SHOW MASTER STATUS 得到
 
 
-CHANGE MASTER TO MASTER_HOST='10.2.0.2', MASTER_PORT=3306, MASTER_USER='repl', MASTER_PASSWORD='123456', MASTER_LOG_FILE='mysql-bin.000003', MASTER_LOG_POS=17037;
+CHANGE MASTER TO MASTER_HOST='10.2.0.2', MASTER_PORT=3306, MASTER_USER='repl', MASTER_PASSWORD='123456', MASTER_LOG_FILE='mysql-bin.000003', MASTER_LOG_POS=827;
 
 -- 2️⃣ 启动从库同步线程
 START SLAVE;

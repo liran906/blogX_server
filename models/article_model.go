@@ -30,6 +30,7 @@ func (ArticleModel) Mapping() string {
 	return articleMapping
 }
 
-func (ArticleModel) Index() string {
+// GetIndex 获取索引名字（index 就像 mysql 中的 table name 一样）
+func (ArticleModel) GetIndex() string {
 	return "article_index"
 }
