@@ -1,4 +1,4 @@
-// Path: ./blogX_server/main.go
+// Path: ./main.go
 
 package main
 
@@ -16,5 +16,6 @@ func main() {
 	global.DB, global.DBMaster = core.InitDB() // 连接 mysql
 	global.Redis = core.InitRedis()            // 连接 redis
 	flags.Run()                                // 数据库迁移
+	global.ESClient = core.InitES()            // 连接 es
 	router.Run()                               // 启动 web 服务
 }

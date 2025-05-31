@@ -1,4 +1,4 @@
-// Path: ./blogX_server/api/user_api/user_info_update.go
+// Path: ./api/user_api/user_info_update.go
 
 package user_api
 

@@ -1,4 +1,4 @@
-// Path: ./blogX_server/router/site_router.go
+// Path: ./router/site_router.go
 
 package router
 

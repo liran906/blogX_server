@@ -1,4 +1,4 @@
-// Path: ./blogX_server/utils/hash/enter.go
+// Path: ./utils/hash/enter.go
 
 package hash
 

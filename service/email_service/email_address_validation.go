@@ -1,4 +1,4 @@
-// Path: ./blogX_server/service/email_service/email_address_validation.go
+// Path: ./service/email_service/email_address_validation.go
 
 package email_service
 

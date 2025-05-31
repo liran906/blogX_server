@@ -1,4 +1,4 @@
-// Path: ./blogX_server/service/email_service/enter.go
+// Path: ./service/email_service/enter.go
 
 package email_service
 

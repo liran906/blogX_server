@@ -1,4 +1,4 @@
-// Path: ./blogX_server/models/enter.go
+// Path: ./models/enter.go
 
 package models
 

@@ -1,4 +1,4 @@
-// Path: ./blogX_server/router/captcha_router.go
+// Path: ./router/captcha_router.go
 
 package router
 

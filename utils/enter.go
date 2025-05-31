@@ -1,4 +1,4 @@
-// Path: ./blogX_server/utils/enter.go
+// Path: ./utils/enter.go
 
 package utils
 

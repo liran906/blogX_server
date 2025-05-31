@@ -48,6 +48,20 @@ services:
     networks:
       blogx_network:
         ipv4_address: 10.2.0.3
+  es:
+    image: "elasticsearch:7.12.0"
+    restart: always
+    privileged: true
+    environment:
+      discovery.type: single-node
+      ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+    ports:
+      - 9200:9200 # ⚠️注意部署的时候这个端口不要映射出来，有安全隐患
+    volumes:
+      - ./es/data:/usr/share/elasticsearch/data
+    networks:
+      blogx_network:
+        ipv4_address: 10.2.0.4
 networks:  #定义容器连接网络
   blogx_network:
     driver: bridge

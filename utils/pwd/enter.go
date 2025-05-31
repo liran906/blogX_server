@@ -1,4 +1,4 @@
-// Path: ./blogX_server/utils/pwd/enter.go
+// Path: ./utils/pwd/enter.go
 
 package pwd
 

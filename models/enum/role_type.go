@@ -1,4 +1,4 @@
-// Path: ./blogX_server/models/enum/role_type.go
+// Path: ./models/enum/role_type.go
 
 package enum
 

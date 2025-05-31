@@ -1,4 +1,4 @@
-// Path: ./blogX_server/common/list_query.go
+// Path: ./common/list_query.go
 
 package common
 

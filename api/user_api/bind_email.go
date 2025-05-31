@@ -1,4 +1,4 @@
-// Path: ./blogX_server/api/user_api/bind_email.go
+// Path: ./api/user_api/bind_email.go
 
 package user_api
 

@@ -1,4 +1,4 @@
-// Path: ./blogX_server/middleware/bind_middleware.go
+// Path: ./middleware/bind_middleware.go
 
 package mdw
 

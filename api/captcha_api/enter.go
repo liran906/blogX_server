@@ -1,4 +1,4 @@
-// Path: ./blogX_server/api/captcha_api/enter.go
+// Path: ./api/captcha_api/enter.go
 
 package captcha_api
 

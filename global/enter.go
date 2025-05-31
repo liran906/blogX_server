@@ -1,4 +1,4 @@
-// Path: ./blogX_server/global/enter.go
+// Path: ./global/enter.go
 
 package global
 
@@ -6,6 +6,7 @@ import (
 	"blogX_server/conf"
 	"github.com/go-redis/redis"
 	"github.com/mojocn/base64Captcha"
+	"github.com/olivere/elastic/v7"
 	"gorm.io/gorm"
 )
 
@@ -17,5 +18,6 @@ var (
 	DBMaster     *gorm.DB
 	Redis        *redis.Client
 	CaptchaStore = base64Captcha.DefaultMemStore
+	ESClient     *elastic.Client
 	Test         string
 )

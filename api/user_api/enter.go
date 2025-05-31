@@ -1,4 +1,4 @@
-// Path: ./blogX_server/api/user_api/enter.go
+// Path: ./api/user_api/enter.go
 
 package user_api
 

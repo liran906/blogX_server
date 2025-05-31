@@ -1,4 +1,4 @@
-// Path: ./blogX_server/api/mytest_api/mytest.go
+// Path: ./api/mytest_api/mytest.go
 
 package mytest_api
 

@@ -1,4 +1,4 @@
-// Path: ./blogX_server/flags/flag_user.go
+// Path: ./flags/flag_user.go
 
 package flags
 

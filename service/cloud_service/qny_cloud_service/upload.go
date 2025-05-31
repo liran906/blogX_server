@@ -1,4 +1,4 @@
-// Path: ./blogX_server/service/cloud_service/qny_cloud_service/upload.go
+// Path: ./service/cloud_service/qny_cloud_service/upload.go
 
 package qny_cloud_service
 

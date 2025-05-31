@@ -1,4 +1,4 @@
-// Path: ./blogX_server/middleware/register_verify_middleware.go
+// Path: ./middleware/register_verify_middleware.go
 
 package mdw
 

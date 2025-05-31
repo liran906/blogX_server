@@ -1,4 +1,4 @@
-// Path: ./blogX_server/utils/jwts/enter.go
+// Path: ./utils/jwts/enter.go
 
 package jwts
 

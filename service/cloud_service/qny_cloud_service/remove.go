@@ -1,4 +1,4 @@
-// Path: ./blogX_server/service/cloud_service/qny_cloud_service/remove.go
+// Path: ./service/cloud_service/qny_cloud_service/remove.go
 
 package qny_cloud_service
 

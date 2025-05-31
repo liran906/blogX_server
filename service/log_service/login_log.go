@@ -1,4 +1,4 @@
-// Path: ./blogX_server/service/log_service/login_log.go
+// Path: ./service/log_service/login_log.go
 
 package log_service
 

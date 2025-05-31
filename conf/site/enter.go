@@ -1,4 +1,4 @@
-// Path: ./blogX_server/conf/site/enter.go
+// Path: ./conf/site/enter.go
 
 package site
 

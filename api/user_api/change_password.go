@@ -1,4 +1,4 @@
-// Path: ./blogX_server/api/user_api/change_password.go
+// Path: ./api/user_api/change_password.go
 
 package user_api
 

@@ -1,4 +1,4 @@
-// Path: ./blogX_server/api/banner_api/enter.go
+// Path: ./api/banner_api/enter.go
 
 package banner_api
 

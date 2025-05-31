@@ -1,4 +1,4 @@
-// Path: ./blogX_server/utils/validate/enter.go
+// Path: ./utils/validate/enter.go
 
 package validate
 

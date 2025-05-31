@@ -1,4 +1,4 @@
-// Path: ./blogX_server/conf/conf_qq.go
+// Path: ./conf/conf_qq.go
 
 package conf
 

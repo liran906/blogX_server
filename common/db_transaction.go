@@ -1,4 +1,4 @@
-// Path: ./blogX_server/common/db_transaction.go
+// Path: ./common/db_transaction.go
 
 package common
 
@@ -44,6 +44,7 @@ func CreateUserAndUserConfig(u models.UserModel, uc models.UserConfigModel) (err
 	return nil
 }
 
+// CreateUserAndUserConfig2 不走事务的存储，其实现在有专门的主库变量，现在也用不上了
 func CreateUserAndUserConfig2(u models.UserModel, uc models.UserConfigModel) (err error) {
 	err = global.DB.Create(&u).Error
 	if err != nil {

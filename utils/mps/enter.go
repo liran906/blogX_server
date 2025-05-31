@@ -1,4 +1,4 @@
-// Path: ./blogX_server/utils/mps/enter.go
+// Path: ./utils/mps/enter.go
 
 package mps
 

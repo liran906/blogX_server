@@ -1,4 +1,4 @@
-// Path: ./blogX_server/conf/congf_jwt.go
+// Path: ./conf/congf_jwt.go
 
 package conf
 

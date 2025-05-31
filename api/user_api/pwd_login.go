@@ -1,4 +1,4 @@
-// Path: ./blogX_server/api/user_api/pwd_login.go
+// Path: ./api/user_api/pwd_login.go
 
 package user_api
 

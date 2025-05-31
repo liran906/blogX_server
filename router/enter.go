@@ -1,4 +1,4 @@
-// Path: ./blogX_server/router/enter.go
+// Path: ./router/enter.go
 
 package router
 

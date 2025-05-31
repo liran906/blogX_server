@@ -1,4 +1,4 @@
-// Path: ./blogX_server/conf/conf_logrus.go
+// Path: ./conf/conf_logrus.go
 
 package conf
 

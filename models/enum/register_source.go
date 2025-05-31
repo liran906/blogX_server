@@ -1,4 +1,4 @@
-// Path: ./blogX_server/models/enum/register_source.go
+// Path: ./models/enum/register_source.go
 
 package enum
 

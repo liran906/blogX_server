@@ -1,4 +1,4 @@
-// Path: ./blogX_server/utils/email_store/enter.go
+// Path: ./utils/email_store/enter.go
 
 package email
 

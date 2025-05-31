@@ -1,4 +1,4 @@
-// Path: ./blogX_server/middleware/captcha_middleware.go
+// Path: ./middleware/captcha_middleware.go
 
 package mdw
 

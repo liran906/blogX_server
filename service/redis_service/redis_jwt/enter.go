@@ -1,4 +1,4 @@
-// Path: ./blogX_server/service/redis_service/redis_jwt/enter.go
+// Path: ./service/redis_service/redis_jwt/enter.go
 
 package redis_jwt
 

@@ -1,4 +1,4 @@
-// Path: ./blogX_server/conf/conf_redis.go
+// Path: ./conf/conf_redis.go
 
 package conf
 

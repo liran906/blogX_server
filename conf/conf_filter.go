@@ -1,4 +1,4 @@
-// Path: ./blogX_server/conf/conf_filter.go
+// Path: ./conf/conf_filter.go
 
 package conf
 

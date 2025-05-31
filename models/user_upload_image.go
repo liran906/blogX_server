@@ -1,4 +1,4 @@
-// Path: ./blogX_server/models/user_upload_image.go
+// Path: ./models/user_upload_image.go
 
 package models
 

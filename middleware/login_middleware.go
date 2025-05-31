@@ -1,4 +1,4 @@
-// Path: ./blogX_server/middleware/login_middleware.go
+// Path: ./middleware/login_middleware.go
 
 package mdw
 

@@ -1,4 +1,4 @@
-// Path: ./blogX_server/core/init_redis.go
+// Path: ./core/init_redis.go
 
 package core
 

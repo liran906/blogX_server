@@ -1,4 +1,4 @@
-// Path: ./blogX_server/core/init_db.go
+// Path: ./core/init_db.go
 
 package core
 

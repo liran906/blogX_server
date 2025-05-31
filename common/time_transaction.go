@@ -1,4 +1,4 @@
-// Path: ./blogX_server/common/time_transaction.go
+// Path: ./common/time_transaction.go
 
 package common
 

@@ -1,4 +1,4 @@
-// Path: ./blogX_server/common/res/enter.go
+// Path: ./common/res/enter.go
 
 package res
 

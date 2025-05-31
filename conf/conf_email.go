@@ -1,4 +1,4 @@
-// Path: ./blogX_server/conf/conf_email.go
+// Path: ./conf/conf_email.go
 
 package conf
 

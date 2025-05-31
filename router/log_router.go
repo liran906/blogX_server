@@ -1,4 +1,4 @@
-// Path: ./blogX_server/router/log_router.go
+// Path: ./router/log_router.go
 
 package router
 
