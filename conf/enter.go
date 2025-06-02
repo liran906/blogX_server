@@ -11,9 +11,9 @@ type Config struct {
 
 	// 数据库相关
 	Redis Redis `yaml:"redis"`
-	DB_r  DB    `yaml:"dbr"` // 读库，这里是读写分离，也可以不分
-	DB_w  DB    `yaml:"dbw"` // 写库
+	DB    []DB  `yaml:"db"` // 数据库连接列表
 	ES    ES    `yaml:"es"`
+	River River `yaml:"river"`
 
 	// 站点设置
 	Site   Site   `yaml:"site"`

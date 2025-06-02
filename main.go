@@ -17,5 +17,6 @@ func main() {
 	global.Redis = core.InitRedis()            // 连接 redis
 	global.ESClient = core.InitES()            // 连接 es
 	flags.Run()                                // 命令行操作: 数据库迁移 ES建索引等
-	router.Run()                               // 启动 web 服务
+	core.InitMysqlES()
+	router.Run() // 启动 web 服务
 }

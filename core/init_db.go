@@ -14,8 +14,13 @@ import (
 )
 
 func InitDB() (db *gorm.DB, masterDB *gorm.DB) {
-	dbReadConf := global.Config.DB_r  // 读库
-	dbWriteConf := global.Config.DB_w // 写库
+	gdb := global.Config.DB
+	n := len(gdb) // 配置数据库数量
+	if n == 0 {
+		logrus.Fatalln("没有配置 DB")
+	}
+
+	dbWriteConf := gdb[0] // 写库
 
 	// 读写分离的时候，写库是主库，读库是从库，所以优先读取写库
 	db, err := gorm.Open(mysql.Open(dbWriteConf.DSN()), &gorm.Config{
@@ -37,43 +42,42 @@ func InitDB() (db *gorm.DB, masterDB *gorm.DB) {
 	// 主库作为一个单独的全局变量，在某些时候（比如读写分离和 gorm 事务会出 bug）有用
 	masterDB = db
 
-	// 如果读库不为空（就是这个配置文件下有读库数据），那么就配置读写分离
-	// 用了 dbresolver 库，可以自动区分读库与写库，无需代码时显性区分
-	// 所以最后返回一个 db 即可
-	if !dbWriteConf.IsEmpty() {
-		// 这里先插播读库连接成功的消息
-		logrus.Infof("DataBase (w) [%s:%d] connection successful", global.Config.DB_w.Host, global.Config.DB_w.Port)
+	// 这里先插播读库连接成功的消息
+	logrus.Infof("DataBase (master) [%s:%d] connection successful", gdb[0].Host, gdb[0].Port)
 
-		// 连接写库
+	if n > 1 {
+		// 读取读库（从库）列表
+		var replicas []gorm.Dialector
+		for i := 1; i < n; i++ {
+			replicas = append(replicas, mysql.Open(gdb[i].DSN()))
+			logrus.Infof("DataBase (servant) [%s:%d] config successful", gdb[i].Host, gdb[i].Port)
+		}
+
 		err := db.Use(dbresolver.Register(dbresolver.Config{
-			// use `db2` as sources, `db3`, `db4` as replicas
 			Sources:  []gorm.Dialector{mysql.Open(dbWriteConf.DSN())}, // 写
-			Replicas: []gorm.Dialector{mysql.Open(dbReadConf.DSN())},  // 读
+			Replicas: replicas,                                        // 读
 			// sources/replicas load balancing policy
 			Policy: dbresolver.RandomPolicy{},
 		}))
 		if err != nil {
 			logrus.Fatalln("DB resolver error: ", err)
 		}
-		logrus.Infof("DataBase (r) [%s:%d] connection successful", global.Config.DB_r.Host, global.Config.DB_r.Port)
+		logrus.Infof("DataBase (servant) connection successful")
 		logrus.Info("DataBase resolver successful")
-	} else {
-		// 没有区分读写库
-		logrus.Infof("DataBase [%s:%d] connection successful", global.Config.DB_w.Host, global.Config.DB_w.Port)
 	}
 	return
 }
 
 func createDB() *gorm.DB {
 	// 创建数据库
-	d := global.Config.DB_w
+	d := global.Config.DB[0]
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/?charset=utf8&parseTime=true&loc=Local", d.User, d.Password, d.Host, d.Port)
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{DisableForeignKeyConstraintWhenMigrating: true})
 	if err != nil {
 		logrus.Fatalln("DB open error: ", err)
 	}
 
-	dbName := global.Config.DB_w.DB
+	dbName := global.Config.DB[0].DBname
 	createDBSQL := "CREATE DATABASE IF NOT EXISTS " + dbName + " DEFAULT CHARSET utf8mb4 COLLATE utf8mb4_general_ci;"
 	if err := db.Exec(createDBSQL).Error; err != nil {
 		logrus.Fatalln("Create database error: ", err.Error())
