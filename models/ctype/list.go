@@ -4,8 +4,8 @@ package ctype
 
 import (
 	"database/sql/driver"
-	"encoding/json"
 	"fmt"
+	"strings"
 )
 
 // List 是一个自定义类型，底层是 []string，用于数据库存储。
@@ -26,12 +26,12 @@ func (l *List) Scan(value interface{}) error {
 		return nil
 	}
 
-	// 解析 JSON 字符串为 List
-	return json.Unmarshal(bytes, l)
+	*l = strings.Split(value.(string), ",")
+	return nil
 }
 
 // Value 实现 driver.Valuer 接口
 // 将 List 序列化为 JSON 字符串用于数据库存储
 func (l List) Value() (driver.Value, error) {
-	return json.Marshal(l)
+	return strings.Join(l, ","), nil
 }

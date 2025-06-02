@@ -25,8 +25,16 @@ type MyClaims struct {
 	jwt.StandardClaims
 }
 
-func (m MyClaims) GetUserFromClaims() (user models.UserModel, err error) {
+func (m MyClaims) GetUserFromClaims() (user *models.UserModel, err error) {
 	err = global.DB.Take(&user, m.UserID).Error
+	return
+}
+
+func (m MyClaims) MustGetUserFromClaims() (user *models.UserModel) {
+	global.DB.Take(&user, m.UserID)
+	if user == nil {
+		panic("user is nil")
+	}
 	return
 }
 
@@ -90,6 +98,14 @@ func GetClaimsFromGin(c *gin.Context) (claims *MyClaims, ok bool) {
 	claims, ok = _claims.(*MyClaims)
 	if !ok {
 		return
+	}
+	return
+}
+
+func MustGetClaimsFromGin(c *gin.Context) (claims *MyClaims) {
+	claims, _ = GetClaimsFromGin(c)
+	if claims == nil {
+		panic("claims is nil")
 	}
 	return
 }
