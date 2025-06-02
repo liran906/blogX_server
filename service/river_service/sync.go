@@ -1,3 +1,5 @@
+// Path: ./service/river_service/sync.go
+
 package river_service
 
 import (
@@ -7,12 +9,12 @@ import (
 	"encoding/json"
 	"fmt"
 	mysql2 "github.com/siddontang/go-mysql/mysql"
+	"github.com/sirupsen/logrus"
 	"reflect"
 	"strings"
 	"time"
 
-	"github.com/juju/errors"
-	"github.com/siddontang/go-log/log"
+	"github.com/pingcap/errors"
 	"github.com/siddontang/go-mysql-elasticsearch/elastic"
 	"github.com/siddontang/go-mysql/canal"
 	"github.com/siddontang/go-mysql/mysql"
@@ -154,7 +156,7 @@ func (r *River) syncLoop() {
 		if needFlush {
 			// TODO: retry some times?
 			if err := r.doBulk(reqs); err != nil {
-				log.Errorf("do ES bulk err %v, close sync", err)
+				logrus.Errorf("do ES bulk err %v, close sync", err)
 				r.cancel()
 				return
 			}
@@ -163,7 +165,7 @@ func (r *River) syncLoop() {
 
 		if needSavePos {
 			if err := r.master.Save(mysql2.Position(pos)); err != nil {
-				log.Errorf("save sync position %s err %v, close sync", pos, err)
+				logrus.Errorf("save sync position %s err %v, close sync", pos, err)
 				r.cancel()
 				return
 			}
@@ -274,7 +276,7 @@ func (r *River) makeReqColumnData(col *schema.TableColumn, value interface{}) in
 			eNum := value - 1
 			if eNum < 0 || eNum >= int64(len(col.EnumValues)) {
 				// we insert invalid enum value before, so return empty
-				log.Warnf("invalid binlog enum index %d, for enum %v", eNum, col.EnumValues)
+				logrus.Warnf("invalid binlog enum index %d, for enum %v", eNum, col.EnumValues)
 				return ""
 			}
 
@@ -466,13 +468,13 @@ func (r *River) doBulk(reqs []*elastic.BulkRequest) error {
 	}
 
 	if resp, err := r.es.Bulk(reqs); err != nil {
-		log.Errorf("sync docs err %v after binlog %s", err, r.canal.SyncedPosition())
+		logrus.Errorf("sync docs err %v after binlog %s", err, r.canal.SyncedPosition())
 		return errors.Trace(err)
 	} else if resp.Code/100 == 2 || resp.Errors {
 		for i := 0; i < len(resp.Items); i++ {
 			for action, item := range resp.Items[i] {
 				if len(item.Error) > 0 {
-					log.Errorf("%s index: %s, type: %s, id: %s, status: %d, error: %s",
+					logrus.Errorf("%s index: %s, type: %s, id: %s, status: %d, error: %s",
 						action, item.Index, item.Type, item.ID, item.Status, item.Error)
 				}
 			}

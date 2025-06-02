@@ -1,16 +1,18 @@
+// Path: ./service/river_service/master.go
+
 package river_service
 
 import (
 	"bytes"
 	"github.com/pingcap/errors"
 	"github.com/siddontang/go-mysql/mysql"
+	"github.com/sirupsen/logrus"
 	"os"
 	"path"
 	"sync"
 	"time"
 
 	"github.com/BurntSushi/toml"
-	"github.com/siddontang/go-log/log"
 	"github.com/siddontang/go/ioutil2"
 )
 
@@ -51,7 +53,7 @@ func loadMasterInfo(dataDir string) (*masterInfo, error) {
 }
 
 func (m *masterInfo) Save(pos mysql.Position) error {
-	log.Infof("save position %s", pos)
+	logrus.Debugf("save position %s", pos)
 
 	m.Lock()
 	defer m.Unlock()
@@ -76,7 +78,7 @@ func (m *masterInfo) Save(pos mysql.Position) error {
 
 	var err error
 	if err = ioutil2.WriteFileAtomic(m.filePath, buf.Bytes(), 0644); err != nil {
-		log.Errorf("canal save master info to file %s err %v", m.filePath, err)
+		logrus.Errorf("canal save master info to file %s err %v", m.filePath, err)
 	}
 
 	return errors.Trace(err)

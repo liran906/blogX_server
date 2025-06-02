@@ -3,48 +3,42 @@
 package core
 
 import (
-	river "blogX_server/service/river_service"
-	"flag"
+	"blogX_server/global"
+	"blogX_server/service/river_service"
 	"github.com/juju/errors"
-	"github.com/siddontang/go-log/log"
-	"os"
-	"os/signal"
 	"runtime"
-	"syscall"
 )
 
 func InitMysqlES() {
+	if !global.Config.River.Enable {
+		return
+	}
+
 	runtime.GOMAXPROCS(runtime.NumCPU())
-	flag.Parse()
 
-	sc := make(chan os.Signal, 1)
-	signal.Notify(sc,
-		os.Kill,
-		os.Interrupt,
-		syscall.SIGHUP,
-		syscall.SIGINT,
-		syscall.SIGTERM,
-		syscall.SIGQUIT)
+	//sc := make(chan os.Signal, 1)
+	//signal.Notify(sc)//os.Kill,
+	//os.Interrupt,
+	//syscall.SIGHUP,
+	//syscall.SIGINT,
+	//syscall.SIGTERM,
+	//syscall.SIGQUIT,
 
-	r, err := river.NewRiver()
+	r, err := river_service.NewRiver()
 	if err != nil {
 		println(errors.ErrorStack(err))
 		return
 	}
 
-	done := make(chan struct{}, 1)
 	go func() {
 		r.Run()
-		done <- struct{}{}
+		r.Close()
 	}()
 
-	select {
-	case n := <-sc:
-		log.Infof("receive signal %v, closing", n)
-	case <-r.Ctx().Done():
-		log.Infof("context is done with %v, closing", r.Ctx().Err())
-	}
-
-	r.Close()
-	<-done
+	//select {
+	//case n := <-sc:
+	//	logrus.Debugf("receive signal %v, closing", n)
+	//case <-rs.Ctx().Done():
+	//	logrus.Debugf("context is done with %v, closing", rs.Ctx().Err())
+	//}
 }

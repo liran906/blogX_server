@@ -1,3 +1,5 @@
+// Path: ./service/river_service/river.go
+
 package river_service
 
 import (
@@ -5,8 +7,8 @@ import (
 	"blogX_server/service/river_service/rule"
 	"context"
 	"fmt"
-	"github.com/juju/errors"
-	"github.com/siddontang/go-mysql/mysql"
+	"github.com/pingcap/errors"
+	"github.com/sirupsen/logrus"
 	"regexp"
 	"strings"
 	"sync"
@@ -288,7 +290,7 @@ func (r *River) Run() error {
 	go r.syncLoop()
 
 	pos := r.master.Position()
-	if err := r.canal.RunFrom(mysql.Position(pos)); err != nil {
+	if err := r.canal.RunFrom(pos); err != nil {
 		log.Errorf("start canal err %v", err)
 		return errors.Trace(err)
 	}
@@ -303,7 +305,7 @@ func (r *River) Ctx() context.Context {
 
 // Close closes the River
 func (r *River) Close() {
-	log.Infof("closing river")
+	logrus.Infof("closing river")
 
 	r.cancel()
 

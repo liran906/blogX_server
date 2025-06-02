@@ -6,6 +6,7 @@ import (
 	"blogX_server/global"
 	"blogX_server/middleware"
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 	"log"
 )
 
@@ -30,6 +31,7 @@ func Run() {
 	MytestRouter(nr) // 测试用
 
 	addr := global.Config.System.Addr()
+	logrus.Infof("Server running at %s", addr)
 	err := r.Run(addr)
 	if err != nil {
 		log.Fatalln(err)
