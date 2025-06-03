@@ -84,7 +84,7 @@ func (ImageApi) ImageListView(c *gin.Context) {
 			PageInfo: req.PageInfo,
 			Likes:    []string{"filename"},
 			Preloads: []string{"Users"},
-			Debug:    true, //
+			Debug:    false,
 		})
 	if err != nil {
 		res.FailWithError(err, c)

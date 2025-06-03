@@ -11,6 +11,7 @@ import (
 func InitIndex(index, mapping string) {
 	if ExistsIndex(index) {
 		DeleteIndex(index)
+		// TODO 保留之前的数据再导入
 	}
 	CreateIndex(index, mapping)
 }

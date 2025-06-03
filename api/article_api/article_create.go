@@ -8,6 +8,7 @@ import (
 	"blogX_server/models"
 	"blogX_server/models/ctype"
 	"blogX_server/models/enum"
+	"blogX_server/service/log_service"
 	"blogX_server/utils/jwts"
 	"blogX_server/utils/markdown"
 	"blogX_server/utils/xss"
@@ -65,7 +66,12 @@ func (ArticleApi) ArticleCreateView(c *gin.Context) {
 		}
 	}
 
-	// 正文内容图片转存
+	// 正文内容图片转存给前端去做。后端留了个接口 ImageCache
+
+	// log
+	log := log_service.GetActionLog(c)
+	log.ShowAll()
+	log.SetTitle("发布文章")
 
 	var article = models.ArticleModel{
 		Title:          req.Title,

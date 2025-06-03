@@ -4,7 +4,6 @@ package ctype
 
 import (
 	"database/sql/driver"
-	"fmt"
 	"strings"
 )
 
@@ -14,19 +13,21 @@ type List []string
 // Scan 实现 sql.Scanner 接口
 // 从数据库读取 JSON 字符串并解析成 List
 func (l *List) Scan(value interface{}) error {
-	// 数据库存储的是 JSON 字符串，通常是 []byte 类型
-	bytes, ok := value.([]byte)
-	if !ok {
-		return fmt.Errorf("failed to scan List: expected []byte, got %T", value)
+	// 将数据库读取的值断言为 []byte（也可以写为 []uint8）
+	// 这是因为数据库 driver（如 MySQL）返回的值类型通常为 []byte
+	val, ok := value.([]byte)
+	if ok {
+		// 如果断言成功，继续处理 val
+		// 将 val 转换为字符串后判断是否为空字符串
+		if string(val) == "" {
+			// 如果是空字符串，就初始化 l 为一个空的字符串切片
+			*l = []string{}
+			return nil
+		}
+		// 否则，将字符串按逗号分割成字符串数组，并赋值给 l
+		*l = strings.Split(string(val), ",")
 	}
-
-	// 如果为空字符串或 null，赋值为空 List
-	if len(bytes) == 0 || string(bytes) == "null" {
-		*l = []string{}
-		return nil
-	}
-
-	*l = strings.Split(value.(string), ",")
+	// 如果类型断言失败（不是 []uint8），那么返回 nil（这里逻辑比较简化，没有处理错误）
 	return nil
 }
 

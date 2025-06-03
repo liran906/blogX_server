@@ -35,7 +35,7 @@ func ExtractContent(md string, length int) (abs string, err error) {
 	abs = htmlText
 	if len(htmlText) > length {
 		// 判断字数
-		abs = string([]rune(htmlText)[:length])
+		abs = string([]rune(htmlText)[:length]) + "..."
 	}
 	return
 }

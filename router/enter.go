@@ -28,6 +28,8 @@ func Run() {
 	BannerRouter(nr)
 	CaptchaRouter(nr)
 	UserRouter(nr)
+	ArticleRouter(nr)
+
 	MytestRouter(nr) // 测试用
 
 	addr := global.Config.System.Addr()

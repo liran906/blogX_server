@@ -13,8 +13,8 @@ import (
 func BannerRouter(r *gin.RouterGroup) {
 	app := api.App.BannerApi
 
-	r.POST("banners", mdw.BindJsonMiddleware[banner_api.BannerCreateReq], app.BannerCreateView)
-	r.GET("banners", mdw.BindQueryMiddleware[banner_api.BannerListReq], mdw.AdminMiddleware, app.BannerListView)
-	r.DELETE("banners", mdw.BindJsonMiddleware[models.RemoveRequest], mdw.AdminMiddleware, app.BannerRemoveView)
-	r.PUT("banners/:id", mdw.AdminMiddleware, app.BannerUpdateView)
+	r.GET("banner", mdw.BindQueryMiddleware[banner_api.BannerListReq], app.BannerListView)
+	r.POST("banner", mdw.BindJsonMiddleware[banner_api.BannerCreateReq], mdw.AdminMiddleware, app.BannerCreateView)
+	r.DELETE("banner", mdw.BindJsonMiddleware[models.RemoveRequest], mdw.AdminMiddleware, app.BannerRemoveView)
+	r.PUT("banner/:id", mdw.AdminMiddleware, app.BannerUpdateView)
 }
