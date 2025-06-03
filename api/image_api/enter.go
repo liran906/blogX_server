@@ -18,7 +18,15 @@ import (
 
 type ImageApi struct{}
 
-type ImageListRequest struct {
+type ImageUploadResponse struct {
+	Filename string `json:"filename"`
+	Size     int64  `json:"size"`
+	Hash     string `json:"hash"`
+	Title    string `json:"title"`
+	Message  string `json:"message"`
+}
+
+type ImageListReq struct {
 	common.PageInfo
 	Filename string `form:"filename"`
 	Path     string `form:"path"`
@@ -55,18 +63,7 @@ func (ImageApi) ImageUploadView(c *gin.Context) {
 		return
 	}
 
-	// 记录日志
-	log := log_service.GetActionLog(c)
-	log.ShowRequestHeader()
-	log.ShowResponseHeader()
-	log.ShowResponse()
-	log.SetTitle("上传图片")
-
-	var list []*ImageUploadResponse
-	var count int
-	for _, fileHeader := range files {
-		uploadImage(fileHeader, log, &list, &count, c)
-	}
+	list, count := uploadImages(files, c)
 
 	if count == len(files) {
 		res.SuccessWithList(list, count, c)
@@ -76,12 +73,7 @@ func (ImageApi) ImageUploadView(c *gin.Context) {
 }
 
 func (ImageApi) ImageListView(c *gin.Context) {
-	var req ImageListRequest
-	err := c.ShouldBindQuery(&req)
-	if err != nil {
-		res.FailWithError(err, c)
-		return
-	}
+	req := c.MustGet("bindReq").(ImageListReq)
 
 	_list, count, err := common.ListQuery(models.ImageModel{
 		Filename: req.Filename,
@@ -121,12 +113,7 @@ func (ImageApi) ImageListView(c *gin.Context) {
 }
 
 func (ImageApi) ImageRemoveView(c *gin.Context) {
-	var req models.RemoveRequest
-	err := c.ShouldBindJSON(&req)
-	if err != nil {
-		res.FailWithError(err, c)
-		return
-	}
+	req := c.MustGet("bindReq").(models.RemoveRequest)
 
 	var removeList []models.ImageModel
 	global.DB.Find(&removeList, "id in ?", req.IDList)

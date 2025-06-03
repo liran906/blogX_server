@@ -14,6 +14,7 @@ type ImageModel struct {
 	Url      string `gorm:"size:256" json:"url"`
 	Size     int64  `gorm:"not null" json:"size"`
 	Hash     string `gorm:"size:64; not null; unique" json:"hash"`
+	Source   string `gorm:"size:256" json:"source"`
 
 	// M2M
 	Users []UserModel `gorm:"many2many:user_upload_images;joinForeignKey:ImageID;JoinReferences:UserID" json:"users"`

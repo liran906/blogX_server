@@ -26,8 +26,8 @@ func MdToHTML(md string) string {
 
 func ExtractContent(md string, length int) (abs string, err error) {
 	// 把markdown转成html，再取文本
-	html := MdToHTML(md)
-	doc, err := goquery.NewDocumentFromReader(bytes.NewReader([]byte(html)))
+	htmlCnt := MdToHTML(md)
+	doc, err := goquery.NewDocumentFromReader(bytes.NewReader([]byte(htmlCnt)))
 	if err != nil {
 		return
 	}

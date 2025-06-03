@@ -10,6 +10,7 @@ import (
 	"blogX_server/models/enum"
 	"blogX_server/utils/jwts"
 	"blogX_server/utils/markdown"
+	"blogX_server/utils/xss"
 	"github.com/gin-gonic/gin"
 )
 
@@ -51,6 +52,9 @@ func (ArticleApi) ArticleCreateView(c *gin.Context) {
 	//	}
 	//}
 
+	// 文章正文防止 xss 注入
+	req.Content = xss.Filter(req.Content)
+
 	// 自动提取正文前 200 字作为摘要
 	if req.Abstract == "" {
 		txt, err := markdown.ExtractContent(req.Content, 200)
@@ -60,8 +64,6 @@ func (ArticleApi) ArticleCreateView(c *gin.Context) {
 			req.Abstract = txt
 		}
 	}
-
-	// 文章正文防止 xss 注入
 
 	// 正文内容图片转存
 
