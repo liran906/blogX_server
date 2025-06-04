@@ -6,6 +6,7 @@ type UserPinnedArticleModel struct {
 	UserID    uint      `gorm:"primaryKey" json:"userID"`
 	ArticleID uint      `gorm:"primaryKey" json:"articleID"`
 	CreatedAt time.Time `json:"createdAt"`
+	Rank      *uint     `gorm:"default:null" json:"rank"`
 
 	// FK
 	UserModel    UserModel    `gorm:"foreignKey:UserID;references:ID" json:"-"`

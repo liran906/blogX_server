@@ -29,10 +29,11 @@ type UserModel struct {
 	RegisterSource enum.RegisterSourceType `gorm:"not null" json:"registerSource"`
 	DateOfBirth    time.Time               `gorm:"default:null" json:"dateOfBirth"`
 	Role           enum.RoleType           `gorm:"not null" json:"role"` // 角色 1管理员 2普通用户 3访客
-	UserConfigID   uint                    `json:"userConfigID"`
+	UserConfigID   uint                    `gorm:"not null" json:"user_config_id"`
 
 	// FK
 	UserConfigModel *UserConfigModel `gorm:"foreignKey:UserConfigID;references:UserID" json:"-"` // 注意是指针，否则会报错：嵌套循环
+	Articles        []ArticleModel   `gorm:"foreignKey:UserID" json:"-"`
 
 	// M2M
 	Images []ImageModel `gorm:"many2many:user_upload_images;joinForeignKey:UserID;JoinReferences:ImageID" json:"images"`
