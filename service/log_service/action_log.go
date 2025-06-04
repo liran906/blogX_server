@@ -36,6 +36,13 @@ type ActionLog struct {
 	itemList           []string         // 存放请求的content，最后和请求和响应body，合并为 content 入库
 	isMiddlewareSave   bool             // 判断是否是在中间件中保存
 	UID                uint             // 某些未登录情况下写入
+	ClaimID            uint             // 操作人 id
+	ClaimRole          enum.RoleType    // 操作人角色
+}
+
+func (l *ActionLog) ShowClaim(claims *jwts.MyClaims) {
+	l.ClaimID = claims.UserID
+	l.ClaimRole = claims.Role
 }
 
 func (l *ActionLog) ShowAll() {
@@ -276,6 +283,8 @@ func (l *ActionLog) Save() uint {
 		IPLocation: addr,
 		IsRead:     false,
 		UA:         ua,
+		ClaimID:    l.ClaimID,
+		ClaimRole:  l.ClaimRole,
 	}
 
 	// 入库

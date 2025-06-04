@@ -29,22 +29,17 @@ type ArticleUpdateReq struct {
 
 func (ArticleApi) ArticleUpdateView(c *gin.Context) {
 	req := c.MustGet("bindReq").(ArticleUpdateReq)
-	u, err := jwts.MustGetClaimsFromGin(c).GetUserFromClaims()
-	if err != nil {
-		res.FailWithMsg("用户信息获取失败", c)
-		return
-	}
+	claims := jwts.MustGetClaimsFromGin(c)
 
 	// 取文章
 	var a models.ArticleModel
-	err = global.DB.Take(&a, req.ArticleID).Error
+	err := global.DB.Take(&a, req.ArticleID).Error
 	if err != nil {
 		res.Fail(err, "文章不存在", c)
 		return
 	}
 
 	// 非管理员只能修改自己的文章
-	claims := jwts.MustGetClaimsFromGin(c)
 	if claims.UserID != a.UserID && claims.Role != enum.AdminRoleType {
 		res.FailWithMsg("只能修改自己的文章", c)
 		return
@@ -53,7 +48,7 @@ func (ArticleApi) ArticleUpdateView(c *gin.Context) {
 	// 取分类
 	var cat models.CategoryModel
 	if req.CategoryID != nil {
-		err = global.DB.Take(&cat, "id = ? and user_id = ?", req.CategoryID, u.ID).Error
+		err = global.DB.Take(&cat, "id = ? and user_id = ?", req.CategoryID, a.UserID).Error
 		if err != nil {
 			res.Fail(err, "文章分类不存在", c)
 			return
@@ -68,12 +63,19 @@ func (ArticleApi) ArticleUpdateView(c *gin.Context) {
 		txt, err := markdown.ExtractContent(req.Content, 100)
 		if err != nil {
 			res.Fail(err, "摘要提取失败", c)
-		} else {
-			req.Abstract = txt
+			return
 		}
+		req.Abstract = txt
 	} else {
 		// 摘要防止 xss 注入
 		req.Abstract = xss.Filter(req.Abstract)
+		// 摘要不能超过 200 字
+		txt, err := markdown.ExtractContent(req.Abstract, 200)
+		if err != nil {
+			res.Fail(err, "摘要提取失败", c)
+			return
+		}
+		req.Abstract = txt
 	}
 
 	// 正文内容图片转存给前端去做。后端留了个接口 ImageCache
@@ -82,6 +84,10 @@ func (ArticleApi) ArticleUpdateView(c *gin.Context) {
 	log := log_service.GetActionLog(c)
 	log.ShowAll()
 	log.SetTitle("修改文章")
+	if claims.UserID != a.UserID {
+		log.ShowClaim(claims)
+		log.SetTitle("管理修改文章")
+	}
 
 	m := map[string]any{
 		"title":            req.Title,

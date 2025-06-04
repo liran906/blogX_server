@@ -20,6 +20,8 @@ type LogModel struct {
 	LoginType   enum.LoginType    `gorm:"not null" json:"loginType"`                  // 登录的类型
 	UA          string            `gorm:"size:256; not null" json:"ua"`               // 登录设备
 	ServiceName string            `gorm:"size:32" json:"serviceName"`
+	ClaimID     uint              `json:"claimID"`   // 操作人 ID
+	ClaimRole   enum.RoleType     `json:"claimRole"` // 操作人角色
 
 	// FK
 	UserModel UserModel `gorm:"foreignKey:UserID;references:ID" json:"-"`

@@ -44,20 +44,24 @@ func (ArticleApi) ArticleCreateView(c *gin.Context) {
 		}
 	}
 
-	// 文章正文防止 xss 注入
-	req.Content = xss.Filter(req.Content)
-
 	// 自动提取正文前 100 字作为摘要
 	if req.Abstract == "" {
 		txt, err := markdown.ExtractContent(req.Content, 100)
 		if err != nil {
-			res.FailWithMsg("摘要提取失败", c)
-		} else {
-			req.Abstract = txt
+			res.Fail(err, "摘要提取失败", c)
+			return
 		}
+		req.Abstract = txt
 	} else {
 		// 摘要防止 xss 注入
 		req.Abstract = xss.Filter(req.Abstract)
+		// 摘要不能超过 200 字
+		txt, err := markdown.ExtractContent(req.Abstract, 200)
+		if err != nil {
+			res.Fail(err, "摘要提取失败", c)
+			return
+		}
+		req.Abstract = txt
 	}
 
 	// 正文内容图片转存给前端去做。后端留了个接口 ImageCache
