@@ -28,10 +28,12 @@ type ImageUploadResponse struct {
 
 type ImageListReq struct {
 	common.PageInfo
-	Filename string `form:"filename"`
-	Path     string `form:"path"`
-	Hash     string `form:"hash"`
-	// TBD 根据用户 id 搜索？
+	Filename  string `form:"filename"`
+	Path      string `form:"path"`
+	Hash      string `form:"hash"`
+	StartTime string `form:"startTime"` // format "2006-01-02 15:04:05"
+	EndTime   string `form:"endTime"`
+	// TODO 根据用户 id 搜索？
 }
 
 type ImageListResponse struct {
@@ -75,6 +77,13 @@ func (ImageApi) ImageUploadView(c *gin.Context) {
 func (ImageApi) ImageListView(c *gin.Context) {
 	req := c.MustGet("bindReq").(ImageListReq)
 
+	// 解析时间戳并查询
+	query, err := common.TimeQuery(req.StartTime, req.EndTime)
+	if err != nil {
+		res.FailWithMsg(err.Error(), c)
+		return
+	}
+
 	_list, count, err := common.ListQuery(models.ImageModel{
 		Filename: req.Filename,
 		Path:     req.Path,
@@ -84,6 +93,7 @@ func (ImageApi) ImageListView(c *gin.Context) {
 			PageInfo: req.PageInfo,
 			Likes:    []string{"filename"},
 			Preloads: []string{"Users"},
+			Where:    query,
 			Debug:    false,
 		})
 	if err != nil {

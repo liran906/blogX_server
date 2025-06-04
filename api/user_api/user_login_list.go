@@ -5,7 +5,6 @@ package user_api
 import (
 	"blogX_server/common"
 	"blogX_server/common/res"
-	"blogX_server/global"
 	"blogX_server/models"
 	"blogX_server/models/enum"
 	"blogX_server/utils/jwts"
@@ -56,22 +55,10 @@ func (UserApi) UserLoginListView(c *gin.Context) {
 	}
 
 	// 解析时间戳并查询
-	query := global.DB.Where("")
-	if req.StartTime != "" {
-		_, err := time.Parse("2006-01-02 15:04:05", req.StartTime)
-		if err != nil {
-			res.FailWithMsg("开始时间格式错误", c)
-			return
-		}
-		query = query.Where("created_at >= ?", req.StartTime)
-	}
-	if req.EndTime != "" {
-		_, err := time.Parse("2006-01-02 15:04:05", req.EndTime)
-		if err != nil {
-			res.FailWithMsg("结束时间格式错误", c)
-			return
-		}
-		query = query.Where("created_at <= ?", req.EndTime)
+	query, err := common.TimeQuery(req.StartTime, req.EndTime)
+	if err != nil {
+		res.FailWithMsg(err.Error(), c)
+		return
 	}
 
 	_list, count, err := common.ListQuery(

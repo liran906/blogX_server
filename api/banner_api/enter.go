@@ -48,11 +48,20 @@ func (BannerApi) BannerCreateView(c *gin.Context) {
 
 type BannerListReq struct {
 	common.PageInfo
-	Activated bool `form:"activated"`
+	Activated bool   `form:"activated"`
+	StartTime string `form:"startTime"` // format "2006-01-02 15:04:05"
+	EndTime   string `form:"endTime"`
 }
 
 func (BannerApi) BannerListView(c *gin.Context) {
 	req := c.MustGet("bindReq").(BannerListReq)
+
+	// 解析时间戳并查询
+	query, err := common.TimeQuery(req.StartTime, req.EndTime)
+	if err != nil {
+		res.FailWithMsg(err.Error(), c)
+		return
+	}
 
 	list, count, err := common.ListQuery(
 		models.BannerModel{
@@ -61,6 +70,7 @@ func (BannerApi) BannerListView(c *gin.Context) {
 		common.Options{
 			PageInfo: req.PageInfo,
 			Likes:    []string{"url"},
+			Where:    query,
 			Debug:    false,
 		})
 	if err != nil {

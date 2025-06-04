@@ -19,10 +19,8 @@ type ArticleListReq struct {
 	CategoryID      *uint              `form:"categoryID"`
 	Status          enum.ArticleStatus `form:"status"`
 	CollectionQuery bool               `form:"viewCollect"` // 查看收藏
-}
-
-type ArticleListResp struct {
-	models.ArticleModel
+	StartTime       string             `form:"startTime"`   // format "2006-01-02 15:04:05"
+	EndTime         string             `form:"endTime"`
 }
 
 // ArticleListView 某个用户发表（或收藏）的文章列表
@@ -70,6 +68,8 @@ func (ArticleApi) ArticleListView(c *gin.Context) {
 		req.Status = enum.ArticleStatusPublish
 		req.CollectionQuery = false
 		req.PageInfo.Order = ""
+		req.StartTime = ""
+		req.EndTime = ""
 		if req.PageInfo.Page > 1 || req.PageInfo.Limit > 10 {
 			res.FailWithMsg("登录后查看更多", c)
 			return
@@ -116,6 +116,13 @@ func (ArticleApi) ArticleListView(c *gin.Context) {
 	// 最后加上时间倒序
 	defaultOrder += "created_at desc"
 
+	// 解析时间戳并查询
+	query, err := common.TimeQuery(req.StartTime, req.EndTime)
+	if err != nil {
+		res.FailWithMsg(err.Error(), c)
+		return
+	}
+
 	if !req.CollectionQuery {
 		// 发布文章查询
 		_list, count, err := common.ListQuery(
@@ -127,6 +134,7 @@ func (ArticleApi) ArticleListView(c *gin.Context) {
 			common.Options{
 				PageInfo:     req.PageInfo,
 				Likes:        []string{"title"},
+				Where:        query,
 				DefaultOrder: defaultOrder,
 				Debug:        true,
 			})

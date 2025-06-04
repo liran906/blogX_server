@@ -11,7 +11,6 @@ import (
 	"blogX_server/service/log_service"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"time"
 )
 
 type LogApi struct{}
@@ -47,22 +46,10 @@ func (LogApi) LogListView(c *gin.Context) {
 	}
 
 	// 解析时间戳并查询
-	query := global.DB.Where("")
-	if req.StartTime != "" {
-		_, err := time.Parse("2006-01-02 15:04:05", req.StartTime)
-		if err != nil {
-			res.FailWithMsg("开始时间格式错误", c)
-			return
-		}
-		query = query.Where("created_at >= ?", req.StartTime)
-	}
-	if req.EndTime != "" {
-		_, err := time.Parse("2006-01-02 15:04:05", req.EndTime)
-		if err != nil {
-			res.FailWithMsg("结束时间格式错误", c)
-			return
-		}
-		query = query.Where("created_at <= ?", req.EndTime)
+	query, err := common.TimeQuery(req.StartTime, req.EndTime)
+	if err != nil {
+		res.FailWithMsg(err.Error(), c)
+		return
 	}
 
 	_list, count, err := common.ListQuery(
