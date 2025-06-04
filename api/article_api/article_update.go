@@ -1,4 +1,4 @@
-// Path: ./api/article_api/article_create.go
+// Path: ./api/article_api/article_update.go
 
 package article_api
 
@@ -15,7 +15,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type ArticleCreateReq struct {
+type ArticleUpdateReq struct {
+	ArticleID      uint               `json:"articleID" binding:"required"`
 	Title          string             `json:"title" binding:"required"`
 	Abstract       string             `json:"abstract"`
 	CoverURL       string             `json:"coverURL"`
@@ -26,11 +27,26 @@ type ArticleCreateReq struct {
 	Status         enum.ArticleStatus `json:"status" binding:"required,oneof=1 2"` // 点提交就是 2，点存为草稿就是 1
 }
 
-func (ArticleApi) ArticleCreateView(c *gin.Context) {
-	req := c.MustGet("bindReq").(ArticleCreateReq)
+func (ArticleApi) ArticleUpdateView(c *gin.Context) {
+	req := c.MustGet("bindReq").(ArticleUpdateReq)
 	u, err := jwts.MustGetClaimsFromGin(c).GetUserFromClaims()
 	if err != nil {
 		res.FailWithMsg("用户信息获取失败", c)
+		return
+	}
+
+	// 取文章
+	var a models.ArticleModel
+	err = global.DB.Take(&a, req.ArticleID).Error
+	if err != nil {
+		res.Fail(err, "文章不存在", c)
+		return
+	}
+
+	// 非管理员只能修改自己的文章
+	claims := jwts.MustGetClaimsFromGin(c)
+	if claims.UserID != a.UserID && claims.Role != enum.AdminRoleType {
+		res.FailWithMsg("只能修改自己的文章", c)
 		return
 	}
 
@@ -39,7 +55,7 @@ func (ArticleApi) ArticleCreateView(c *gin.Context) {
 	if req.CategoryID != nil {
 		err = global.DB.Take(&cat, "id = ? and user_id = ?", req.CategoryID, u.ID).Error
 		if err != nil {
-			res.FailWithMsg("文章分类不存在", c)
+			res.Fail(err, "文章分类不存在", c)
 			return
 		}
 	}
@@ -51,7 +67,7 @@ func (ArticleApi) ArticleCreateView(c *gin.Context) {
 	if req.Abstract == "" {
 		txt, err := markdown.ExtractContent(req.Content, 100)
 		if err != nil {
-			res.FailWithMsg("摘要提取失败", c)
+			res.Fail(err, "摘要提取失败", c)
 		} else {
 			req.Abstract = txt
 		}
@@ -65,28 +81,27 @@ func (ArticleApi) ArticleCreateView(c *gin.Context) {
 	// log
 	log := log_service.GetActionLog(c)
 	log.ShowAll()
-	log.SetTitle("发布文章")
+	log.SetTitle("修改文章")
 
-	var article = models.ArticleModel{
-		Title:          req.Title,
-		Abstract:       req.Abstract,
-		CoverURL:       req.CoverURL,
-		Content:        req.Content,
-		CategoryID:     req.CategoryID,
-		Tags:           req.Tags,
-		OpenForComment: req.OpenForComment,
-		UserID:         u.ID,
-		Status:         req.Status,
+	m := map[string]any{
+		"title":            req.Title,
+		"abstract":         req.Abstract,
+		"cover_url":        req.CoverURL,
+		"content":          req.Content,
+		"category_id":      req.CategoryID,
+		"Tags":             req.Tags,
+		"open_for_comment": req.OpenForComment,
+		"status":           req.Status,
 	}
 	if req.Status == enum.ArticleStatusReview && global.Config.Site.Article.AutoApprove {
-		article.Status = enum.ArticleStatusPublish
+		m["status"] = enum.ArticleStatusPublish
 	}
 
 	// 入库
-	err = global.DB.Create(&article).Error
+	err = global.DB.Model(&a).Updates(m).Error
 	if err != nil {
-		res.Fail(err, "文章创建失败", c)
+		res.Fail(err, "文章修改失败", c)
 		return
 	}
-	res.SuccessWithMsg("文章创建成功", c)
+	res.SuccessWithMsg("文章修改成功", c)
 }

@@ -61,6 +61,10 @@ func SuccessWithList(list any, count int, c *gin.Context) {
 		"Success"}.Json(c)
 }
 
+func Fail(err error, msg string, c *gin.Context) {
+	Response{FailValidationCode, "Error: " + err.Error(), msg}.Json(c)
+}
+
 func FailWithMsg(msg string, c *gin.Context) {
 	Response{FailValidationCode, empty, msg}.Json(c)
 }
