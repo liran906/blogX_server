@@ -85,9 +85,9 @@ func (ArticleApi) ArticleListView(c *gin.Context) {
 	// 提取出置顶的文章, 其余按日期排序
 	var defaultOrder string
 	var pinnedArticles []models.UserPinnedArticleModel
-	err = global.DB.Preload("ArticleModel").
-		Find(&pinnedArticles, "user_id = ?", u.ID).
-		Order("rank asc").Error
+	err = global.DB.Where("user_id = ?", u.ID). // 如果想加 .Order(...) 等其他链式操作，就必须把条件提取为 .Where(...) 单独写，否则 .Order(...) 就会被忽略
+							Order("`rank` asc").        // 注意 rank 是 MySQL 的保留关键字，必须用反引号 `rank` 包裹，才能作为字段名使用
+							Find(&pinnedArticles).Error // 另外，order 要在 find（执行）之前，否则失效
 	if err == nil {
 		for _, m := range pinnedArticles {
 			defaultOrder += fmt.Sprintf("id = %d desc, ", m.ArticleID)

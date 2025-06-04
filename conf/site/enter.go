@@ -58,5 +58,6 @@ type RightSidebar struct {
 // Article 文章设置
 type Article struct {
 	AutoApprove bool `yaml:"autoApprove" json:"autoApprove"` // 免审核
+	MaxPin      int  `yaml:"maxPin" json:"maxPin"`           // 用户最高置顶数
 	CommentLine int  `yaml:"commentLine" json:"commentLine"` // 评论的层级
 }
