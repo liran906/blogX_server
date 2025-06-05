@@ -120,7 +120,7 @@ func (l *RuntimeLog) setItem(label string, value any, logLevelType enum.LogLevel
 	}
 
 	l.itemList = append(l.itemList, fmt.Sprintf("<div class=\"log_item %s\"><div class=\"log_item_label\">%s</div><div class=\"log_item_content\">%s</div></div>",
-		logLevelType.ToString(), label, v))
+		logLevelType.String(), label, v))
 }
 
 func (l *RuntimeLog) SetItem(label string, value any) {
@@ -129,6 +129,10 @@ func (l *RuntimeLog) SetItem(label string, value any) {
 
 func (l *RuntimeLog) SetItemDebug(label string, value any) {
 	l.setItem(label, value, enum.LogDebugLevel)
+}
+
+func (l *RuntimeLog) SetItemTrace(label string, value any) {
+	l.setItem(label, value, enum.LogTraceLevel)
 }
 
 func (l *RuntimeLog) SetItemInfo(label string, value any) {

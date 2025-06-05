@@ -93,7 +93,7 @@ func (l *ActionLog) setItem(label string, value any, logLevelType enum.LogLevelT
 	}
 
 	l.itemList = append(l.itemList, fmt.Sprintf("<div class=\"log_item %s\"><div class=\"log_item_label\">%s</div><div class=\"log_item_content\">%s</div></div>",
-		logLevelType.ToString(), label, v))
+		logLevelType.String(), label, v))
 }
 
 func (l *ActionLog) SetItem(label string, value any) {
@@ -102,6 +102,10 @@ func (l *ActionLog) SetItem(label string, value any) {
 
 func (l *ActionLog) SetItemDebug(label string, value any) {
 	l.setItem(label, value, enum.LogDebugLevel)
+}
+
+func (l *ActionLog) SetItemTrace(label string, value any) {
+	l.setItem(label, value, enum.LogTraceLevel)
 }
 
 func (l *ActionLog) SetItemInfo(label string, value any) {
@@ -303,7 +307,7 @@ func (l *ActionLog) Save() uint {
 }
 
 func NewActionLogByGin(c *gin.Context) *ActionLog {
-	return &ActionLog{c: c}
+	return &ActionLog{c: c, level: enum.LogInfoLevel}
 }
 
 // GetActionLog 拿取对应 gin.Context 的 ActionLog 对象（如有）

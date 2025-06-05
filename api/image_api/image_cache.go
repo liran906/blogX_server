@@ -4,6 +4,7 @@ package image_api
 
 import (
 	"blogX_server/common/res"
+	"blogX_server/models/enum"
 	"blogX_server/service/log_service"
 	"blogX_server/utils/hash"
 	"blogX_server/utils/jwts"
@@ -35,6 +36,7 @@ func (ImageApi) ImageCacheView(c *gin.Context) {
 
 	log := log_service.GetActionLog(c)
 	log.ShowAll()
+	log.SetLevel(enum.LogTraceLevel)
 	log.SetTitle("转存图片")
 
 	var suffix string

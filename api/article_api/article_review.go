@@ -7,6 +7,7 @@ import (
 	"blogX_server/global"
 	"blogX_server/models"
 	"blogX_server/models/enum"
+	"blogX_server/service/log_service"
 	"fmt"
 	"github.com/gin-gonic/gin"
 )
@@ -39,12 +40,18 @@ func (ArticleApi) ArticleReviewView(c *gin.Context) {
 		return
 	}
 
+	// 日志
+	log := log_service.GetActionLog(c)
+	log.ShowAll()
+
 	// TODO 给文章提交的用户发送消息
 	if req.Msg == "" && req.Status == enum.ArticleStatusPublish {
 		req.Msg = fmt.Sprintf("您发布审核的文章 [ID:%d]%s 已成功通过审核！", a.ID, a.Title)
+		log.SetTitle("文章审核成功")
 	}
 	if req.Msg == "" && req.Status == enum.ArticleStatusPublish {
 		req.Msg = fmt.Sprintf("您发布审核的文章 [ID:%d]%s 没有通过审核！", a.ID, a.Title)
+		log.SetTitle("文章审核失败")
 	}
 
 	res.SuccessWithMsg("成功审核", c)

@@ -6,9 +6,12 @@ import (
 	"blogX_server/common/res"
 	"blogX_server/global"
 	"blogX_server/models"
+	"blogX_server/models/enum"
+	"blogX_server/service/log_service"
 	"blogX_server/service/redis_service/redis_article"
 	"blogX_server/utils/jwts"
 	"errors"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"strings"
@@ -66,6 +69,14 @@ func (ArticleApi) ArticleCollectView(c *gin.Context) {
 		UserID:             uid,
 		CollectionFolderID: req.CollectionID,
 	}
+
+	// 日志
+	log := log_service.GetActionLog(c)
+	log.ShowRequest()
+	log.ShowResponse()
+	log.SetLevel(enum.LogTraceLevel)
+	log.SetTitle(fmt.Sprintf("增加收藏 %d", req.ArticleID))
+
 	// userID articleID collectionFolderID 是一组联合 CK，如果有重复写入会自己报错
 	// 所以不在这里显示判断是否有重复
 	err = global.DB.Create(&ac).Error
@@ -79,8 +90,9 @@ func (ArticleApi) ArticleCollectView(c *gin.Context) {
 				return
 			}
 			// 更新数量
-			global.DB.Model(&cf).Update("article_count", gorm.Expr("article_count - 1"))
+			//global.DB.Model(&cf).Update("article_count", gorm.Expr("article_count - 1"))
 			redis_article.SubArticleCollect(req.ArticleID)
+			log.SetTitle(fmt.Sprintf("取消收藏 %d", req.ArticleID))
 			res.SuccessWithMsg("取消收藏成功", c)
 			return
 		} else {
@@ -89,7 +101,7 @@ func (ArticleApi) ArticleCollectView(c *gin.Context) {
 		}
 	}
 	// 更新数量
-	global.DB.Model(&cf).Update("article_count", gorm.Expr("article_count + 1"))
+	//global.DB.Model(&cf).Update("article_count", gorm.Expr("article_count + 1"))
 	redis_article.AddArticleCollect(req.ArticleID)
 	res.SuccessWithMsg("收藏成功", c)
 }

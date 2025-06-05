@@ -6,17 +6,20 @@ type LogLevelType uint8
 
 const (
 	LogDebugLevel LogLevelType = 1
-	LogInfoLevel  LogLevelType = 2
-	LogWarnLevel  LogLevelType = 3
-	LogErrorLevel LogLevelType = 4
-	LogFatalLevel LogLevelType = 5
-	LogPanicLevel LogLevelType = 6
+	LogTraceLevel LogLevelType = 2
+	LogInfoLevel  LogLevelType = 3
+	LogWarnLevel  LogLevelType = 4
+	LogErrorLevel LogLevelType = 5
+	LogFatalLevel LogLevelType = 6
+	LogPanicLevel LogLevelType = 7
 )
 
-func (l LogLevelType) ToString() string {
+func (l LogLevelType) String() string {
 	switch l {
 	case LogDebugLevel:
 		return "Debug"
+	case LogTraceLevel:
+		return "Trace"
 	case LogInfoLevel:
 		return "Info"
 	case LogWarnLevel:

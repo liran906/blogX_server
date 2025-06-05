@@ -68,7 +68,7 @@ func uploadImages(files []*multipart.FileHeader, c *gin.Context) (list []*ImageU
 		}
 
 		// 日志
-		log.SetItem(rCode.String(), msg)
+		log.SetItemTrace(rCode.String(), msg)
 		// 回复列表结构体
 		uploadResp := &ImageUploadResponse{
 			Filename: fileHeader.Filename,

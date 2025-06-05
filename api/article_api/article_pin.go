@@ -62,8 +62,11 @@ func (ArticleApi) ArticlePinView(c *gin.Context) {
 		}
 	}
 
+	// 日志
 	log := log_service.GetActionLog(c)
-	log.ShowAll()
+	log.ShowRequest()
+	log.ShowResponse()
+	log.SetLevel(enum.LogTraceLevel)
 	log.SetTitle("用户更新置顶")
 
 	// 用事务更新

@@ -102,6 +102,7 @@ func (SiteApi) SiteUpdateView(c *gin.Context) {
 	// 写入日志
 	log := log_service.GetActionLog(c)
 	log.ShowAll()
+	log.SetLevel(enum.LogWarnLevel)
 	log.SetTitle("站点配置更新失败")
 
 	var rep any
