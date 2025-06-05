@@ -20,7 +20,7 @@ type ArticleDetailResp struct {
 func (ArticleApi) ArticleDetailView(c *gin.Context) {
 	req := c.MustGet("bindReq").(models.IDRequest)
 	if req.ID == 0 {
-		res.FailWithMsg("未指定 ID", c)
+		res.FailWithMsg("未指定文章 ID", c)
 		return
 	}
 
