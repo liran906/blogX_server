@@ -22,4 +22,6 @@ func ArticleRouter(rg *gin.RouterGroup) {
 	rg.POST("article/like/:id", mdw.BindUriMiddleware[models.IDRequest], mdw.AuthMiddleware, app.ArticleLikeView)
 	rg.POST("article/collect/", mdw.BindJsonMiddleware[article_api.ArticleCollectReq], mdw.AuthMiddleware, app.ArticleCollectView)
 	rg.POST("article/history", mdw.BindJsonMiddleware[article_api.ArticleReadCountReq], app.ArticleReadCountView)
+	rg.DELETE("article/:id", mdw.BindUriMiddleware[models.IDRequest], mdw.AuthMiddleware, app.ArticleRemoveView)
+	rg.DELETE("article", mdw.BindJsonMiddleware[models.RemoveRequest], mdw.AdminMiddleware, app.ArticleBatchRemoveView)
 }

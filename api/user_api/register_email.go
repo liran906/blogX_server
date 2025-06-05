@@ -3,8 +3,8 @@
 package user_api
 
 import (
-	"blogX_server/common"
 	"blogX_server/common/res"
+	"blogX_server/common/transaction"
 	"blogX_server/global"
 	"blogX_server/models"
 	"blogX_server/models/enum"
@@ -106,7 +106,7 @@ func (UserApi) RegisterEmailView(c *gin.Context) {
 		DisplayFans:        true,
 		DisplayFollowing:   true,
 	}
-	err = common.CreateUserAndUserConfig(user, userConf)
+	err = transaction.CreateUserAndUserConfig(user, userConf)
 	if err != nil {
 		res.FailWithError(err, c)
 		return

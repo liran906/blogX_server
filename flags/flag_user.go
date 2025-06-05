@@ -3,7 +3,7 @@
 package flags
 
 import (
-	"blogX_server/common"
+	"blogX_server/common/transaction"
 	"blogX_server/global"
 	"blogX_server/models"
 	"blogX_server/models/enum"
@@ -110,7 +110,7 @@ func (FlagUser) Create() {
 	}
 
 	// 入库
-	err := common.CreateUserAndUserConfig(u, userConf)
+	err := transaction.CreateUserAndUserConfig(u, userConf)
 	if err != nil {
 		fmt.Println("入库失败")
 		return

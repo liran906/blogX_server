@@ -3,8 +3,8 @@
 package article_api
 
 import (
-	"blogX_server/common"
 	"blogX_server/common/res"
+	"blogX_server/common/transaction"
 	"blogX_server/global"
 	"blogX_server/models"
 	"blogX_server/models/enum"
@@ -70,7 +70,7 @@ func (ArticleApi) ArticlePinView(c *gin.Context) {
 	log.SetTitle("用户更新置顶")
 
 	// 用事务更新
-	err = common.UpdateUserPinnedArticles(claims.UserID, req.IDList)
+	err = transaction.UpdateUserPinnedArticles(claims.UserID, req.IDList)
 	if err != nil {
 		res.FailWithData(err.Error(), "置顶失败", c)
 		return

@@ -1,6 +1,6 @@
-// Path: ./common/db_transaction.go
+// Path: ./common/transaction/transaction_create_user_and_user_config.go
 
-package common
+package transaction
 
 import (
 	"blogX_server/global"
