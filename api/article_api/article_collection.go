@@ -24,7 +24,7 @@ func (ArticleApi) ArticleCollectView(c *gin.Context) {
 	var cf models.CollectionFolderModel
 
 	var a models.ArticleModel
-	err := global.DB.Take(&a, req.ArticleID).Error
+	err := global.DB.Take(&a, "id = ? AND status = ?", req.ArticleID, 3).Error
 	if err != nil {
 		res.Fail(err, "文章不存在", c)
 		return
