@@ -6,6 +6,8 @@ import (
 	"blogX_server/global"
 	"blogX_server/models"
 	"blogX_server/utils"
+	"errors"
+	"gorm.io/gorm"
 	"regexp"
 )
 
@@ -33,7 +35,7 @@ func IsAvailableUsername(username string) (msg string, ok bool) {
 	err := global.DB.Take(&user, "username = ?", username).Error
 	if err == nil {
 		return "用户名已存在", false
-	} else if err.Error() != "record not found" {
+	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
 		return "读取数据库错误", false
 	}
 	return "", true

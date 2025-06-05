@@ -20,4 +20,5 @@ func ArticleRouter(rg *gin.RouterGroup) {
 	rg.PUT("article", mdw.BindJsonMiddleware[article_api.ArticleUpdateReq], mdw.AuthMiddleware, mdw.VerifySiteModeMiddleware, app.ArticleUpdateView)
 	rg.POST("article/review", mdw.BindJsonMiddleware[article_api.ArticleReviewReq], mdw.AdminMiddleware, app.ArticleReviewView)
 	rg.POST("article/like/:id", mdw.BindUriMiddleware[models.IDRequest], mdw.AuthMiddleware, app.ArticleLikeView)
+	rg.POST("article/collect/", mdw.BindJsonMiddleware[article_api.ArticleCollectReq], mdw.AuthMiddleware, app.ArticleCollectView)
 }

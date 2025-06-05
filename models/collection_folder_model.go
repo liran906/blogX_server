@@ -7,6 +7,7 @@ type CollectionFolderModel struct {
 	CoverURL     string `gorm:"size:256" json:"coverURL"`
 	ArticleCount int    `gorm:"not null" json:"articleCount"`
 	UserID       uint   `gorm:"not null" json:"userID"`
+	IsDefault    bool   `gorm:"default:false" json:"isDefault"` // 是否是默认收藏夹
 
 	// FK
 	UserModel UserModel `gorm:"foreignKey:UserID;references:ID" json:"-"`

@@ -11,9 +11,10 @@ import (
 	"blogX_server/utils/email"
 	"blogX_server/utils/jwts"
 	"encoding/json"
+	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/mojocn/base64Captcha"
-	"strings"
+	"gorm.io/gorm"
 	"time"
 )
 
@@ -62,8 +63,8 @@ func (UserApi) SendEmailView(c *gin.Context) {
 	case 2:
 		// 检查是否已注册
 		if err != nil {
-			if strings.Contains(err.Error(), "record not found") {
-				res.FailWithMsg("该邮箱未注册", c)
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				res.Fail(err, "该邮箱未注册", c)
 			} else {
 				res.FailWithError(err, c)
 			}

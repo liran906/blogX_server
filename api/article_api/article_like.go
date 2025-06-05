@@ -7,8 +7,9 @@ import (
 	"blogX_server/global"
 	"blogX_server/models"
 	"blogX_server/utils/jwts"
+	"errors"
 	"github.com/gin-gonic/gin"
-	"strings"
+	"gorm.io/gorm"
 )
 
 func (ArticleApi) ArticleLikeView(c *gin.Context) {
@@ -19,7 +20,7 @@ func (ArticleApi) ArticleLikeView(c *gin.Context) {
 	}
 
 	var a models.ArticleModel
-	err := global.DB.Preload("UserModel").Take(&a, req.ID).Error
+	err := global.DB.Take(&a, req.ID).Error
 	if err != nil {
 		res.Fail(err, "文章不存在", c)
 		return
@@ -30,7 +31,7 @@ func (ArticleApi) ArticleLikeView(c *gin.Context) {
 	var al models.ArticleLikesModel
 	err = global.DB.Take(&al, "article_id = ? and user_id = ?", a.ID, uid).Error
 	if err != nil {
-		if strings.Contains(err.Error(), "record not found") {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			err = global.DB.Create(&models.ArticleLikesModel{
 				ArticleID: a.ID,
 				UserID:    uid,
