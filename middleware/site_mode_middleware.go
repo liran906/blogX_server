@@ -11,6 +11,7 @@ import (
 )
 
 // VerifySiteModeMiddleware 博客模式下，普通用户无法操作
+// 必须要在 auth 或者 admin 中间件之后，因为要用到 MustGetClaimsFromGin()
 func VerifySiteModeMiddleware(c *gin.Context) {
 	if global.Config.Site.SiteInfo.Mode == 2 {
 		claims := jwts.MustGetClaimsFromGin(c)
