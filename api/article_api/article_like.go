@@ -6,6 +6,7 @@ import (
 	"blogX_server/common/res"
 	"blogX_server/global"
 	"blogX_server/models"
+	"blogX_server/service/redis_service/redis_article"
 	"blogX_server/utils/jwts"
 	"errors"
 	"github.com/gin-gonic/gin"
@@ -40,9 +41,10 @@ func (ArticleApi) ArticleLikeView(c *gin.Context) {
 				res.Fail(err, "点赞失败", c)
 				return
 			}
+			// redis文章点赞数+1
+			redis_article.AddArticleLike(req.ID)
 			res.SuccessWithMsg("点赞成功", c)
 			return
-			// TODO redis文章点赞数+1
 		}
 		res.Fail(err, "读取点赞数据失败", c)
 	}
@@ -51,6 +53,8 @@ func (ArticleApi) ArticleLikeView(c *gin.Context) {
 		res.Fail(err, "取消点赞失败", c)
 		return
 	}
+	// redis文章点赞数-1
+	redis_article.SubArticleLike(req.ID)
 	res.SuccessWithMsg("取消点赞成功", c)
-	// TODO redis文章点赞数-1
+	return
 }

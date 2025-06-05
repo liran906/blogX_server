@@ -1,4 +1,4 @@
-// Path: ./api/article_api/article_view_count.go
+// Path: ./api/article_api/article_read_count.go
 
 package article_api
 
@@ -6,6 +6,7 @@ import (
 	"blogX_server/common/res"
 	"blogX_server/global"
 	"blogX_server/models"
+	"blogX_server/service/redis_service/redis_article"
 	"blogX_server/utils/jwts"
 	"errors"
 	"github.com/gin-gonic/gin"
@@ -13,13 +14,13 @@ import (
 	"time"
 )
 
-type ArticleViewCountReq struct {
+type ArticleReadCountReq struct {
 	ArticleID uint `json:"articleID" binding:"required"`
-	Interval  uint `json:"interval"` // 秒单位
+	Interval  uint `json:"interval"` // TODO 秒单位
 }
 
-func (ArticleApi) ArticleViewCountView(c *gin.Context) {
-	req := c.MustGet("bindReq").(ArticleViewCountReq)
+func (ArticleApi) ArticleReadCountView(c *gin.Context) {
+	req := c.MustGet("bindReq").(ArticleReadCountReq)
 	var a models.ArticleModel
 	err := global.DB.Take(&a, "id = ? AND status = ?", req.ArticleID, 3).Error
 	if err != nil {
@@ -34,18 +35,26 @@ func (ArticleApi) ArticleViewCountView(c *gin.Context) {
 		return
 	}
 
+	if redis_article.HasUserArticleHistoryCacheToday(a.ID, claims.UserID) {
+		res.SuccessWithMsg("今日已有足迹", c)
+		return
+	}
+
+	// 其实下面关于 mysql 的判断都可以省略，记录全部存入缓存，每天固定时间同步即可。
+	// 不过这里就按照教程吧，还是写入 mysql
+
 	// 查这个文章今天有没有在足迹里面
 	var his models.UserArticleHistoryModel
 	err = global.DB.Take(&his,
-		"user_id = ? AND article_id = ? AND created_at < ? AND created_at > ?",
+		"user_id = ? AND article_id = ? AND created_at < ? AND created_at >= ?",
 		claims.UserID,
 		req.ArticleID,
-		time.Now().Format("2006-01-02")+" 23:59:59",
+		time.Now().AddDate(0, 0, 1).Format("2006-01-02")+" 00:00:00",
 		time.Now().Format("2006-01-02")+" 00:00:00",
 	).Error
 	if err == nil {
 		// 有足迹
-		res.SuccessWithMsg("今日已有足迹", c)
+		res.SuccessWithMsg("今日已有足迹!", c)
 		return
 	}
 	// 没有足迹
@@ -57,6 +66,9 @@ func (ArticleApi) ArticleViewCountView(c *gin.Context) {
 			res.Fail(err, "创建失败", c)
 			return
 		}
+		// 写入逻辑
+		redis_article.SetUserArticleHistoryCacheToday(a.ID, claims.UserID)
+		redis_article.AddArticleRead(req.ArticleID)
 		res.SuccessWithMsg("成功", c)
 		return
 	} else {

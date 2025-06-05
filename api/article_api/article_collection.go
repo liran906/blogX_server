@@ -6,6 +6,7 @@ import (
 	"blogX_server/common/res"
 	"blogX_server/global"
 	"blogX_server/models"
+	"blogX_server/service/redis_service/redis_article"
 	"blogX_server/utils/jwts"
 	"errors"
 	"github.com/gin-gonic/gin"
@@ -79,8 +80,8 @@ func (ArticleApi) ArticleCollectView(c *gin.Context) {
 			}
 			// 更新数量
 			global.DB.Model(&cf).Update("article_count", gorm.Expr("article_count - 1"))
+			redis_article.SubArticleCollect(req.ArticleID)
 			res.SuccessWithMsg("取消收藏成功", c)
-			// TODO 更新 redis
 			return
 		} else {
 			res.Fail(err, "查询数据库失败", c)
@@ -89,6 +90,6 @@ func (ArticleApi) ArticleCollectView(c *gin.Context) {
 	}
 	// 更新数量
 	global.DB.Model(&cf).Update("article_count", gorm.Expr("article_count + 1"))
+	redis_article.AddArticleCollect(req.ArticleID)
 	res.SuccessWithMsg("收藏成功", c)
-	// TODO 更新 redis
 }

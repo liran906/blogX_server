@@ -7,6 +7,7 @@ import (
 	"blogX_server/global"
 	"blogX_server/models"
 	"blogX_server/models/enum"
+	"blogX_server/service/redis_service/redis_article"
 	"blogX_server/utils/jwts"
 	"github.com/gin-gonic/gin"
 )
@@ -30,6 +31,7 @@ func (ArticleApi) ArticleDetailView(c *gin.Context) {
 		res.Fail(err, "文章不存在", c)
 		return
 	}
+	_ = redis_article.GetAllTypesForArticle(&a) // 读取缓存数据
 
 	// 提取身份信息，判断查询种类
 	claims, err := jwts.ParseTokenFromRequest(c)

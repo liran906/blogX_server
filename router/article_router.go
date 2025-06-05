@@ -21,5 +21,5 @@ func ArticleRouter(rg *gin.RouterGroup) {
 	rg.POST("article/review", mdw.BindJsonMiddleware[article_api.ArticleReviewReq], mdw.AdminMiddleware, app.ArticleReviewView)
 	rg.POST("article/like/:id", mdw.BindUriMiddleware[models.IDRequest], mdw.AuthMiddleware, app.ArticleLikeView)
 	rg.POST("article/collect/", mdw.BindJsonMiddleware[article_api.ArticleCollectReq], mdw.AuthMiddleware, app.ArticleCollectView)
-	rg.POST("article/history", mdw.BindJsonMiddleware[article_api.ArticleViewCountReq], app.ArticleViewCountView)
+	rg.POST("article/history", mdw.BindJsonMiddleware[article_api.ArticleReadCountReq], app.ArticleReadCountView)
 }

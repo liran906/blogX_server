@@ -8,6 +8,7 @@ import (
 	"blogX_server/global"
 	"blogX_server/models"
 	"blogX_server/models/enum"
+	"blogX_server/service/redis_service/redis_article"
 	"blogX_server/utils/jwts"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -142,7 +143,15 @@ func (ArticleApi) ArticleListView(c *gin.Context) {
 			res.FailWithMsg("查询失败", c)
 			return
 		}
-		res.SuccessWithList(_list, count, c)
+
+		var list []models.ArticleModel
+		for _, article := range _list {
+			article.Content = ""                              // 正文在 list 中不返回
+			_ = redis_article.GetAllTypesForArticle(&article) // 读取缓存中的数据
+			list = append(list, article)
+		}
+
+		res.SuccessWithList(list, count, c)
 	} else {
 		// 收藏文章查询
 	}
