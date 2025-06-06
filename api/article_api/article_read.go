@@ -19,6 +19,7 @@ type ArticleCountReadReq struct {
 	Interval  uint `json:"interval"` // TODO 秒单位
 }
 
+// ArticleCountReadView 增加浏览记录
 func (ArticleApi) ArticleCountReadView(c *gin.Context) {
 	req := c.MustGet("bindReq").(ArticleCountReadReq)
 	var a models.ArticleModel

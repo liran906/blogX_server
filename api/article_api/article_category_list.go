@@ -41,6 +41,8 @@ func (ArticleApi) ArticleCategoryListView(c *gin.Context) {
 		return
 	}
 
+	req.PageInfo.Normalize()
+
 	// 解析时间戳并查询
 	query, err := common.TimeQuery(req.StartTime, req.EndTime)
 	if err != nil {

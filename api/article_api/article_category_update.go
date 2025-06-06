@@ -40,7 +40,8 @@ func (ArticleApi) ArticleCategoryUpdateView(c *gin.Context) {
 	}
 
 	log := log_service.GetActionLog(c)
-	log.ShowAll()
+	log.ShowRequest()
+	log.ShowResponse()
 	log.SetLevel(enum.LogTraceLevel)
 	log.SetTitle("更新文章分类")
 

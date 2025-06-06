@@ -101,6 +101,8 @@ func (ArticleApi) ArticleUpdateView(c *gin.Context) {
 	}
 	if req.Status == enum.ArticleStatusReview && global.Config.Site.Article.AutoApprove {
 		m["status"] = enum.ArticleStatusPublish
+	} else {
+		// TODO 要把已收藏这篇文章的取消
 	}
 
 	// 入库

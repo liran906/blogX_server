@@ -1,4 +1,4 @@
-// Path: ./api/article_api/article_collection.go
+// Path: ./api/article_api/article_collect.go
 
 package article_api
 
@@ -22,11 +22,13 @@ type ArticleCollectReq struct {
 	CollectionID uint `json:"collectionID"`
 }
 
+// ArticleCollectView 收藏某篇文章
 func (ArticleApi) ArticleCollectView(c *gin.Context) {
 	req := c.MustGet("bindReq").(ArticleCollectReq)
 	uid := jwts.MustGetClaimsFromGin(c).UserID
 	var cf models.CollectionFolderModel
 
+	// 只允许收藏已发布状态的文章
 	var a models.ArticleModel
 	err := global.DB.Take(&a, "id = ? AND status = ?", req.ArticleID, 3).Error
 	if err != nil {

@@ -11,9 +11,7 @@ import (
 // 基本方法
 
 func update(t articleCacheType, articleID uint, delta int) {
-	num, _ := global.Redis.HGet(string(t), strconv.Itoa(int(articleID))).Int()
-	num += delta
-	global.Redis.HSet(string(t), strconv.Itoa(int(articleID)), strconv.Itoa(num))
+	global.Redis.HIncrBy(string(t), strconv.Itoa(int(articleID)), int64(delta))
 }
 
 func set(t articleCacheType, articleID uint, n int) {

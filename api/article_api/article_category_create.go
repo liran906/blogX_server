@@ -33,7 +33,8 @@ func (ArticleApi) ArticleCategoryCreateView(c *gin.Context) {
 	}
 
 	log := log_service.GetActionLog(c)
-	log.ShowAll()
+	log.ShowRequest()
+	log.ShowResponse()
 	log.SetLevel(enum.LogTraceLevel)
 	log.SetTitle("创建文章分类")
 

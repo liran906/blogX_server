@@ -98,6 +98,9 @@ func ListQuery[T any](model T, options Options) (list []T, count int, err error)
 	} else {
 		if options.DefaultOrder != "" {
 			query = query.Order(options.DefaultOrder)
+		} else {
+			// 留空就按时间倒序
+			query = query.Order("created_at desc")
 		}
 	}
 

@@ -70,9 +70,9 @@ func GetAllTypesForArticle(article *models.ArticleModel) (ok bool) {
 		return false
 	}
 	mps := GetAllTypes(article.ID)
-	article.ReadCount = mps["read"]
-	article.LikeCount = mps["like"]
-	article.CollectCount = mps["collect"]
-	article.CommentCount = mps["comment"]
+	article.ReadCount += mps["read"]
+	article.LikeCount += mps["like"]
+	article.CollectCount += mps["collect"]
+	article.CommentCount += mps["comment"]
 	return true
 }

@@ -16,12 +16,11 @@ import (
 
 type ArticleListReq struct {
 	common.PageInfo
-	UserID          uint               `form:"userID"`
-	CategoryID      *uint              `form:"categoryID"`
-	Status          enum.ArticleStatus `form:"status"`
-	CollectionQuery bool               `form:"viewCollect"` // 查看收藏
-	StartTime       string             `form:"startTime"`   // format "2006-01-02 15:04:05"
-	EndTime         string             `form:"endTime"`
+	UserID     uint               `form:"userID"`
+	CategoryID *uint              `form:"categoryID"`
+	Status     enum.ArticleStatus `form:"status"`
+	StartTime  string             `form:"startTime"` // format "2006-01-02 15:04:05"
+	EndTime    string             `form:"endTime"`
 }
 
 type ArticleListResp struct {
@@ -60,20 +59,16 @@ func (ArticleApi) ArticleListView(c *gin.Context) {
 		return
 	}
 	var u models.UserModel
-	err = global.DB.Preload("UserConfigModel").Take(&u, req.UserID).Error
+	err = global.DB.Take(&u, req.UserID).Error
 	if err != nil {
 		res.FailWithMsg("用户不存在", c)
 		return
 	}
 
-	// 使 limit 和 page 合理，省的后面再 return
-	req.PageInfo.Normalize()
-
 	// 搜索限制
 	switch queryType {
 	case 1: // 未登录
 		req.Status = enum.ArticleStatusPublish
-		req.CollectionQuery = false
 		req.PageInfo.Order = ""
 		req.StartTime = ""
 		req.EndTime = ""
@@ -82,9 +77,6 @@ func (ArticleApi) ArticleListView(c *gin.Context) {
 			return
 		}
 	case 2: // 已登录查别人
-		if !u.UserConfigModel.DisplayCollections {
-			req.CollectionQuery = false
-		}
 		req.Status = enum.ArticleStatusPublish
 		// 情况 3 和 4 都是最高权限，不做限制
 	}
@@ -132,44 +124,40 @@ func (ArticleApi) ArticleListView(c *gin.Context) {
 
 	req.PageInfo.Normalize()
 
-	if !req.CollectionQuery {
-		// 发布文章查询
-		_list, count, err := common.ListQuery(
-			models.ArticleModel{
-				UserID:     req.UserID,
-				CategoryID: req.CategoryID,
-				Status:     req.Status,
-			},
-			common.Options{
-				PageInfo:     req.PageInfo,
-				Likes:        []string{"title"},
-				Preloads:     []string{"UserModel", "CategoryModel"},
-				Where:        query,
-				DefaultOrder: defaultOrder,
-				Debug:        true,
-			})
-		if err != nil {
-			res.Fail(err, "查询失败", c)
-			return
-		}
-
-		var list []ArticleListResp
-		for _, article := range _list {
-			article.Content = ""                              // 正文在 list 中不返回
-			_ = redis_article.GetAllTypesForArticle(&article) // 读取缓存中的数据
-			data := ArticleListResp{ // 响应结构体
-				ArticleModel:  article,
-				UserNickname:  article.UserModel.Nickname,
-				UserAvatarURL: article.UserModel.AvatarURL,
-			}
-			if article.CategoryModel != nil {
-				// 如果分类不为空，赋值给响应结构体
-				data.CategoryName = &article.CategoryModel.Name
-			}
-			list = append(list, data)
-		}
-		res.SuccessWithList(list, count, c)
-	} else {
-		// 收藏文章查询
+	// 发布文章查询
+	_list, count, err := common.ListQuery(
+		models.ArticleModel{
+			UserID:     req.UserID,
+			CategoryID: req.CategoryID,
+			Status:     req.Status,
+		},
+		common.Options{
+			PageInfo:     req.PageInfo,
+			Likes:        []string{"title"},
+			Preloads:     []string{"UserModel", "CategoryModel"},
+			Where:        query,
+			DefaultOrder: defaultOrder,
+			Debug:        true,
+		})
+	if err != nil {
+		res.Fail(err, "查询失败", c)
+		return
 	}
+
+	var list []ArticleListResp
+	for _, article := range _list {
+		article.Content = ""                              // 正文在 list 中不返回
+		_ = redis_article.GetAllTypesForArticle(&article) // 读取缓存中的数据
+		data := ArticleListResp{ // 响应结构体
+			ArticleModel:  article,
+			UserNickname:  article.UserModel.Nickname,
+			UserAvatarURL: article.UserModel.AvatarURL,
+		}
+		if article.CategoryModel != nil {
+			// 如果分类不为空，赋值给响应结构体
+			data.CategoryName = &article.CategoryModel.Name
+		}
+		list = append(list, data)
+	}
+	res.SuccessWithList(list, count, c)
 }
