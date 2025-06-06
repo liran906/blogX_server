@@ -118,7 +118,7 @@ func (ArticleApi) ArticleCollectionListView(c *gin.Context) {
 	for _, article := range _list {
 		article.Content = ""                              // 正文在 list 中不返回
 		_ = redis_article.GetAllTypesForArticle(&article) // 读取缓存中的数据
-		data := ArticleListResp{ // 响应结构体
+		data := ArticleListResp{                          // 响应结构体
 			ArticleModel:  article,
 			UserNickname:  article.UserModel.Nickname,
 			UserAvatarURL: article.UserModel.AvatarURL,
