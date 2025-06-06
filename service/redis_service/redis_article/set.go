@@ -4,6 +4,7 @@ package redis_article
 
 import (
 	"blogX_server/global"
+	"github.com/sirupsen/logrus"
 	"strconv"
 )
 
@@ -17,6 +18,13 @@ func update(t articleCacheType, articleID uint, delta int) {
 
 func set(t articleCacheType, articleID uint, n int) {
 	global.Redis.HSet(string(t), strconv.Itoa(int(articleID)), strconv.Itoa(n))
+}
+
+func Clear() {
+	err := global.Redis.Del(string(articleReadCount), string(articleLikeCount), string(articleCollectCount), string(articleCommentCount)).Err()
+	if err != nil {
+		logrus.Errorf("Failed to clear article redis cache: %v", err)
+	}
 }
 
 // 增减更新数值

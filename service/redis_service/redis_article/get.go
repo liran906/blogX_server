@@ -43,16 +43,16 @@ func getAllArticles(t articleCacheType) map[uint]int {
 	return mps
 }
 
-func GetReadCounts() map[uint]int {
+func GetAllReadCounts() map[uint]int {
 	return getAllArticles(articleReadCount)
 }
-func GetLikeCounts() map[uint]int {
+func GetAllLikeCounts() map[uint]int {
 	return getAllArticles(articleLikeCount)
 }
-func GetCollectCounts() map[uint]int {
+func GetAllCollectCounts() map[uint]int {
 	return getAllArticles(articleCollectCount)
 }
-func GetCommentCounts() map[uint]int {
+func GetAllCommentCounts() map[uint]int {
 	return getAllArticles(articleCommentCount)
 }
 

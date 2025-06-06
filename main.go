@@ -7,6 +7,7 @@ import (
 	"blogX_server/flags"
 	"blogX_server/global"
 	"blogX_server/router"
+	"blogX_server/service/cron_service"
 )
 
 func main() {
@@ -17,6 +18,7 @@ func main() {
 	global.Redis = core.InitRedis()            // 连接 redis
 	global.ESClient = core.InitES()            // 连接 es
 	flags.Run()                                // 命令行操作: 数据库迁移 ES建索引等
-	core.InitMysqlES()
-	router.Run() // 启动 web 服务
+	core.InitMysqlES()                         // es 开启同步（协程）
+	cron_service.Cron()                        // 定时任务（协程）
+	router.Run()                               // 启动 web 服务
 }
