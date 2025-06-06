@@ -52,6 +52,8 @@ func (LogApi) LogListView(c *gin.Context) {
 		return
 	}
 
+	req.PageInfo.Normalize()
+
 	_list, count, err := common.ListQuery(
 		models.LogModel{ // 精确匹配参数
 			LogType:     req.LogType,
@@ -71,6 +73,10 @@ func (LogApi) LogListView(c *gin.Context) {
 			DefaultOrder: "id desc",
 		},
 	)
+	if err != nil {
+		res.Fail(err, "查询失败", c)
+		return
+	}
 
 	// 下面注释的代码，已经封装到 common.ListQuery() 中了
 	/*

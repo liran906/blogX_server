@@ -63,6 +63,8 @@ func (BannerApi) BannerListView(c *gin.Context) {
 		return
 	}
 
+	req.PageInfo.Normalize()
+
 	list, count, err := common.ListQuery(
 		models.BannerModel{
 			Activated: req.Activated,
@@ -74,7 +76,7 @@ func (BannerApi) BannerListView(c *gin.Context) {
 			Debug:    false,
 		})
 	if err != nil {
-		res.FailWithError(err, c)
+		res.Fail(err, "查询失败", c)
 		return
 	}
 	res.SuccessWithList(list, count, c)

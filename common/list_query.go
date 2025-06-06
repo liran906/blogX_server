@@ -15,6 +15,11 @@ type PageInfo struct {
 	Order string `form:"order"` // 这个 order 由前端写入，优先级高于 defaultorder
 }
 
+func (p *PageInfo) Normalize() {
+	p.Page = p.GetPage()
+	p.Limit = p.GetLimit()
+}
+
 // GetPage 确保 page 合理
 func (p *PageInfo) GetPage() int {
 	if p.Page < 1 {

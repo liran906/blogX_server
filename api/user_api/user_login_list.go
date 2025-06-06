@@ -61,6 +61,8 @@ func (UserApi) UserLoginListView(c *gin.Context) {
 		return
 	}
 
+	req.PageInfo.Normalize()
+
 	_list, count, err := common.ListQuery(
 		models.LogModel{ // 精确匹配参数
 			LogType:    enum.LoginLogType,
@@ -78,7 +80,7 @@ func (UserApi) UserLoginListView(c *gin.Context) {
 		},
 	)
 	if err != nil {
-		res.FailWithMsg("查询失败: "+err.Error(), c)
+		res.Fail(err, "查询失败", c)
 		return
 	}
 

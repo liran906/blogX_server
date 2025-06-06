@@ -43,3 +43,16 @@ func HasUserArticleHistoryCacheToday(articleID, userId uint) (ok bool) {
 	}
 	return exists
 }
+
+func RemoveUserArticleHistoryCacheToday(articleID, userId uint) {
+	key := fmt.Sprintf("history_%d", userId)
+	field := fmt.Sprintf("a_%d", articleID)
+
+	if HasUserArticleHistoryCacheToday(articleID, userId) {
+		err := global.Redis.HDel(key, field).Err()
+		if err != nil {
+			logrus.Error("Redis HDel error: " + err.Error())
+			return
+		}
+	}
+}

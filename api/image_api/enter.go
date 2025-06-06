@@ -84,6 +84,8 @@ func (ImageApi) ImageListView(c *gin.Context) {
 		return
 	}
 
+	req.PageInfo.Normalize()
+
 	_list, count, err := common.ListQuery(models.ImageModel{
 		Filename: req.Filename,
 		Path:     req.Path,
@@ -97,7 +99,7 @@ func (ImageApi) ImageListView(c *gin.Context) {
 			Debug:    false,
 		})
 	if err != nil {
-		res.FailWithError(err, c)
+		res.Fail(err, "查询失败", c)
 		return
 	}
 

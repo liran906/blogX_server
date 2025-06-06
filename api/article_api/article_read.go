@@ -1,4 +1,4 @@
-// Path: ./api/article_api/article_read_count.go
+// Path: ./api/article_api/article_read.go
 
 package article_api
 
@@ -14,13 +14,13 @@ import (
 	"time"
 )
 
-type ArticleReadCountReq struct {
+type ArticleCountReadReq struct {
 	ArticleID uint `json:"articleID" binding:"required"`
 	Interval  uint `json:"interval"` // TODO 秒单位
 }
 
-func (ArticleApi) ArticleReadCountView(c *gin.Context) {
-	req := c.MustGet("bindReq").(ArticleReadCountReq)
+func (ArticleApi) ArticleCountReadView(c *gin.Context) {
+	req := c.MustGet("bindReq").(ArticleCountReadReq)
 	var a models.ArticleModel
 	err := global.DB.Take(&a, "id = ? AND status = ?", req.ArticleID, 3).Error
 	if err != nil {

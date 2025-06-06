@@ -14,14 +14,21 @@ func ArticleRouter(rg *gin.RouterGroup) {
 	app := api.App.ArticleModel
 
 	rg.POST("article", mdw.BindJsonMiddleware[article_api.ArticleCreateReq], mdw.CaptchaMiddleware, mdw.AuthMiddleware, mdw.VerifySiteModeMiddleware, app.ArticleCreateView)
-	rg.GET("article", mdw.BindQueryMiddleware[article_api.ArticleListReq], app.ArticleListView)
-	rg.GET("article/:id", mdw.BindUriMiddleware[models.IDRequest], app.ArticleDetailView)
-	rg.PUT("article/pin", mdw.BindJsonMiddleware[article_api.ArticlePinReq], mdw.AuthMiddleware, app.ArticlePinView)
 	rg.PUT("article", mdw.BindJsonMiddleware[article_api.ArticleUpdateReq], mdw.AuthMiddleware, mdw.VerifySiteModeMiddleware, app.ArticleUpdateView)
-	rg.POST("article/review", mdw.BindJsonMiddleware[article_api.ArticleReviewReq], mdw.AdminMiddleware, app.ArticleReviewView)
-	rg.POST("article/like/:id", mdw.BindUriMiddleware[models.IDRequest], mdw.AuthMiddleware, app.ArticleLikeView)
-	rg.POST("article/collect/", mdw.BindJsonMiddleware[article_api.ArticleCollectReq], mdw.AuthMiddleware, app.ArticleCollectView)
-	rg.POST("article/history", mdw.BindJsonMiddleware[article_api.ArticleReadCountReq], app.ArticleReadCountView)
 	rg.DELETE("article/:id", mdw.BindUriMiddleware[models.IDRequest], mdw.AuthMiddleware, app.ArticleRemoveView)
 	rg.DELETE("article", mdw.BindJsonMiddleware[models.RemoveRequest], mdw.AdminMiddleware, app.ArticleBatchRemoveView)
+
+	rg.GET("article", mdw.BindQueryMiddleware[article_api.ArticleListReq], app.ArticleListView)
+	rg.GET("article/:id", mdw.BindUriMiddleware[models.IDRequest], app.ArticleDetailView)
+
+	rg.PUT("article/pin", mdw.BindJsonMiddleware[article_api.ArticlePinReq], mdw.AuthMiddleware, app.ArticlePinView)
+
+	rg.POST("article/review", mdw.BindJsonMiddleware[article_api.ArticleReviewReq], mdw.AdminMiddleware, app.ArticleReviewView)
+
+	rg.POST("article/like/:id", mdw.BindUriMiddleware[models.IDRequest], mdw.AuthMiddleware, app.ArticleLikeView)
+	rg.POST("article/collect/", mdw.BindJsonMiddleware[article_api.ArticleCollectReq], mdw.AuthMiddleware, app.ArticleCollectView)
+
+	rg.POST("article/history", mdw.BindJsonMiddleware[article_api.ArticleCountReadReq], app.ArticleCountReadView)
+	rg.GET("article/history", mdw.BindQueryMiddleware[article_api.ArticleReadListReq], mdw.AuthMiddleware, app.ArticleReadListView)
+	rg.DELETE("article/history", mdw.BindJsonMiddleware[models.RemoveRequest], mdw.AuthMiddleware, app.ArticleReadRemoveView)
 }
