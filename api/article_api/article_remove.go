@@ -55,6 +55,11 @@ func (ArticleApi) ArticleRemoveView(c *gin.Context) {
 func (ArticleApi) ArticleBatchRemoveView(c *gin.Context) {
 	req := c.MustGet("bindReq").(models.RemoveRequest)
 
+	if len(req.IDList) == 0 {
+		res.FailWithMsg("没有指定删除对象", c)
+		return
+	}
+
 	// log
 	log := log_service.GetActionLog(c)
 	log.ShowAll()

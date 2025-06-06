@@ -14,7 +14,9 @@ import (
 
 type ArticleReadListReq struct {
 	common.PageInfo
-	UserId uint `form:"userID"`
+	UserId    uint   `form:"userID"`
+	StartTime string `form:"startTime"` // format "2006-01-02 15:04:05"
+	EndTime   string `form:"endTime"`
 }
 
 type ArticleReadListResp struct {
@@ -46,11 +48,19 @@ func (ArticleApi) ArticleReadListView(c *gin.Context) {
 
 	req.PageInfo.Normalize()
 
+	// 解析时间戳并查询
+	query, err := common.TimeQuery(req.StartTime, req.EndTime)
+	if err != nil {
+		res.FailWithMsg(err.Error(), c)
+		return
+	}
+
 	// 查询
 	_list, count, err := common.ListQuery(
 		models.UserArticleHistoryModel{UserID: req.UserId},
 		common.Options{
 			PageInfo: req.PageInfo,
+			Where:    query,
 			Preloads: []string{"UserModel", "ArticleModel"},
 		})
 	if err != nil {

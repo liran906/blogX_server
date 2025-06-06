@@ -25,8 +25,8 @@ type ArticleModel struct {
 	PinnedByAdmin  uint               `gorm:"not null; default:0" json:"pinnedByAdmin"`    // 0就是没有被置顶，其他数字就是置顶顺序，1为最顶
 
 	// FK
-	UserModel     UserModel     `gorm:"foreignKey:UserID;references:ID" json:"-"`
-	CategoryModel CategoryModel `gorm:"foreignKey:CategoryID;references:ID" json:"category"`
+	UserModel     UserModel      `gorm:"foreignKey:UserID;references:ID" json:"-"`
+	CategoryModel *CategoryModel `gorm:"foreignKey:CategoryID;references:ID" json:"-"`
 }
 
 // `go:embed`用于在 编译时 把文件内容打包进 Go 二进制文件 中。这样就不需要在运行时再去加载外部文件了。

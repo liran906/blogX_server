@@ -31,4 +31,9 @@ func ArticleRouter(rg *gin.RouterGroup) {
 	rg.POST("article/history", mdw.BindJsonMiddleware[article_api.ArticleCountReadReq], app.ArticleCountReadView)
 	rg.GET("article/history", mdw.BindQueryMiddleware[article_api.ArticleReadListReq], mdw.AuthMiddleware, app.ArticleReadListView)
 	rg.DELETE("article/history", mdw.BindJsonMiddleware[models.RemoveRequest], mdw.AuthMiddleware, app.ArticleReadRemoveView)
+
+	rg.POST("article/category", mdw.BindJsonMiddleware[article_api.ArticleCategoryCreateReq], mdw.AuthMiddleware, app.ArticleCategoryCreateView)
+	rg.PUT("article/category", mdw.BindJsonMiddleware[article_api.ArticleCategoryUpdateReq], mdw.AuthMiddleware, app.ArticleCategoryUpdateView)
+	rg.GET("article/category", mdw.BindQueryMiddleware[article_api.ArticleCategoryListReq], mdw.AuthMiddleware, app.ArticleCategoryListView)
+	rg.DELETE("article/category", mdw.BindJsonMiddleware[models.RemoveRequest], mdw.AuthMiddleware, app.ArticleCategoryRemoveView)
 }

@@ -24,6 +24,13 @@ type ArticleListReq struct {
 	EndTime         string             `form:"endTime"`
 }
 
+type ArticleListResp struct {
+	models.ArticleModel
+	UserNickname  string  `json:"userNickname,omitempty"`
+	UserAvatarURL string  `json:"userAvatarURL,omitempty"`
+	CategoryName  *string `json:"categoryName,omitempty"`
+}
+
 // ArticleListView 某个用户发表（或收藏）的文章列表
 func (ArticleApi) ArticleListView(c *gin.Context) {
 	req := c.MustGet("bindReq").(ArticleListReq)
@@ -60,8 +67,7 @@ func (ArticleApi) ArticleListView(c *gin.Context) {
 	}
 
 	// 使 limit 和 page 合理，省的后面再 return
-	req.PageInfo.GetLimit()
-	req.PageInfo.GetPage()
+	req.PageInfo.Normalize()
 
 	// 搜索限制
 	switch queryType {
@@ -137,6 +143,7 @@ func (ArticleApi) ArticleListView(c *gin.Context) {
 			common.Options{
 				PageInfo:     req.PageInfo,
 				Likes:        []string{"title"},
+				Preloads:     []string{"UserModel", "CategoryModel"},
 				Where:        query,
 				DefaultOrder: defaultOrder,
 				Debug:        true,
@@ -146,13 +153,21 @@ func (ArticleApi) ArticleListView(c *gin.Context) {
 			return
 		}
 
-		var list []models.ArticleModel
+		var list []ArticleListResp
 		for _, article := range _list {
 			article.Content = ""                              // 正文在 list 中不返回
 			_ = redis_article.GetAllTypesForArticle(&article) // 读取缓存中的数据
-			list = append(list, article)
+			data := ArticleListResp{ // 响应结构体
+				ArticleModel:  article,
+				UserNickname:  article.UserModel.Nickname,
+				UserAvatarURL: article.UserModel.AvatarURL,
+			}
+			if article.CategoryModel != nil {
+				// 如果分类不为空，赋值给响应结构体
+				data.CategoryName = &article.CategoryModel.Name
+			}
+			list = append(list, data)
 		}
-
 		res.SuccessWithList(list, count, c)
 	} else {
 		// 收藏文章查询

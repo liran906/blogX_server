@@ -13,7 +13,7 @@ import (
 // 所以这里用 global.DBMaster (主库)避免问题
 func CreateUserAndUserConfig(u models.UserModel, uc models.UserConfigModel) (err error) {
 	// 注意这里是 DBMaster
-	err = global.DBMaster.Transaction(func(tx *gorm.DB) (err error) {
+	return global.DBMaster.Transaction(func(tx *gorm.DB) (err error) {
 		// 创建 User
 		err = tx.Create(&u).Error
 		if err != nil {
@@ -38,11 +38,6 @@ func CreateUserAndUserConfig(u models.UserModel, uc models.UserConfigModel) (err
 		// 成功创建
 		return nil
 	})
-
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 // CreateUserAndUserConfig2 不走事务的存储，其实现在有专门的主库变量，现在也用不上了
