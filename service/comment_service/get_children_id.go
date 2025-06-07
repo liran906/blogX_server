@@ -1,4 +1,4 @@
-// Path: ./service/comment_service/get_children.go
+// Path: ./service/comment_service/get_children_id.go
 
 package comment_service
 
@@ -50,7 +50,7 @@ func GetAllChildrenCidOfRoot(rootID *uint) (childrenCid []uint, err error) {
 // GetAllChildrenCid 递归查询所有当前节点的所有子孙节点
 func GetAllChildrenCid(commentID *uint) (childrenCid []uint, err error) {
 	if commentID == nil {
-		return nil, errors.New("imported comment id is nil")
+		return
 	}
 	var cmt models.CommentModel
 	err = global.DB.Preload("ChildListModel").Take(&cmt, commentID).Error
