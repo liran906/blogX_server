@@ -34,7 +34,7 @@ func PreloadAllChildren(comment *models.CommentModel) {
 func PreloadAllChildrenResponse(cid uint) (resp *CommentResponse) {
 	var comment models.CommentModel
 	global.DB.Preload("UserModel").Preload("ChildListModel").Take(&comment, cid)
-	
+
 	resp = &CommentResponse{
 		ID:            comment.ID,
 		CreatedAt:     comment.CreatedAt,
@@ -45,7 +45,7 @@ func PreloadAllChildrenResponse(cid uint) (resp *CommentResponse) {
 		ArticleID:     comment.ArticleID,
 		ParentID:      comment.ParentID,
 		LikeCount:     comment.LikeCount,
-		ReplyCount:    0,
+		ReplyCount:    len(comment.ChildListModel),
 		ChildComments: []*CommentResponse{},
 	}
 	for _, child := range comment.ChildListModel {

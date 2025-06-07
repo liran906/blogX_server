@@ -14,5 +14,5 @@ type CommentModel struct {
 	ArticleModel   ArticleModel    `gorm:"foreignKey:ArticleID;references:ID" json:"-"`
 	ParentModel    *CommentModel   `gorm:"foreignKey:ParentID;references:ID" json:"-"`
 	RootModel      *CommentModel   `gorm:"foreignKey:RootID;references:ID" json:"-"`
-	ChildListModel []*CommentModel `gorm:"foreignKey:ParentID" json:"childList"` // 这里不确定是否要 FK。按照 GPT 连字段都不用
+	ChildListModel []*CommentModel `gorm:"foreignKey:ParentID" json:"childList"`
 }

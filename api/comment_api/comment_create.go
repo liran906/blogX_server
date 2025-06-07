@@ -6,6 +6,7 @@ import (
 	"blogX_server/common/res"
 	"blogX_server/global"
 	"blogX_server/models"
+	"blogX_server/models/enum"
 	"blogX_server/service/comment_service"
 	"blogX_server/service/log_service"
 	"blogX_server/service/redis_service/redis_article"
@@ -20,14 +21,20 @@ type CommentCreateReq struct {
 	ParentID  *uint  `json:"parentID"`
 }
 
-func (commentApi *CommentApi) CommentCreateView(c *gin.Context) {
+func (CommentApi) CommentCreateView(c *gin.Context) {
 	req := c.MustGet("bindReq").(CommentCreateReq)
 	claims := jwts.MustGetClaimsFromGin(c)
 
-	var a models.ArticleModel
-	err := global.DB.Take(&a, req.ArticleID).Error
+	var article models.ArticleModel
+	err := global.DB.Take(&article, req.ArticleID).Error
 	if err != nil {
 		res.Fail(err, "文章不存在", c)
+		return
+	}
+
+	// 只能评论已发布的文章
+	if article.Status != enum.ArticleStatusPublish {
+		res.FailWithMsg("无法评论该文章", c)
 		return
 	}
 
