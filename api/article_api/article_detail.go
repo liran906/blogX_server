@@ -31,7 +31,7 @@ func (ArticleApi) ArticleDetailView(c *gin.Context) {
 		res.Fail(err, "文章不存在", c)
 		return
 	}
-	_ = redis_article.GetAllTypesForArticle(&a) // 读取缓存数据
+	_ = redis_article.UpdateCachedFieldsForArticle(&a) // 读取缓存数据
 
 	// 提取身份信息，判断查询种类
 	claims, err := jwts.ParseTokenFromRequest(c)

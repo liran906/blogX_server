@@ -7,7 +7,6 @@ import (
 	"blogX_server/global"
 	"blogX_server/models"
 	"blogX_server/models/enum"
-	"blogX_server/service/comment_service"
 	"blogX_server/service/log_service"
 	"blogX_server/service/redis_service/redis_article"
 	"blogX_server/utils/jwts"
@@ -40,10 +39,21 @@ func (CommentApi) CommentCreateView(c *gin.Context) {
 
 	req.Content = xss.Filter(req.Content)
 
-	rootID, err := comment_service.GetRootCommentID(req.ParentID)
-	if err != nil {
-		res.Fail(err, "获取根评论失败", c)
-		return
+	var depth = 0
+	var rootID *uint
+	if req.ParentID != nil {
+		var parent models.CommentModel
+		err := global.DB.Take(&parent, req.ParentID).Error
+		if err != nil {
+			res.Fail(err, "获取父评论失败", c)
+			return
+		}
+		depth = parent.Depth + 1
+		rootID = parent.RootID
+		if depth >= global.Config.Site.Article.CommentDepth {
+			res.FailWithMsg("评论层级超过限制", c)
+			return
+		}
 	}
 
 	log := log_service.GetActionLog(c)
@@ -56,6 +66,7 @@ func (CommentApi) CommentCreateView(c *gin.Context) {
 		ArticleID: req.ArticleID,
 		ParentID:  req.ParentID,
 		RootID:    rootID,
+		Depth:     depth,
 	}
 
 	err = global.DB.Create(&cmt).Error

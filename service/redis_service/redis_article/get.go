@@ -56,7 +56,7 @@ func GetAllCommentCounts() map[uint]int {
 	return getAllArticles(articleCommentCount)
 }
 
-func GetAllTypes(articleID uint) map[string]int {
+func GetAllFields(articleID uint) map[string]int {
 	mps := map[string]int{
 		"read":    GetArticleRead(articleID),
 		"like":    GetArticleLike(articleID),
@@ -65,11 +65,11 @@ func GetAllTypes(articleID uint) map[string]int {
 	}
 	return mps
 }
-func GetAllTypesForArticle(article *models.ArticleModel) (ok bool) {
+func UpdateCachedFieldsForArticle(article *models.ArticleModel) (ok bool) {
 	if article == nil || article.ID == 0 {
 		return false
 	}
-	mps := GetAllTypes(article.ID)
+	mps := GetAllFields(article.ID)
 	article.ReadCount += mps["read"]
 	article.LikeCount += mps["like"]
 	article.CollectCount += mps["collect"]

@@ -5,6 +5,7 @@ package comment_service
 import (
 	"blogX_server/global"
 	"blogX_server/models"
+	"fmt"
 	"time"
 )
 
@@ -17,6 +18,8 @@ type CommentResponse struct {
 	UserAvatarURL string             `json:"userAvatarURL"`
 	ArticleID     uint               `json:"articleID"`
 	ParentID      *uint              `json:"parentID"`
+	RootID        *uint              `json:"rootID"`
+	Depth         int                `json:"depth"`
 	LikeCount     int                `json:"likeCount"`
 	ReplyCount    int                `json:"replyCount"`
 	ChildComments []*CommentResponse `json:"childComments"`
@@ -32,24 +35,35 @@ func PreloadAllChildren(comment *models.CommentModel) {
 
 // PreloadAllChildrenResponse 返回一个 CommentResponse，其中的 ChildComments 逐级嵌入所有的 childCommentResponse
 func PreloadAllChildrenResponse(cid uint) (resp *CommentResponse) {
-	var comment models.CommentModel
-	global.DB.Preload("UserModel").Preload("ChildListModel").Take(&comment, cid)
+	var cmt models.CommentModel
+	global.DB.Preload("UserModel").Preload("ChildListModel").Take(&cmt, cid)
+	return PreloadAllChildrenResponseFromModel(&cmt)
+}
 
+func PreloadAllChildrenResponseFromModel(cmt *models.CommentModel) (resp *CommentResponse) {
+	// todo fix recursion
+	global.DB.Preload("UserModel").Preload("ChildListModel").First(cmt)
 	resp = &CommentResponse{
-		ID:            comment.ID,
-		CreatedAt:     comment.CreatedAt,
-		Content:       comment.Content,
-		UserID:        comment.UserID,
-		UserNickname:  comment.UserModel.Nickname,
-		UserAvatarURL: comment.UserModel.AvatarURL,
-		ArticleID:     comment.ArticleID,
-		ParentID:      comment.ParentID,
-		LikeCount:     comment.LikeCount,
-		ReplyCount:    len(comment.ChildListModel),
+		ID:            cmt.ID,
+		CreatedAt:     cmt.CreatedAt,
+		Content:       cmt.Content,
+		UserID:        cmt.UserID,
+		UserNickname:  cmt.UserModel.Nickname,
+		UserAvatarURL: cmt.UserModel.AvatarURL,
+		ArticleID:     cmt.ArticleID,
+		ParentID:      cmt.ParentID,
+		RootID:        cmt.RootID,
+		Depth:         cmt.Depth,
+		LikeCount:     cmt.LikeCount,
+		ReplyCount:    len(cmt.ChildListModel),
 		ChildComments: []*CommentResponse{},
 	}
-	for _, child := range comment.ChildListModel {
-		resp.ChildComments = append(resp.ChildComments, PreloadAllChildrenResponse(child.ID))
+	fmt.Println("current: ", cmt.ChildListModel)
+	for i := range cmt.ChildListModel {
+		child := cmt.ChildListModel[i]
+		fmt.Println("curr:", child.ID)
+		fmt.Println("child:", child.ChildListModel)
+		resp.ChildComments = append(resp.ChildComments, PreloadAllChildrenResponseFromModel(child))
 	}
 	return
 }

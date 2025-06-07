@@ -7,6 +7,7 @@ type CommentModel struct {
 	ArticleID uint   `gorm:"not null" json:"articleID"`
 	ParentID  *uint  `json:"parentID"` // 父评论
 	RootID    *uint  `json:"rootID"`   // 根评论 自己为根时为 nil
+	Depth     int    `json:"depth"`    // 评论深度
 	LikeCount int    `gorm:"not null" json:"likeCount"`
 
 	// FK

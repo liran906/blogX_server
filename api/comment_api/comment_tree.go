@@ -22,13 +22,14 @@ func (CommentApi) CommentTreeView(c *gin.Context) {
 		return
 	}
 
-	// 非管理员只能查看已发布的文章
+	// 非管理员只能查看`已发布`的文章
 	claims, _ := jwts.ParseTokenFromRequest(c)
 	if claims.Role != enum.AdminRoleType && article.Status != enum.ArticleStatusPublish {
 		res.FailWithMsg("文章不存在", c)
 		return
 	}
 
+	// 找到文章所有的根评论
 	var rootCmts []models.CommentModel
 	err = global.DB.Where("article_id = ? AND root_id IS NULL", req.ID).Find(&rootCmts).Error
 	if err != nil {
@@ -43,7 +44,7 @@ func (CommentApi) CommentTreeView(c *gin.Context) {
 
 	var list []comment_service.CommentResponse
 	for _, cmt := range rootCmts {
-		list = append(list, *comment_service.PreloadAllChildrenResponse(cmt.ID))
+		list = append(list, *comment_service.PreloadAllChildrenResponseFromModel(&cmt))
 	}
 	res.SuccessWithList(list, len(rootCmts), c)
 }
