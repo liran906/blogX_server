@@ -29,6 +29,7 @@ func Run() {
 	CaptchaRouter(nr)
 	UserRouter(nr)
 	ArticleRouter(nr)
+	CommentRouter(nr)
 
 	MytestRouter(nr) // 测试用
 
