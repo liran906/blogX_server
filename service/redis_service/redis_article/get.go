@@ -14,16 +14,16 @@ func get(t articleCacheType, articleID uint) int {
 }
 
 func GetArticleRead(articleID uint) int {
-	return get(articleReadCount, articleID)
+	return get(ArticleReadCount, articleID)
 }
 func GetArticleLike(articleID uint) int {
-	return get(articleLikeCount, articleID)
+	return get(ArticleLikeCount, articleID)
 }
 func GetArticleCollect(articleID uint) int {
-	return get(articleCollectCount, articleID)
+	return get(ArticleCollectCount, articleID)
 }
 func GetArticleComment(articleID uint) int {
-	return get(articleCommentCount, articleID)
+	return get(ArticleCommentCount, articleID)
 }
 
 func getAllArticleCache(t articleCacheType) map[uint]int {
@@ -44,16 +44,16 @@ func getAllArticleCache(t articleCacheType) map[uint]int {
 }
 
 func GetAllReadCounts() map[uint]int {
-	return getAllArticleCache(articleReadCount)
+	return getAllArticleCache(ArticleReadCount)
 }
 func GetAllLikeCounts() map[uint]int {
-	return getAllArticleCache(articleLikeCount)
+	return getAllArticleCache(ArticleLikeCount)
 }
 func GetAllCollectCounts() map[uint]int {
-	return getAllArticleCache(articleCollectCount)
+	return getAllArticleCache(ArticleCollectCount)
 }
 func GetAllCommentCounts() map[uint]int {
-	return getAllArticleCache(articleCommentCount)
+	return getAllArticleCache(ArticleCommentCount)
 }
 
 func GetAllFields(articleID uint) map[string]int {

@@ -19,7 +19,7 @@ func set(t articleCacheType, articleID uint, n int) {
 }
 
 func Clear() {
-	err := global.Redis.Del(string(articleReadCount), string(articleLikeCount), string(articleCollectCount), string(articleCommentCount)).Err()
+	err := global.Redis.Del(string(ArticleReadCount), string(ArticleLikeCount), string(ArticleCollectCount), string(ArticleCommentCount)).Err()
 	if err != nil {
 		logrus.Errorf("Failed to clear article redis cache: %v", err)
 	}
@@ -28,59 +28,59 @@ func Clear() {
 // 增减更新数值
 
 func UpdateArticleRead(articleID uint, delta int) {
-	update(articleReadCount, articleID, delta)
+	update(ArticleReadCount, articleID, delta)
 }
 func UpdateArticleLike(articleID uint, delta int) {
-	update(articleLikeCount, articleID, delta)
+	update(ArticleLikeCount, articleID, delta)
 }
 func UpdateArticleCollect(articleID uint, delta int) {
-	update(articleCollectCount, articleID, delta)
+	update(ArticleCollectCount, articleID, delta)
 }
 func UpdateArticleComment(articleID uint, delta int) {
-	update(articleCommentCount, articleID, delta)
+	update(ArticleCommentCount, articleID, delta)
 }
 
 // 加一
 
 func AddArticleRead(articleID uint) {
-	update(articleReadCount, articleID, 1)
+	update(ArticleReadCount, articleID, 1)
 }
 func AddArticleLike(articleID uint) {
-	update(articleLikeCount, articleID, 1)
+	update(ArticleLikeCount, articleID, 1)
 }
 func AddArticleCollect(articleID uint) {
-	update(articleCollectCount, articleID, 1)
+	update(ArticleCollectCount, articleID, 1)
 }
 func AddArticleComment(articleID uint) {
-	update(articleCommentCount, articleID, 1)
+	update(ArticleCommentCount, articleID, 1)
 }
 
 // 减一
 
 func SubArticleLike(articleID uint) {
-	update(articleLikeCount, articleID, -1)
+	update(ArticleLikeCount, articleID, -1)
 }
 func SubArticleRead(articleID uint) {
-	update(articleReadCount, articleID, -1)
+	update(ArticleReadCount, articleID, -1)
 }
 func SubArticleCollect(articleID uint) {
-	update(articleCollectCount, articleID, -1)
+	update(ArticleCollectCount, articleID, -1)
 }
 func SubArticleComment(articleID uint) {
-	update(articleCommentCount, articleID, -1)
+	update(ArticleCommentCount, articleID, -1)
 }
 
 // 设值
 
 func SetArticleRead(articleID uint, n int) {
-	set(articleReadCount, articleID, n)
+	set(ArticleReadCount, articleID, n)
 }
 func SetArticleLike(articleID uint, n int) {
-	set(articleLikeCount, articleID, n)
+	set(ArticleLikeCount, articleID, n)
 }
 func SetArticleCollect(articleID uint, n int) {
-	set(articleCollectCount, articleID, n)
+	set(ArticleCollectCount, articleID, n)
 }
 func SetArticleComment(articleID uint, n int) {
-	set(articleCommentCount, articleID, n)
+	set(ArticleCommentCount, articleID, n)
 }

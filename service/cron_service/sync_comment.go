@@ -3,11 +3,12 @@
 package cron_service
 
 import (
+	"blogX_server/common/transaction"
 	"blogX_server/global"
 	"blogX_server/models"
 	"blogX_server/service/redis_service/redis_comment"
+	"fmt"
 	"github.com/sirupsen/logrus"
-	"gorm.io/gorm"
 	"time"
 )
 
@@ -24,7 +25,7 @@ func SyncComment() {
 
 	// 创建一个字典记录有改变的 cid
 	var activeComments = make(map[uint]struct{})
-	maps := []map[uint]int{replyMap, likeMap}
+	maps := map[string]map[uint]int{"reply": replyMap, "like": likeMap}
 	for _, m := range maps {
 		for cid := range m { // 只要 key
 			activeComments[cid] = struct{}{}
@@ -36,7 +37,7 @@ func SyncComment() {
 		return
 	}
 
-	// 从 DB 中取出对应的文章
+	// 从 DB 中取出本次有修改的评论
 	var commentList []models.CommentModel
 	err := global.DB.Where("id IN ?", mapKeys(activeComments)).Find(&commentList).Error
 	if err != nil {
@@ -44,31 +45,44 @@ func SyncComment() {
 		return
 	}
 
-	// 遍历comment，修改数据
-	count := 0
-	for _, cmt := range commentList {
-		// 遍历每一篇文章提取出更新数据
-		updateMap := make(map[string]any, 2)
-		if d, ok := replyMap[cmt.ID]; ok && d != 0 {
-			updateMap["read_count"] = gorm.Expr("read_count + ?", d)
+	// 事务中遍历comment，修改数据
+	err = transaction.SyncCommentTx(commentList, maps)
+	if err != nil {
+		logrus.Errorf("sync comment error: %v", err)
+		if err = RollbackCommentRedis(replyMap, likeMap); err != nil {
+			logrus.Errorf("rollback to Redis error: %v", err)
+		} else {
+			logrus.Info("Redis data rolled back...")
 		}
-		if d, ok := likeMap[cmt.ID]; ok && d != 0 {
-			updateMap["like_count"] = gorm.Expr("like_count + ?", d)
-		}
-
-		// 如果有全为 0 的情况，上面 activeComment 是无法筛选出来的，所以这里再筛一次
-		if len(updateMap) == 0 {
-			continue
-		}
-
-		// 写入数据库
-		err = global.DB.Model(&cmt).Updates(updateMap).Error
-		if err != nil {
-			logrus.Errorf("update comment[%d] error: %v", cmt.ID, err)
-			continue
-		}
-		logrus.Infof("update comment[%d]", cmt.ID)
-		count++
+		return
 	}
-	logrus.Infof("update comment complete, total %d comments, %d success, %s time elapsed", len(commentList), count, time.Since(start))
+	logrus.Infof("update comment complete, total %d comments, %s time elapsed", len(commentList), time.Since(start))
+}
+
+// RollbackCommentRedis 如果写入 db 失败，将数据回滚到 redis 中
+func RollbackCommentRedis(replyMap, likeMap map[uint]int) error {
+	// 当前 Redis 中的新增增量
+	newReplyMap := redis_comment.GetAllReplyCounts()
+	newLikeMap := redis_comment.GetAllLikeCounts()
+
+	// Redis Key
+	replyKey := string(redis_comment.CommentReplyCount)
+	likeKey := string(redis_comment.CommentLikeCount)
+
+	// 合并保存数据与新增数据 构建最终恢复数据
+	mergedReply := mapMergeAndConvert(replyMap, newReplyMap)
+	mergedLike := mapMergeAndConvert(likeMap, newLikeMap)
+
+	// 批量回写
+	if len(mergedReply) > 0 {
+		if err := global.Redis.HMSet(replyKey, mergedReply).Err(); err != nil {
+			return fmt.Errorf("HMSet replyCount error: %v", err)
+		}
+	}
+	if len(mergedLike) > 0 {
+		if err := global.Redis.HMSet(likeKey, mergedLike).Err(); err != nil {
+			return fmt.Errorf("HMSet likeCount error: %v", err)
+		}
+	}
+	return nil
 }

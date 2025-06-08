@@ -11,8 +11,8 @@ import (
 type commentCacheType string
 
 const (
-	commentReplyCount commentCacheType = "comment_reply_count_key"
-	commentLikeCount  commentCacheType = "comment_like_count_key"
+	CommentReplyCount commentCacheType = "comment_reply_count_key"
+	CommentLikeCount  commentCacheType = "comment_like_count_key"
 )
 
 // 基本方法
@@ -31,7 +31,7 @@ func get(t commentCacheType, commentID uint) int {
 }
 
 func Clear() {
-	err := global.Redis.Del(string(commentReplyCount), string(commentLikeCount)).Err()
+	err := global.Redis.Del(string(CommentReplyCount), string(CommentLikeCount)).Err()
 	if err != nil {
 		logrus.Errorf("Failed to clear article redis cache: %v", err)
 	}
@@ -40,46 +40,46 @@ func Clear() {
 // 增减更新数值
 
 func UpdateCommentReplyCount(commentID uint, delta int) {
-	update(commentReplyCount, commentID, delta)
+	update(CommentReplyCount, commentID, delta)
 }
 func UpdateCommentLikeCount(commentID uint, delta int) {
-	update(commentLikeCount, commentID, delta)
+	update(CommentLikeCount, commentID, delta)
 }
 
 // 加一
 
 func AddCommentReplyCount(commentID uint) {
-	update(commentReplyCount, commentID, 1)
+	update(CommentReplyCount, commentID, 1)
 }
 func AddCommentLikeCount(commentID uint) {
-	update(commentLikeCount, commentID, 1)
+	update(CommentLikeCount, commentID, 1)
 }
 
 // 减一
 
 func SubCommentReplyCount(commentID uint) {
-	update(commentReplyCount, commentID, -1)
+	update(CommentReplyCount, commentID, -1)
 }
 func SubCommentLikeCount(commentID uint) {
-	update(commentLikeCount, commentID, -1)
+	update(CommentLikeCount, commentID, -1)
 }
 
 // 设值
 
 func SetCommentReplyCount(commentID uint, n int) {
-	set(commentReplyCount, commentID, n)
+	set(CommentReplyCount, commentID, n)
 }
 func SetCommentLikeCount(commentID uint, n int) {
-	set(commentLikeCount, commentID, n)
+	set(CommentLikeCount, commentID, n)
 }
 
 // get
 
 func GetCommentReplyCount(commentID uint) int {
-	return get(commentReplyCount, commentID)
+	return get(CommentReplyCount, commentID)
 }
 func GetCommentLikeCount(commentID uint) int {
-	return get(commentLikeCount, commentID)
+	return get(CommentLikeCount, commentID)
 }
 
 // get all
@@ -102,8 +102,8 @@ func getAllCommentCache(t commentCacheType) map[uint]int {
 }
 
 func GetAllReplyCounts() map[uint]int {
-	return getAllCommentCache(commentReplyCount)
+	return getAllCommentCache(CommentReplyCount)
 }
 func GetAllLikeCounts() map[uint]int {
-	return getAllCommentCache(commentLikeCount)
+	return getAllCommentCache(CommentLikeCount)
 }

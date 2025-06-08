@@ -10,8 +10,10 @@ import (
 	"blogX_server/models/enum"
 	"blogX_server/service/log_service"
 	"blogX_server/utils/jwts"
+	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 func (CommentApi) CommentRemoveView(c *gin.Context) {
@@ -19,21 +21,18 @@ func (CommentApi) CommentRemoveView(c *gin.Context) {
 	claims := jwts.MustGetClaimsFromGin(c)
 
 	var cmt models.CommentModel
-	err := global.DB.Take(&cmt, req.ID).Error
+	err := global.DB.Preload("ArticleModel").Take(&cmt, req.ID).Error
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			res.Fail(err, "评论不存在", c)
+			return
+		}
 		res.Fail(err, "查询数据库失败", c)
 		return
 	}
 
-	var article models.ArticleModel
-	err = global.DB.Take(&article, cmt.ArticleID).Error
-	if err != nil {
-		res.Fail(err, "查询文章失败", c)
-		return
-	}
-
 	// 可以删除评论的三类人：评论的发表者 管理员 文章的所有者
-	if cmt.UserID != claims.UserID && claims.Role != enum.AdminRoleType && claims.UserID != article.UserID {
+	if cmt.UserID != claims.UserID && claims.Role != enum.AdminRoleType && claims.UserID != cmt.ArticleModel.UserID {
 		res.FailWithMsg("权限不足", c)
 		return
 	}

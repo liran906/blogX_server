@@ -3,11 +3,12 @@
 package cron_service
 
 import (
+	"blogX_server/common/transaction"
 	"blogX_server/global"
 	"blogX_server/models"
 	"blogX_server/service/redis_service/redis_article"
+	"fmt"
 	"github.com/sirupsen/logrus"
-	"gorm.io/gorm"
 	"time"
 )
 
@@ -26,7 +27,7 @@ func SyncArticle() {
 
 	// 创建一个字典记录有改变的 aid
 	var activeArticles = make(map[uint]struct{})
-	maps := []map[uint]int{readMap, likeMap, collectMap, commentMap}
+	maps := map[string]map[uint]int{"read": readMap, "like": likeMap, "collect": collectMap, "comment": commentMap}
 	for _, m := range maps {
 		for aid := range m { // 只要 key
 			activeArticles[aid] = struct{}{}
@@ -38,7 +39,7 @@ func SyncArticle() {
 		return
 	}
 
-	// 从 DB 中取出对应的文章
+	// 从 DB 中取出本次有修改的文章
 	var articleList []models.ArticleModel
 	err := global.DB.Where("id IN ?", mapKeys(activeArticles)).Find(&articleList).Error
 	if err != nil {
@@ -46,38 +47,60 @@ func SyncArticle() {
 		return
 	}
 
-	// 遍历文章，修改数据
-	count := 0
-	for _, article := range articleList {
-
-		// 每篇文章提取出更新数据
-		updateMap := make(map[string]any, 4)
-		if d, ok := readMap[article.ID]; ok && d != 0 {
-			updateMap["read_count"] = gorm.Expr("read_count + ?", d)
+	// 事务中遍历comment，修改数据
+	err = transaction.SyncArticleTx(articleList, maps)
+	if err != nil {
+		logrus.Errorf("sync comment error: %v", err)
+		if err = RollbackArticleRedis(readMap, likeMap, collectMap, commentMap); err != nil {
+			logrus.Errorf("rollback to Redis error: %v", err)
+		} else {
+			logrus.Info("Redis data rolled back...")
 		}
-		if d, ok := likeMap[article.ID]; ok && d != 0 {
-			updateMap["like_count"] = gorm.Expr("like_count + ?", d)
-		}
-		if d, ok := collectMap[article.ID]; ok && d != 0 {
-			updateMap["collect_count"] = gorm.Expr("collect_count + ?", d)
-		}
-		if d, ok := commentMap[article.ID]; ok && d != 0 {
-			updateMap["comment_count"] = gorm.Expr("comment_count + ?", d)
-		}
-
-		// 如果有全为 0 的情况，上面 activeArticles 是无法筛选出来的，所以这里再筛一次
-		if len(updateMap) == 0 {
-			continue
-		}
-
-		// 写入数据库
-		err = global.DB.Model(&article).Updates(updateMap).Error
-		if err != nil {
-			logrus.Errorf("update article[%d] error: %v", article.ID, err)
-			continue
-		}
-		logrus.Infof("update article[%d]", article.ID)
-		count++
+		return
 	}
-	logrus.Infof("update articles complete, total %d articles, %d success, %s time elapsed", len(articleList), count, time.Since(start))
+	logrus.Infof("update comment complete, total %d comments, %s time elapsed", len(articleList), time.Since(start))
+}
+
+// RollbackArticleRedis 如果写入 db 失败，将数据回滚到 redis 中
+func RollbackArticleRedis(readMap, likeMap, collectMap, commentMap map[uint]int) error {
+	// 当前 Redis 中的新增增量
+	newReadMap := redis_article.GetAllReadCounts()
+	newLikeMap := redis_article.GetAllLikeCounts()
+	newCollectMap := redis_article.GetAllCollectCounts()
+	newCommentMap := redis_article.GetAllCommentCounts()
+
+	// Redis Key
+	readKey := string(redis_article.ArticleReadCount)
+	likeKey := string(redis_article.ArticleLikeCount)
+	collectKey := string(redis_article.ArticleCollectCount)
+	commentKey := string(redis_article.ArticleCommentCount)
+
+	// 合并保存数据与新增数据 构建最终恢复数据
+	mergedRead := mapMergeAndConvert(readMap, newReadMap)
+	mergedLike := mapMergeAndConvert(likeMap, newLikeMap)
+	mergedCollect := mapMergeAndConvert(collectMap, newCollectMap)
+	mergedComment := mapMergeAndConvert(commentMap, newCommentMap)
+
+	// 批量回写
+	if len(mergedRead) > 0 {
+		if err := global.Redis.HMSet(readKey, mergedRead).Err(); err != nil {
+			return fmt.Errorf("HMSet readCount error: %v", err)
+		}
+	}
+	if len(mergedLike) > 0 {
+		if err := global.Redis.HMSet(likeKey, mergedLike).Err(); err != nil {
+			return fmt.Errorf("HMSet likeCount error: %v", err)
+		}
+	}
+	if len(mergedCollect) > 0 {
+		if err := global.Redis.HMSet(collectKey, mergedCollect).Err(); err != nil {
+			return fmt.Errorf("HMSet collectCount error: %v", err)
+		}
+	}
+	if len(mergedComment) > 0 {
+		if err := global.Redis.HMSet(commentKey, mergedComment).Err(); err != nil {
+			return fmt.Errorf("HMSet commentCount error: %v", err)
+		}
+	}
+	return nil
 }
