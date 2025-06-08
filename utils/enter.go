@@ -32,3 +32,18 @@ func Md5(data []byte) string {
 	md5New.Write(data)
 	return hex.EncodeToString(md5New.Sum(nil))
 }
+
+func Unique[T comparable](data []T) []T {
+	if len(data) == 0 {
+		return []T{}
+	}
+	set := make(map[T]struct{})
+	unique := make([]T, 0, len(data))
+	for _, item := range data {
+		if _, exists := set[item]; !exists {
+			set[item] = struct{}{}
+			unique = append(unique, item)
+		}
+	}
+	return unique
+}

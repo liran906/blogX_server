@@ -19,3 +19,8 @@ type IDRequest struct {
 type RemoveRequest struct {
 	IDList []uint `json:"idList"`
 }
+
+type OptionsRequest[T any] struct {
+	Label string `json:"label"`
+	Value T      `json:"value"`
+}

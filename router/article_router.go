@@ -42,6 +42,10 @@ func ArticleRouter(rg *gin.RouterGroup) {
 	rg.GET("article/category", mdw.BindQueryMiddleware[article_api.ArticleCategoryListReq], mdw.AuthMiddleware, app.ArticleCategoryListView)
 	rg.DELETE("article/category", mdw.BindJsonMiddleware[models.RemoveRequest], mdw.AuthMiddleware, app.ArticleCategoryRemoveView)
 
+	// 分类及标签选项
+	rg.GET("article/category/options", mdw.AuthMiddleware, app.ArticleCategoryOptionsView)
+	rg.GET("article/tag/options", mdw.AuthMiddleware, app.ArticleTagOptionsView)
+
 	// 收藏夹 CRUD
 	rg.POST("article/collections", mdw.BindJsonMiddleware[article_api.ArticleCollectionCreateReq], mdw.AuthMiddleware, app.ArticleCollectionCreateView)
 	rg.PUT("article/collections", mdw.BindJsonMiddleware[article_api.ArticleCollectionUpdateReq], mdw.AuthMiddleware, app.ArticleCollectionUpdateView)
