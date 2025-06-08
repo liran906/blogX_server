@@ -10,7 +10,6 @@ import (
 	"blogX_server/models/enum"
 	"blogX_server/service/log_service"
 	"blogX_server/utils/jwts"
-	"fmt"
 	"github.com/gin-gonic/gin"
 )
 
@@ -18,53 +17,40 @@ func (ArticleApi) ArticleCollectionRemoveView(c *gin.Context) {
 	req := c.MustGet("bindReq").(models.RemoveRequest)
 	claims := jwts.MustGetClaimsFromGin(c)
 
-	if len(req.IDList) == 0 {
-		res.FailWithMsg("没有指定删除对象", c)
-		return
-	}
-
-	var list []models.CollectionFolderModel
-	err := global.DB.Where("id IN ?", req.IDList).Find(&list).Error
+	var collections []models.ArticleCollectionModel
+	err := global.DB.Preload("ArticleModel").Find(&collections, "id IN ?", req.IDList).Error
 	if err != nil {
-		res.Fail(err, "查询数据库失败", c)
+		res.Fail(err, "数据库读取失败", c)
 		return
 	}
 
-	// 校验查出来的记录数量是否和请求一致
-	if len(list) != len(req.IDList) {
-		res.FailWithMsg("部分记录不存在或无权限访问", c)
+	if len(collections) == 0 {
+		res.FailWithMsg("没有找到可取消收藏的文章", c)
 		return
 	}
 
-	// 日志
+	for _, collection := range collections {
+		if collection.UserID != claims.UserID {
+			res.FailWithMsg("只能取消自己收藏文章的收藏", c)
+			return
+		}
+		if collection.CollectionFolderID != collections[0].CollectionFolderID {
+			res.FailWithMsg("一次只能取消同一个收藏夹内文章的收藏", c)
+			return
+		}
+	}
+
+	err = transaction.RemoveCollectionsTx(collections)
+	if err != nil {
+		res.FailWithError(err, c)
+		return
+	}
+
 	log := log_service.GetActionLog(c)
-	log.ShowAll()
-	log.SetTitle("批量删除收藏夹失败")
+	log.ShowRequest()
+	log.ShowResponse()
+	log.SetLevel(enum.LogTraceLevel)
+	log.SetTitle("批量取消收藏")
 
-	var succ []uint
-	for _, coll := range list {
-		if coll.UserID != claims.UserID {
-			if claims.Role != enum.AdminRoleType {
-				// 非管理员只能删除自己的记录
-				log.SetItem("权限不足", fmt.Sprintf("收藏夹[id: %d][title: %s][belongs to: %d]", coll.ID, coll.Title, coll.UserID))
-				continue
-			}
-			log.ShowClaim(claims) // 管理员删别人
-		}
-		// 删除事务
-		err = transaction.RemoveCollection(&coll)
-		if err != nil {
-			log.SetItem("失败", fmt.Sprintf("收藏夹[id: %d][title: %s]", coll.ID, coll.Title))
-			continue
-		}
-		log.SetItem("成功", fmt.Sprintf("收藏夹[id: %d][title: %s]", coll.ID, coll.Title))
-		succ = append(succ, coll.ID)
-	}
-
-	if len(succ) == 0 {
-		res.FailWithMsg("批量删除收藏夹失败", c)
-		return
-	}
-	log.SetTitle(fmt.Sprintf("批量删除收藏夹成功"))
-	res.SuccessWithMsg(fmt.Sprintf("批量删除收藏夹完成，共计 %d 条，删除 %d 条: %v", len(list), len(succ), succ), c)
+	res.SuccessWithMsg("取消收藏成功", c)
 }

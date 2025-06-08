@@ -28,7 +28,7 @@ type ArticleCollectionListResp struct {
 	UserAvatarURL string `json:"userAvatarURL,omitempty"`
 }
 
-// ArticleCollectionListView 某个用户发表（或收藏）的文章列表
+// ArticleCollectionListView 某个收藏夹的文章列表
 func (ArticleApi) ArticleCollectionListView(c *gin.Context) {
 	req := c.MustGet("bindReq").(ArticleCollectionListReq)
 

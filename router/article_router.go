@@ -30,6 +30,7 @@ func ArticleRouter(rg *gin.RouterGroup) {
 	// 点赞收藏 CD
 	rg.POST("article/:id", mdw.BindUriMiddleware[models.IDRequest], mdw.AuthMiddleware, app.ArticleLikeView)
 	rg.POST("article/collect/", mdw.BindJsonMiddleware[article_api.ArticleCollectReq], mdw.AuthMiddleware, app.ArticleCollectView)
+	rg.DELETE("article/collect", mdw.BindJsonMiddleware[models.RemoveRequest], mdw.AuthMiddleware, app.ArticleCollectionRemoveView)
 
 	// 浏览记录 CRD
 	rg.POST("article/history", mdw.BindJsonMiddleware[article_api.ArticleCountReadReq], app.ArticleCountReadView)
@@ -47,9 +48,9 @@ func ArticleRouter(rg *gin.RouterGroup) {
 	rg.GET("article/tag/options", mdw.AuthMiddleware, app.ArticleTagOptionsView)
 
 	// 收藏夹 CRUD
-	rg.POST("article/collections", mdw.BindJsonMiddleware[article_api.ArticleCollectionCreateReq], mdw.AuthMiddleware, app.ArticleCollectionCreateView)
-	rg.PUT("article/collections", mdw.BindJsonMiddleware[article_api.ArticleCollectionUpdateReq], mdw.AuthMiddleware, app.ArticleCollectionUpdateView)
+	rg.POST("article/collections", mdw.BindJsonMiddleware[article_api.ArticleCollectionCreateReq], mdw.AuthMiddleware, app.ArticleCollectionFolderCreateView)
+	rg.PUT("article/collections", mdw.BindJsonMiddleware[article_api.ArticleCollectionUpdateReq], mdw.AuthMiddleware, app.ArticleCollectionFolderUpdateView)
 	rg.GET("article/collections", mdw.BindQueryMiddleware[article_api.ArticleCollectionFolderListReq], mdw.AuthMiddleware, app.ArticleCollectionFolderListView)
 	rg.GET("article/collection", mdw.BindQueryMiddleware[article_api.ArticleCollectionListReq], app.ArticleCollectionListView)
-	rg.DELETE("article/collections", mdw.BindJsonMiddleware[models.RemoveRequest], mdw.AuthMiddleware, app.ArticleCollectionRemoveView)
+	rg.DELETE("article/collections", mdw.BindJsonMiddleware[models.RemoveRequest], mdw.AuthMiddleware, app.ArticleCollectionFolderRemoveView)
 }

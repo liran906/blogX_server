@@ -22,7 +22,7 @@ type ArticleCollectReq struct {
 	CollectionID uint `json:"collectionID"`
 }
 
-// ArticleCollectView 收藏某篇文章
+// ArticleCollectView 收藏/取消收藏某篇文章
 func (ArticleApi) ArticleCollectView(c *gin.Context) {
 	req := c.MustGet("bindReq").(ArticleCollectReq)
 	uid := jwts.MustGetClaimsFromGin(c).UserID

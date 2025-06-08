@@ -20,7 +20,7 @@ type ArticleCollectionCreateReq struct {
 	CoverURL string `json:"coverURL"`
 }
 
-func (ArticleApi) ArticleCollectionCreateView(c *gin.Context) {
+func (ArticleApi) ArticleCollectionFolderCreateView(c *gin.Context) {
 	req := c.MustGet("bindReq").(ArticleCollectionCreateReq)
 	claims := jwts.MustGetClaimsFromGin(c)
 
