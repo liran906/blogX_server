@@ -40,7 +40,8 @@ type CommentListResponse struct {
 func (CommentApi) CommentListView(c *gin.Context) {
 	req := c.MustGet("bindReq").(CommentListReq)
 	claims := jwts.MustGetClaimsFromGin(c)
-	query := global.DB.Where("")
+	// 层级限制
+	query := global.DB.Where("depth < ?", global.Config.Site.Article.CommentDepth)
 
 	switch req.Type {
 	case 1: // 我的文章收到的评论

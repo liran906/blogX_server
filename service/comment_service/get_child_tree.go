@@ -40,6 +40,58 @@ func PreloadAllChildrenResponseFromID(cid uint) (resp *CommentResponse) {
 }
 
 func PreloadAllChildrenResponseFromModel(cmt *models.CommentModel) (resp *CommentResponse) {
+	// 两种实现，功能完全一致
+
+	// preloadByAttr 是更简单的实现，但需要维护 depth 属性
+	return preloadByAttr(cmt)
+
+	// preloadByClosure 利用闭包（depth 的递归和回溯）判断是否达到层数限制
+	//return preloadByClosure(cmt)
+}
+
+// preloadByClosure 利用闭包（depth 的递归和回溯）判断是否达到层数限制
+func preloadByClosure(cmt *models.CommentModel) (resp *CommentResponse) {
+	var depth int
+	// 也可以 helper 函数多传入一个 depth 参数，这样不需要回溯了
+	var preloadHelper func(*models.CommentModel) *CommentResponse
+	preloadHelper = func(cmt *models.CommentModel) (resp *CommentResponse) {
+		depth++
+		if depth > global.Config.Site.Article.CommentDepth {
+			depth--
+			return
+		}
+		global.DB.Preload("UserModel").Preload("ChildListModel").Take(cmt)
+		resp = &CommentResponse{
+			ID:            cmt.ID,
+			CreatedAt:     cmt.CreatedAt,
+			Content:       cmt.Content,
+			UserID:        cmt.UserID,
+			UserNickname:  cmt.UserModel.Nickname,
+			UserAvatarURL: cmt.UserModel.AvatarURL,
+			ArticleID:     cmt.ArticleID,
+			ParentID:      cmt.ParentID,
+			RootID:        cmt.RootID,
+			Depth:         cmt.Depth,
+			LikeCount:     cmt.LikeCount,
+			ReplyCount:    len(cmt.ChildListModel),
+			ChildComments: []*CommentResponse{},
+		}
+		for i := range cmt.ChildListModel {
+			child := cmt.ChildListModel[i]
+			resp.ChildComments = append(resp.ChildComments, preloadHelper(child))
+		}
+		depth--
+		return
+	}
+
+	return preloadHelper(cmt)
+}
+
+// preloadByAttr 是更简单的实现，但需要维护 depth 属性
+func preloadByAttr(cmt *models.CommentModel) (resp *CommentResponse) {
+	if cmt.Depth >= global.Config.Site.Article.CommentDepth {
+		return
+	}
 	global.DB.Preload("UserModel").Preload("ChildListModel").Take(cmt)
 	resp = &CommentResponse{
 		ID:            cmt.ID,
@@ -58,7 +110,7 @@ func PreloadAllChildrenResponseFromModel(cmt *models.CommentModel) (resp *Commen
 	}
 	for i := range cmt.ChildListModel {
 		child := cmt.ChildListModel[i]
-		resp.ChildComments = append(resp.ChildComments, PreloadAllChildrenResponseFromModel(child))
+		resp.ChildComments = append(resp.ChildComments, preloadByAttr(child))
 	}
 	return
 }
