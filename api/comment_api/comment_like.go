@@ -1,6 +1,6 @@
-// Path: ./api/article_api/article_like.go
+// Path: ./api/comment_api/comment_like.go
 
-package article_api
+package comment_api
 
 import (
 	"blogX_server/common/res"
@@ -8,7 +8,7 @@ import (
 	"blogX_server/models"
 	"blogX_server/models/enum"
 	"blogX_server/service/log_service"
-	"blogX_server/service/redis_service/redis_article"
+	"blogX_server/service/redis_service/redis_comment"
 	"blogX_server/utils/jwts"
 	"errors"
 	"fmt"
@@ -16,17 +16,17 @@ import (
 	"gorm.io/gorm"
 )
 
-func (ArticleApi) ArticleLikeView(c *gin.Context) {
+func (CommentApi) CommentLikeView(c *gin.Context) {
 	req := c.MustGet("bindReq").(models.IDRequest)
 	if req.ID == 0 {
-		res.FailWithMsg("未指定文章 ID", c)
+		res.FailWithMsg("未指定评论 ID", c)
 		return
 	}
 
-	var a models.ArticleModel
-	err := global.DB.Take(&a, "id = ? AND status = ?", req.ID, 3).Error
+	var cmt models.CommentModel
+	err := global.DB.Take(&cmt, req.ID).Error
 	if err != nil {
-		res.Fail(err, "文章不存在", c)
+		res.Fail(err, "评论不存在", c)
 		return
 	}
 
@@ -37,36 +37,36 @@ func (ArticleApi) ArticleLikeView(c *gin.Context) {
 	log.ShowRequest()
 	log.ShowResponse()
 	log.SetLevel(enum.LogTraceLevel)
-	log.SetTitle(fmt.Sprintf("文章点赞+ %d", req.ID))
+	log.SetTitle(fmt.Sprintf("评论点赞+ %d", req.ID))
 
-	var al models.ArticleLikesModel
-	err = global.DB.Take(&al, "article_id = ? and user_id = ?", a.ID, uid).Error
+	var cl models.CommentLikesModel
+	err = global.DB.Take(&cl, "comment_id = ? and user_id = ?", cmt.ID, uid).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			err = global.DB.Create(&models.ArticleLikesModel{
-				ArticleID: a.ID,
+			err = global.DB.Create(&models.CommentLikesModel{
 				UserID:    uid,
+				CommentID: req.ID,
 			}).Error
 			if err != nil {
 				res.Fail(err, "点赞失败", c)
 				return
 			}
-			// redis文章点赞数+1
-			redis_article.AddArticleLike(req.ID)
+			// redis 评论点赞数+1
+			redis_comment.AddCommentLikeCount(req.ID)
 			res.SuccessWithMsg("点赞成功", c)
 			return
 		}
 		res.Fail(err, "读取点赞数据失败", c)
 		return
 	}
-	err = global.DB.Delete(&al).Error
+	err = global.DB.Delete(&cl).Error
 	if err != nil {
 		res.Fail(err, "取消点赞失败", c)
 		return
 	}
 	// redis文章点赞数-1
-	redis_article.SubArticleLike(req.ID)
-	log.SetTitle(fmt.Sprintf("文章点赞- %d", req.ID))
+	redis_comment.SubCommentLikeCount(req.ID)
+	log.SetTitle(fmt.Sprintf("评论点赞- %d", req.ID))
 	res.SuccessWithMsg("取消点赞成功", c)
 	return
 }

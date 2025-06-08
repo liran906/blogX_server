@@ -8,6 +8,7 @@ import (
 	"blogX_server/global"
 	"blogX_server/models"
 	"blogX_server/models/enum"
+	"blogX_server/service/redis_service/redis_comment"
 	"blogX_server/utils/jwts"
 	"errors"
 	"github.com/gin-gonic/gin"
@@ -121,7 +122,7 @@ func (CommentApi) CommentListView(c *gin.Context) {
 			ArticleID:       cmt.ArticleID,
 			ArticleTitle:    cmt.ArticleModel.Title,
 			ArticleCoverURL: cmt.ArticleModel.CoverURL,
-			LikeCount:       cmt.LikeCount,
+			LikeCount:       cmt.LikeCount + redis_comment.GetCommentLikeCount(cmt.ID),
 		})
 	}
 	if len(list) == 0 {

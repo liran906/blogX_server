@@ -73,8 +73,8 @@ func preloadByClosure(cmt *models.CommentModel) (resp *CommentResponse) {
 			ParentID:      cmt.ParentID,
 			RootID:        cmt.RootID,
 			Depth:         cmt.Depth,
-			LikeCount:     cmt.LikeCount,
-			ReplyCount:    len(cmt.ChildListModel),
+			LikeCount:     cmt.LikeCount + redis_comment.GetCommentLikeCount(cmt.ID),
+			ReplyCount:    cmt.ReplyCount + redis_comment.GetCommentReplyCount(cmt.ID),
 			ChildComments: []*CommentResponse{},
 		}
 		for i := range cmt.ChildListModel {
