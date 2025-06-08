@@ -5,6 +5,7 @@ package comment_service
 import (
 	"blogX_server/global"
 	"blogX_server/models"
+	"blogX_server/service/redis_service/redis_comment"
 	"time"
 )
 
@@ -105,7 +106,7 @@ func preloadByAttr(cmt *models.CommentModel) (resp *CommentResponse) {
 		RootID:        cmt.RootID,
 		Depth:         cmt.Depth,
 		LikeCount:     cmt.LikeCount,
-		ReplyCount:    len(cmt.ChildListModel),
+		ReplyCount:    redis_comment.GetCommentReplyCount(cmt.ID),
 		ChildComments: []*CommentResponse{},
 	}
 	for i := range cmt.ChildListModel {

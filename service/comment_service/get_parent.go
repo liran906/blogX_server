@@ -7,13 +7,15 @@ import (
 	"blogX_server/models"
 )
 
-func GetAncestors(commentID uint) (ancestors []models.CommentModel, err error) {
-	return getAncestorsIterative(commentID)
+// GetAncestors 传入父评论 id，返回祖先评论 model 切片
+func GetAncestors(parentID uint) (ancestors []models.CommentModel, err error) {
+	return getAncestorsIterative(parentID)
 }
 
-func getAncestorsIterative(commentID uint) (ancestors []models.CommentModel, err error) {
+// getAncestorsIterative 返回祖先 model 切片（包括入参自己）
+func getAncestorsIterative(parentID uint) (ancestors []models.CommentModel, err error) {
 	var cmt models.CommentModel
-	if err = global.DB.Take(&cmt, commentID).Error; err != nil {
+	if err = global.DB.Take(&cmt, parentID).Error; err != nil {
 		return
 	}
 	for cmt.ParentID != nil {
@@ -28,9 +30,10 @@ func getAncestorsIterative(commentID uint) (ancestors []models.CommentModel, err
 	return
 }
 
-func getAncestorsRecursive(commentID uint) (ancestors []models.CommentModel, err error) {
+// getAncestorsRecursive 返回祖先 model 切片（包括入参自己, 如果要不包括, 传入 parentID 即可）
+func getAncestorsRecursive(parentID uint) (ancestors []models.CommentModel, err error) {
 	var cmt models.CommentModel
-	if err = global.DB.Take(&cmt, commentID).Error; err != nil {
+	if err = global.DB.Take(&cmt, parentID).Error; err != nil {
 		return
 	}
 	if cmt.ParentID == nil {

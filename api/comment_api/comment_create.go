@@ -7,16 +7,20 @@ import (
 	"blogX_server/global"
 	"blogX_server/models"
 	"blogX_server/models/enum"
+	"blogX_server/service/comment_service"
 	"blogX_server/service/log_service"
 	"blogX_server/service/redis_service/redis_article"
+	"blogX_server/service/redis_service/redis_comment"
 	"blogX_server/utils/jwts"
 	"blogX_server/utils/xss"
+	"errors"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 type CommentCreateReq struct {
 	Content   string `json:"content" binding:"required"`
-	ArticleID uint   `json:"articleID" binding:"required"`
+	ArticleID uint   `json:"articleID"`
 	ParentID  *uint  `json:"parentID"`
 }
 
@@ -24,21 +28,21 @@ func (CommentApi) CommentCreateView(c *gin.Context) {
 	req := c.MustGet("bindReq").(CommentCreateReq)
 	claims := jwts.MustGetClaimsFromGin(c)
 
-	var article models.ArticleModel
-	err := global.DB.Take(&article, req.ArticleID).Error
-	if err != nil {
-		res.Fail(err, "文章不存在", c)
+	if req.ArticleID == 0 && req.ParentID == nil {
+		res.FailWithMsg("请输入文章 id 或父评论 id", c)
 		return
 	}
 
-	// 只能评论已发布的文章
-	if article.Status != enum.ArticleStatusPublish {
-		res.FailWithMsg("无法评论该文章", c)
-		return
+	var err error
+	if req.ArticleID != 0 {
+		_, err = verifyArticle(req.ArticleID)
+		if err != nil {
+			res.FailWithError(err, c)
+			return
+		}
 	}
 
-	req.Content = xss.Filter(req.Content)
-
+	// 确定深度以及根评论 ID
 	var depth = 0
 	var rootID *uint
 	if req.ParentID != nil {
@@ -48,6 +52,23 @@ func (CommentApi) CommentCreateView(c *gin.Context) {
 			res.Fail(err, "获取父评论失败", c)
 			return
 		}
+		// 文章 id
+		if req.ArticleID != 0 {
+			// 校验文章 id
+			if parent.ArticleID != req.ArticleID {
+				res.FailWithMsg("文章 id 或父评论 id 错误", c)
+				return
+			}
+		} else {
+			// 获取文章 id
+			req.ArticleID = parent.ArticleID
+			_, err = verifyArticle(req.ArticleID)
+			if err != nil {
+				res.FailWithError(err, c)
+				return
+			}
+		}
+
 		depth = parent.Depth + 1
 		if parent.RootID == nil {
 			rootID = &parent.ID
@@ -59,6 +80,8 @@ func (CommentApi) CommentCreateView(c *gin.Context) {
 			return
 		}
 	}
+
+	req.Content = xss.Filter(req.Content)
 
 	log := log_service.GetActionLog(c)
 	log.ShowAll()
@@ -75,12 +98,35 @@ func (CommentApi) CommentCreateView(c *gin.Context) {
 
 	err = global.DB.Create(&cmt).Error
 	if err != nil {
-		res.Fail(err, "创建评论失败", c)
+		res.Fail(err, "无法评论该文章", c)
 		return
 	}
 
+	// 更新祖先评论的回复量
+	ancestors, err := comment_service.GetAncestors(*cmt.ParentID)
+	for _, ans := range ancestors {
+		redis_comment.AddCommentReplyCount(ans.ID)
+	}
+
+	// 更新文章回复量
 	redis_article.AddArticleComment(req.ArticleID)
 
 	log.SetTitle("创建评论成功")
 	res.SuccessWithMsg("创建评论成功", c)
+}
+
+func verifyArticle(articleID uint) (article models.ArticleModel, err error) {
+	err = global.DB.Take(&article, articleID).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			err = errors.New("文章不存在")
+		}
+		return
+	}
+	// 只能评论已发布的文章
+	if article.Status != enum.ArticleStatusPublish {
+		err = errors.New("无法评论该文章")
+		return
+	}
+	return
 }
