@@ -49,7 +49,11 @@ func (CommentApi) CommentCreateView(c *gin.Context) {
 			return
 		}
 		depth = parent.Depth + 1
-		rootID = parent.RootID
+		if parent.RootID == nil {
+			rootID = &parent.ID
+		} else {
+			rootID = parent.RootID
+		}
 		if depth >= global.Config.Site.Article.CommentDepth {
 			res.FailWithMsg("评论层级超过限制", c)
 			return

@@ -5,7 +5,6 @@ package comment_service
 import (
 	"blogX_server/global"
 	"blogX_server/models"
-	"fmt"
 	"time"
 )
 
@@ -33,16 +32,15 @@ func PreloadAllChildren(comment *models.CommentModel) {
 	}
 }
 
-// PreloadAllChildrenResponse 返回一个 CommentResponse，其中的 ChildComments 逐级嵌入所有的 childCommentResponse
-func PreloadAllChildrenResponse(cid uint) (resp *CommentResponse) {
+// PreloadAllChildrenResponseFromID 返回一个 CommentResponse，其中的 ChildComments 逐级嵌入所有的 childCommentResponse
+func PreloadAllChildrenResponseFromID(cid uint) (resp *CommentResponse) {
 	var cmt models.CommentModel
 	global.DB.Preload("UserModel").Preload("ChildListModel").Take(&cmt, cid)
 	return PreloadAllChildrenResponseFromModel(&cmt)
 }
 
 func PreloadAllChildrenResponseFromModel(cmt *models.CommentModel) (resp *CommentResponse) {
-	// todo fix recursion
-	global.DB.Preload("UserModel").Preload("ChildListModel").First(cmt)
+	global.DB.Preload("UserModel").Preload("ChildListModel").Take(cmt)
 	resp = &CommentResponse{
 		ID:            cmt.ID,
 		CreatedAt:     cmt.CreatedAt,
@@ -58,11 +56,8 @@ func PreloadAllChildrenResponseFromModel(cmt *models.CommentModel) (resp *Commen
 		ReplyCount:    len(cmt.ChildListModel),
 		ChildComments: []*CommentResponse{},
 	}
-	fmt.Println("current: ", cmt.ChildListModel)
 	for i := range cmt.ChildListModel {
 		child := cmt.ChildListModel[i]
-		fmt.Println("curr:", child.ID)
-		fmt.Println("child:", child.ChildListModel)
 		resp.ChildComments = append(resp.ChildComments, PreloadAllChildrenResponseFromModel(child))
 	}
 	return
