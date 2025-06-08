@@ -103,9 +103,15 @@ func (CommentApi) CommentCreateView(c *gin.Context) {
 	}
 
 	// 更新祖先评论的回复量
-	ancestors, err := comment_service.GetAncestors(*cmt.ParentID)
-	for _, ans := range ancestors {
-		redis_comment.AddCommentReplyCount(ans.ID)
+	if cmt.ParentID != nil {
+		ancestors, err := comment_service.GetAncestors(*cmt.ParentID)
+		if err != nil {
+			res.Fail(err, "获取父评论失败", c)
+			return
+		}
+		for _, ans := range ancestors {
+			redis_comment.AddCommentReplyCount(ans.ID)
+		}
 	}
 
 	// 更新文章回复量
@@ -121,6 +127,11 @@ func verifyArticle(articleID uint) (article models.ArticleModel, err error) {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			err = errors.New("文章不存在")
 		}
+		return
+	}
+	// 只能评论开放评论的文章
+	if !article.OpenForComment {
+		err = errors.New("无法评论该文章")
 		return
 	}
 	// 只能评论已发布的文章
