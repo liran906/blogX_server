@@ -26,7 +26,7 @@ func GetArticleComment(articleID uint) int {
 	return get(articleCommentCount, articleID)
 }
 
-func getAllArticles(t articleCacheType) map[uint]int {
+func getAllArticleCache(t articleCacheType) map[uint]int {
 	res, err := global.Redis.HGetAll(string(t)).Result()
 	if err != nil {
 		return nil
@@ -44,16 +44,16 @@ func getAllArticles(t articleCacheType) map[uint]int {
 }
 
 func GetAllReadCounts() map[uint]int {
-	return getAllArticles(articleReadCount)
+	return getAllArticleCache(articleReadCount)
 }
 func GetAllLikeCounts() map[uint]int {
-	return getAllArticles(articleLikeCount)
+	return getAllArticleCache(articleLikeCount)
 }
 func GetAllCollectCounts() map[uint]int {
-	return getAllArticles(articleCollectCount)
+	return getAllArticleCache(articleCollectCount)
 }
 func GetAllCommentCounts() map[uint]int {
-	return getAllArticles(articleCommentCount)
+	return getAllArticleCache(articleCommentCount)
 }
 
 func GetAllFields(articleID uint) map[string]int {

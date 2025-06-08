@@ -81,11 +81,3 @@ func SyncArticle() {
 	}
 	logrus.Infof("update articles complete, total %d articles, %d success, %s time elapsed", len(articleList), count, time.Since(start))
 }
-
-func mapKeys(m map[uint]struct{}) []uint {
-	keys := make([]uint, 0, len(m))
-	for k := range m {
-		keys = append(keys, k)
-	}
-	return keys
-}

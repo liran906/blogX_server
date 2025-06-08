@@ -81,3 +81,29 @@ func GetCommentReplyCount(commentID uint) int {
 func GetCommentLikeCount(commentID uint) int {
 	return get(commentLikeCount, commentID)
 }
+
+// get all
+
+func getAllCommentCache(t commentCacheType) map[uint]int {
+	res, err := global.Redis.HGetAll(string(t)).Result()
+	if err != nil {
+		return nil
+	}
+	mps := make(map[uint]int)
+	for k, v := range res {
+		key, err1 := strconv.Atoi(k)
+		val, err2 := strconv.Atoi(v)
+		if err1 != nil || err2 != nil {
+			continue // skip this invalid entry
+		}
+		mps[uint(key)] = val
+	}
+	return mps
+}
+
+func GetAllReplyCounts() map[uint]int {
+	return getAllCommentCache(commentReplyCount)
+}
+func GetAllLikeCounts() map[uint]int {
+	return getAllCommentCache(commentLikeCount)
+}
