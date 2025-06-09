@@ -11,7 +11,7 @@ import (
 
 // CreateUserAndUserConfig 如果直接用 global.DB 会导致主从数据库的 bug，主数据库没有写入，而从数据库写入了
 // 所以这里用 global.DBMaster (主库)避免问题
-func CreateUserAndUserConfig(u models.UserModel, uc models.UserConfigModel) (err error) {
+func CreateUserAndUserConfig(u models.UserModel) (err error) {
 	// 注意这里是 DBMaster
 	return global.DBMaster.Transaction(func(tx *gorm.DB) (err error) {
 		// 创建 User
@@ -20,17 +20,22 @@ func CreateUserAndUserConfig(u models.UserModel, uc models.UserConfigModel) (err
 			return err
 		}
 
-		// 设置 UserConfig 的 UserID
-		uc.UserID = u.ID
-
+		// 配置 UserConfig
+		userConf := models.UserConfigModel{
+			UserID: u.ID,
+		}
 		// 创建 UserConfig
-		err = tx.Create(&uc).Error
+		err = tx.Create(&userConf).Error
 		if err != nil {
 			return err
 		}
 
-		// 更新 User 的 UserConfigID
-		err = tx.Model(&u).Update("user_config_id", uc.UserID).Error
+		// 配置 UserMsgConfig
+		msgConf := models.UserMessageConfModel{
+			UserID: u.ID,
+		}
+		// 创建 UserMsgConfig
+		err = tx.Create(&msgConf).Error
 		if err != nil {
 			return err
 		}

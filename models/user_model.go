@@ -29,11 +29,11 @@ type UserModel struct {
 	RegisterSource enum.RegisterSourceType `gorm:"not null" json:"registerSource"`
 	DateOfBirth    time.Time               `gorm:"default:null" json:"dateOfBirth"`
 	Role           enum.RoleType           `gorm:"not null" json:"role"` // 角色 1管理员 2普通用户 3访客
-	UserConfigID   uint                    `gorm:"not null" json:"user_config_id"`
 
 	// FK
-	UserConfigModel *UserConfigModel `gorm:"foreignKey:UserConfigID;references:UserID" json:"-"` // 注意是指针，否则会报错：嵌套循环
-	Articles        []ArticleModel   `gorm:"foreignKey:UserID" json:"-"`
+	UserConfigModel      *UserConfigModel      `gorm:"foreignKey:UserID;references:ID" json:"-"` // 注意是指针，否则会报错：嵌套循环
+	UserMessageConfModel *UserMessageConfModel `gorm:"foreignKey:UserID;references:ID" json:"-"`
+	Articles             []ArticleModel        `gorm:"foreignKey:UserID" json:"-"`
 
 	// M2M
 	Images []ImageModel `gorm:"many2many:user_upload_images;joinForeignKey:UserID;JoinReferences:ImageID" json:"images"`
@@ -41,12 +41,12 @@ type UserModel struct {
 
 type UserConfigModel struct {
 	UserID             uint       `gorm:"primaryKey" json:"userID"`
-	Tags               []string   `gorm:"type:longtext; serializer:json" json:"tags"` // 兴趣标签
-	UpdatedAt          *time.Time `json:"updatedAt"`                                  // 上次修改时间，可能为空，所以是指针
-	ThemeID            uint8      `json:"themeID"`                                    // 主页样式 id
-	DisplayCollections bool       `gorm:"default:true" json:"displayCollections"`     // 公开我的收藏
-	DisplayFans        bool       `gorm:"default:true" json:"displayFans"`            // 公开我的粉丝
-	DisplayFollowing   bool       `gorm:"default:true" json:"displayFollowing"`       // 公开我的关注
+	UpdatedAt          *time.Time `json:"updatedAt"`                                        // 上次修改时间，可能为空，所以是指针
+	Tags               []string   `gorm:"type:longtext; serializer:json" json:"tags"`       // 兴趣标签
+	ThemeID            uint8      `gorm:"not null; default:1" json:"themeID"`               // 主页样式 id
+	DisplayCollections bool       `gorm:"not null; default:true" json:"displayCollections"` // 公开我的收藏
+	DisplayFans        bool       `gorm:"not null; default:true" json:"displayFans"`        // 公开我的粉丝
+	DisplayFollowing   bool       `gorm:"not null; default:true" json:"displayFollowing"`   // 公开我的关注
 
 	// FK
 	UserModel UserModel `gorm:"foreignKey:UserID;references:ID" json:"userModel"` // 外键关联到 User, ref 如果不写会自动关联到 ID

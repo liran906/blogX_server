@@ -100,17 +100,9 @@ func (FlagUser) Create() {
 	u.Nickname = fmt.Sprintf("用户%05d", rand.Intn(100000))
 	u.RegisterSource = enum.RegisterSourceTerminalType
 	u.LastLoginTime = time.Now()
-	// 配置信息
-	userConf := models.UserConfigModel{
-		Tags:               []string{},
-		ThemeID:            1, // 默认主题
-		DisplayCollections: true,
-		DisplayFans:        true,
-		DisplayFollowing:   true,
-	}
 
 	// 入库
-	err := transaction.CreateUserAndUserConfig(u, userConf)
+	err := transaction.CreateUserAndUserConfig(u)
 	if err != nil {
 		fmt.Println("入库失败")
 		return

@@ -99,14 +99,8 @@ func (UserApi) RegisterEmailView(c *gin.Context) {
 		LastLoginIP:    c.ClientIP(),
 		LastLoginTime:  time.Now(),
 	}
-	userConf := models.UserConfigModel{
-		Tags:               []string{},
-		ThemeID:            1, // 默认主题
-		DisplayCollections: true,
-		DisplayFans:        true,
-		DisplayFollowing:   true,
-	}
-	err = transaction.CreateUserAndUserConfig(user, userConf)
+
+	err = transaction.CreateUserAndUserConfig(user)
 	if err != nil {
 		res.FailWithError(err, c)
 		return

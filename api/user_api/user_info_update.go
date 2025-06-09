@@ -31,6 +31,12 @@ type UserInfoUpdateReq struct {
 	DisplayFans        *bool     `json:"displayFans" s-u-c:"display_fans"`
 	DisplayFollowing   *bool     `json:"displayFollowing" s-u-c:"display_following"`
 	ThemeID            *uint8    `json:"themeID" s-u-c:"theme_id"`
+
+	ReceiveCommentMessage  *bool `json:"receiveCommentMessage" s-m-c:"receive_comment_message"`
+	ReceiveLikeMessage     *bool `json:"receiveLikeMessage" s-m-c:"receive_like_message"`
+	ReceiveCollectMessage  *bool `json:"receiveCollectMessage" s-m-c:"receive_collect_message"`
+	ReceivePrivateMessage  *bool `json:"receivePrivateMessage" s-m-c:"receive_private_message"`
+	ReceiveStrangerMessage *bool `json:"receiveStrangerMessage" s-m-c:"receive_stranger_message"`
 }
 
 func (UserApi) UserInfoUpdateView(c *gin.Context) {
@@ -45,9 +51,10 @@ func (UserApi) UserInfoUpdateView(c *gin.Context) {
 	// 转为 map 方便更新 db
 	userMap := mps.StructToMap(req, "s-u")
 	userConfMap := mps.StructToMap(req, "s-u-c")
+	userMsgConfMap := mps.StructToMap(req, "s-m-c")
 
 	// 判断是否有更新字段
-	if len(userMap) == 0 && len(userConfMap) == 0 {
+	if len(userMap) == 0 && len(userConfMap) == 0 && len(userMsgConfMap) == 0 {
 		res.FailWithMsg("没有更新字段", c)
 		return
 	}
@@ -91,6 +98,17 @@ func (UserApi) UserInfoUpdateView(c *gin.Context) {
 			return
 		}
 	}
+
+	// 更新 messageConfig 表
+	if len(userMsgConfMap) > 0 {
+		var umc models.UserMessageConfModel
+		err := global.DB.Take(&umc, claims.UserID).Updates(userMsgConfMap).Error
+		if err != nil {
+			res.FailWithMsg("写入数据库失败: "+err.Error(), c)
+			return
+		}
+	}
+
 	// 日志
 	log := log_service.GetActionLog(c)
 	log.ShowAll()

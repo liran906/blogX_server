@@ -13,32 +13,37 @@ import (
 )
 
 type UserDetailResponse struct {
-	ID                 uint                    `json:"id"`
-	CreatedAt          time.Time               `json:"createdAt"`
-	Username           string                  `json:"username"`
-	Email              string                  `json:"email"`
-	Nickname           string                  `json:"nickname"`
-	AvatarURL          string                  `json:"avatarURL"`
-	Bio                string                  `json:"bio"`
-	OpenID             string                  `json:"openid"`
-	Gender             int8                    `json:"gender"`
-	Phone              string                  `json:"phone"`
-	Country            string                  `json:"country"`
-	Province           string                  `json:"province"`
-	City               string                  `json:"city"`
-	Status             int8                    `json:"status"`
-	LastLoginTime      time.Time               `json:"lastLoginTime"`
-	LastLoginIP        string                  `json:"lastLoginIP"`
-	RegisterSource     enum.RegisterSourceType `json:"registerSource"`
-	DateOfBirth        time.Time               `json:"dateOfBirth"`
-	Role               enum.RoleType           `json:"role"`               // 角色 1管理员 2普通用户 3访客
-	SiteAge            uint                    `json:"siteAge"`            // 站龄
-	Tags               []string                `json:"tags"`               // 兴趣标签
-	UpdatedAt          *time.Time              `json:"updatedAt"`          // 上次修改时间，可能为空，所以是指针
-	ThemeID            uint8                   `json:"themeID"`            // 主页样式 id
-	DisplayCollections bool                    `json:"displayCollections"` // 公开我的收藏
-	DisplayFans        bool                    `json:"displayFans"`        // 公开我的粉丝
-	DisplayFollowing   bool                    `json:"displayFollowing"`   // 公开我的关注
+	ID                     uint                    `json:"id"`
+	CreatedAt              time.Time               `json:"createdAt"`
+	Username               string                  `json:"username"`
+	Email                  string                  `json:"email"`
+	Nickname               string                  `json:"nickname"`
+	AvatarURL              string                  `json:"avatarURL"`
+	Bio                    string                  `json:"bio"`
+	OpenID                 string                  `json:"openid"`
+	Gender                 int8                    `json:"gender"`
+	Phone                  string                  `json:"phone"`
+	Country                string                  `json:"country"`
+	Province               string                  `json:"province"`
+	City                   string                  `json:"city"`
+	Status                 int8                    `json:"status"`
+	LastLoginTime          time.Time               `json:"lastLoginTime"`
+	LastLoginIP            string                  `json:"lastLoginIP"`
+	RegisterSource         enum.RegisterSourceType `json:"registerSource"`
+	DateOfBirth            time.Time               `json:"dateOfBirth"`
+	Role                   enum.RoleType           `json:"role"`               // 角色 1管理员 2普通用户 3访客
+	SiteAge                uint                    `json:"siteAge"`            // 站龄
+	Tags                   []string                `json:"tags"`               // 兴趣标签
+	UpdatedAt              *time.Time              `json:"updatedAt"`          // 上次修改时间，可能为空，所以是指针
+	ThemeID                uint8                   `json:"themeID"`            // 主页样式 id
+	DisplayCollections     bool                    `json:"displayCollections"` // 公开我的收藏
+	DisplayFans            bool                    `json:"displayFans"`        // 公开我的粉丝
+	DisplayFollowing       bool                    `json:"displayFollowing"`   // 公开我的关注
+	ReceiveCommentMessage  bool                    `json:"receiveCommentMessage"`
+	ReceiveLikeMessage     bool                    `json:"receiveLikeMessage"`
+	ReceiveCollectMessage  bool                    `json:"receiveCollectMessage"`
+	ReceivePrivateMessage  bool                    `json:"receivePrivateMessage"`
+	ReceiveStrangerMessage bool                    `json:"receiveStrangerMessage"`
 }
 type OtherUserDetailResponse struct {
 	ID            uint          `json:"id"`
@@ -104,13 +109,20 @@ func (UserApi) UserDetailView(c *gin.Context) {
 			SiteAge:        u.SiteAge(),
 		}
 		// 判断空指针的情况
-		if u.UserConfigModel != nil || u.UserConfigID != 0 {
+		if u.UserConfigModel != nil {
 			resp.Tags = u.UserConfigModel.Tags
 			resp.UpdatedAt = u.UserConfigModel.UpdatedAt
 			resp.ThemeID = u.UserConfigModel.ThemeID
 			resp.DisplayCollections = u.UserConfigModel.DisplayCollections
 			resp.DisplayFans = u.UserConfigModel.DisplayFans
 			resp.DisplayFollowing = u.UserConfigModel.DisplayFollowing
+		}
+		if u.UserMessageConfModel != nil {
+			resp.ReceiveCommentMessage = u.UserMessageConfModel.ReceiveCommentMessage
+			resp.ReceiveLikeMessage = u.UserMessageConfModel.ReceiveLikeMessage
+			resp.ReceiveCollectMessage = u.UserMessageConfModel.ReceiveCollectMessage
+			resp.ReceivePrivateMessage = u.UserMessageConfModel.ReceivePrivateMessage
+			resp.ReceiveStrangerMessage = u.UserMessageConfModel.ReceiveStrangerMessage
 		}
 		res.Success(resp, "读取成功", c)
 	} else {
@@ -131,7 +143,7 @@ func (UserApi) UserDetailView(c *gin.Context) {
 			SiteAge:       u.SiteAge(),
 		}
 		// 判断空指针的情况
-		if u.UserConfigModel != nil || u.UserConfigID != 0 {
+		if u.UserConfigModel != nil {
 			resp.Tags = u.UserConfigModel.Tags
 			resp.UpdatedAt = u.UserConfigModel.UpdatedAt
 			resp.ThemeID = u.UserConfigModel.ThemeID
