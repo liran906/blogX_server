@@ -131,7 +131,7 @@ func SendArticleCollectNotify(ac models.ArticleCollectionModel) (err error) {
 
 	// 入库
 	err = global.DB.Create(&models.NotifyModel{
-		Type:                notify_enum.ArticleLikeType,
+		Type:                notify_enum.ArticleCollectType,
 		ReceiveUserID:       ac.ArticleModel.UserID,
 		ActionUserID:        ac.UserID,
 		ActionUserNickname:  ac.UserModel.Nickname,

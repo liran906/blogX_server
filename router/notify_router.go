@@ -4,6 +4,7 @@ package router
 
 import (
 	"blogX_server/api"
+	"blogX_server/api/notify_api"
 	mdw "blogX_server/middleware"
 	"github.com/gin-gonic/gin"
 )
@@ -11,5 +12,5 @@ import (
 func NotifyRouter(rg *gin.RouterGroup) {
 	app := api.App.NotifyApi
 
-	rg.GET("notify/conf", mdw.AuthMiddleware, app.UserNotifyConfView)
+	rg.GET("notify", mdw.BindQueryMiddleware[notify_api.NotifyListReq], mdw.AuthMiddleware, app.NotifyListView)
 }

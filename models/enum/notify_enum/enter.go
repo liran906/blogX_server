@@ -16,3 +16,21 @@ const (
 	ArticleUncollectType Type = 8
 	CommentUnlikeType    Type = 9
 )
+
+func (t Type) String() string {
+	switch t {
+	case ArticleLikeType:
+		return "文章点赞"
+	case ArticleCollectType:
+		return "文章收藏"
+	case ArticleCommentType:
+		return "文章评论"
+	case CommentLikeType:
+		return "评论点赞"
+	case CommentReplyType:
+		return "评论回复"
+	case SystemType:
+		return "系统消息"
+	}
+	return "Unknown"
+}

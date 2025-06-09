@@ -54,7 +54,7 @@ func (ArticleApi) ArticleReviewView(c *gin.Context) {
 			res.Fail(err, "发送消息失败", c)
 			return
 		}
-	} else if req.Status == enum.ArticleStatusPublish {
+	} else if req.Status == enum.AritcleStatusFail {
 		fMsg := fmt.Sprintf("您提交审核的文章 [ID:%d]%s 没有通过！\n", a.ID, a.Title)
 		href := fmt.Sprintf("%s/aritcle/%d", global.Config.System.Addr(), a.ID)
 		err = message_service.SendSystemNotify(a.UserID, "文章审核未通过", fMsg+req.Msg, a.Title, href)
