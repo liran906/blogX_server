@@ -13,4 +13,5 @@ func NotifyRouter(rg *gin.RouterGroup) {
 	app := api.App.NotifyApi
 
 	rg.GET("notify", mdw.BindQueryMiddleware[notify_api.NotifyListReq], mdw.AuthMiddleware, app.NotifyListView)
+	rg.PUT("notify/read", mdw.BindJsonMiddleware[notify_api.NotifyReadReq], mdw.AuthMiddleware, app.NotifyReadView)
 }
