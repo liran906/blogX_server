@@ -32,9 +32,9 @@ type UserInfoUpdateReq struct {
 	DisplayFollowing   *bool     `json:"displayFollowing" s-u-c:"display_following"`
 	ThemeID            *uint8    `json:"themeID" s-u-c:"theme_id"`
 
-	ReceiveCommentMessage  *bool `json:"receiveCommentMessage" s-m-c:"receive_comment_message"`
-	ReceiveLikeMessage     *bool `json:"receiveLikeMessage" s-m-c:"receive_like_message"`
-	ReceiveCollectMessage  *bool `json:"receiveCollectMessage" s-m-c:"receive_collect_message"`
+	ReceiveCommentNotify   *bool `json:"receiveCommentNotify" s-m-c:"receive_comment_notify"`
+	ReceiveLikeNotify      *bool `json:"receiveLikeNotify" s-m-c:"receive_like_notify"`
+	ReceiveCollectNotify   *bool `json:"receiveCollectNotify" s-m-c:"receive_collect_notify"`
 	ReceivePrivateMessage  *bool `json:"receivePrivateMessage" s-m-c:"receive_private_message"`
 	ReceiveStrangerMessage *bool `json:"receiveStrangerMessage" s-m-c:"receive_stranger_message"`
 }

@@ -1,0 +1,15 @@
+// Path: ./router/notify_router.go
+
+package router
+
+import (
+	"blogX_server/api"
+	mdw "blogX_server/middleware"
+	"github.com/gin-gonic/gin"
+)
+
+func NotifyRouter(rg *gin.RouterGroup) {
+	app := api.App.NotifyApi
+
+	rg.GET("notify/conf", mdw.AuthMiddleware, app.UserNotifyConfView)
+}

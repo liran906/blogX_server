@@ -126,14 +126,14 @@ func (CommentApi) CommentCreateView(c *gin.Context) {
 	log.SetTitle("创建评论成功")
 	res.SuccessWithMsg("创建评论成功", c)
 
-	// SendCommentMessage 发送提醒消息
+	// SendCommentNotify 发送提醒消息
 	// ======================================
 	// 进去内部函数在 preload  cmt的fk，总是会报错
 	// 怀疑是 mysql 没有那么快写入并可读取
 	// 所以在外部把相关字段填好再传入吧
 	cmt.ParentModel = &parent
 	cmt.ArticleModel = article
-	err = message_service.SendCommentMessage(cmt)
+	err = message_service.SendCommentNotify(cmt)
 	if err != nil {
 		log.SetItemWarn("消息发送失败", err.Error())
 	}

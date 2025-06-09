@@ -59,7 +59,7 @@ func (CommentApi) CommentRemoveView(c *gin.Context) {
 			msg = "文章作者删除"
 		}
 		// todo 删除理由
-		err = message_service.SendSystemMessage(cmt.UserID, "您发布的评论被删除", msg, "", "")
+		err = message_service.SendSystemNotify(cmt.UserID, "您发布的评论被删除", msg, "", "")
 		if err != nil {
 			res.Fail(err, "删除消息发送失败", c)
 			return

@@ -110,7 +110,7 @@ func (ArticleApi) ArticleCollectView(c *gin.Context) {
 
 	// 通知点赞
 	ac.ArticleModel = a
-	err = message_service.SendArticleCollectMessage(ac)
+	err = message_service.SendArticleCollectNotify(ac)
 	if err != nil {
 		log.SetItemWarn("消息发送失败", err.Error())
 	}

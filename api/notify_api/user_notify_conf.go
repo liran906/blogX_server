@@ -1,0 +1,24 @@
+// Path: ./api/notify_api/user_notify_conf.go
+
+package notify_api
+
+import (
+	"blogX_server/common/res"
+	"blogX_server/global"
+	"blogX_server/models"
+	"blogX_server/utils/jwts"
+	"github.com/gin-gonic/gin"
+)
+
+func (NotifyApi) UserNotifyConfView(c *gin.Context) {
+	claims := jwts.MustGetClaimsFromGin(c)
+
+	var un models.UserMessageConfModel
+	err := global.DB.Take(&un, "user_id = ?", claims.UserID).Error
+	if err != nil {
+		res.Fail(err, "用户配置不存在", c)
+		return
+	}
+
+	res.SuccessWithData(un, c)
+}

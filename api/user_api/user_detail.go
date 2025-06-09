@@ -39,9 +39,9 @@ type UserDetailResponse struct {
 	DisplayCollections     bool                    `json:"displayCollections"` // 公开我的收藏
 	DisplayFans            bool                    `json:"displayFans"`        // 公开我的粉丝
 	DisplayFollowing       bool                    `json:"displayFollowing"`   // 公开我的关注
-	ReceiveCommentMessage  bool                    `json:"receiveCommentMessage"`
-	ReceiveLikeMessage     bool                    `json:"receiveLikeMessage"`
-	ReceiveCollectMessage  bool                    `json:"receiveCollectMessage"`
+	ReceiveCommentNotify   bool                    `json:"receiveCommentNotify"`
+	ReceiveLikeNotify      bool                    `json:"receiveLikeNotify"`
+	ReceiveCollectNotify   bool                    `json:"receiveCollectNotify"`
 	ReceivePrivateMessage  bool                    `json:"receivePrivateMessage"`
 	ReceiveStrangerMessage bool                    `json:"receiveStrangerMessage"`
 }
@@ -78,7 +78,7 @@ func (UserApi) UserDetailView(c *gin.Context) {
 
 	// 读库
 	var u models.UserModel
-	err := global.DB.Preload("UserConfigModel").Take(&u, "id = ?", req.ID).Error
+	err := global.DB.Preload("UserConfigModel").Preload("UserMessageConfModel").Take(&u, "id = ?", req.ID).Error
 	if err != nil {
 		res.FailWithMsg("读取用户信息失败: "+err.Error(), c)
 		return
@@ -118,9 +118,9 @@ func (UserApi) UserDetailView(c *gin.Context) {
 			resp.DisplayFollowing = u.UserConfigModel.DisplayFollowing
 		}
 		if u.UserMessageConfModel != nil {
-			resp.ReceiveCommentMessage = u.UserMessageConfModel.ReceiveCommentMessage
-			resp.ReceiveLikeMessage = u.UserMessageConfModel.ReceiveLikeMessage
-			resp.ReceiveCollectMessage = u.UserMessageConfModel.ReceiveCollectMessage
+			resp.ReceiveCommentNotify = u.UserMessageConfModel.ReceiveCommentNotify
+			resp.ReceiveLikeNotify = u.UserMessageConfModel.ReceiveLikeNotify
+			resp.ReceiveCollectNotify = u.UserMessageConfModel.ReceiveCollectNotify
 			resp.ReceivePrivateMessage = u.UserMessageConfModel.ReceivePrivateMessage
 			resp.ReceiveStrangerMessage = u.UserMessageConfModel.ReceiveStrangerMessage
 		}

@@ -59,7 +59,7 @@ func (CommentApi) CommentLikeView(c *gin.Context) {
 
 			// 通知点赞
 			cl.CommentModel = cmt
-			err = message_service.SendCommentLikeMessage(cl)
+			err = message_service.SendCommentLikeNotify(cl)
 			if err != nil {
 				log.SetItemWarn("消息发送失败", err.Error())
 			}

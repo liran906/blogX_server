@@ -5,7 +5,7 @@ package message_service
 import (
 	"blogX_server/global"
 	"blogX_server/models"
-	"blogX_server/models/enum/message_enum"
+	"blogX_server/models/enum/notify_enum"
 	"blogX_server/utils"
 	"fmt"
 )
@@ -15,15 +15,15 @@ import (
 // 所以在外部把相关字段填好再传入吧
 // 这里不再 Preload 了
 
-func SendCommentMessage(cmt models.CommentModel) (err error) {
+func SendCommentNotify(cmt models.CommentModel) (err error) {
 	// 判断消息种类
-	var messageType message_enum.Type
+	var messageType notify_enum.Type
 	var receiveUserID uint
 	if cmt.ParentID == nil {
-		messageType = message_enum.ArticleCommentType
+		messageType = notify_enum.ArticleCommentType
 		receiveUserID = cmt.ArticleModel.UserID
 	} else {
-		messageType = message_enum.CommentReplyType
+		messageType = notify_enum.CommentReplyType
 		receiveUserID = cmt.ParentModel.UserID
 	}
 
@@ -35,7 +35,7 @@ func SendCommentMessage(cmt models.CommentModel) (err error) {
 	// 检验对方是否接受消息
 	var receiveUserConf models.UserMessageConfModel
 	err = global.DB.Take(&receiveUserConf, "user_id = ?", receiveUserID).Error
-	if !receiveUserConf.ReceiveCommentMessage {
+	if !receiveUserConf.ReceiveCommentNotify {
 		return
 	}
 
@@ -48,7 +48,7 @@ func SendCommentMessage(cmt models.CommentModel) (err error) {
 	cmt.UserModel = user
 
 	// 入库
-	err = global.DB.Create(&models.MessageModel{
+	err = global.DB.Create(&models.NotifyModel{
 		Type:                messageType,
 		Content:             utils.ExtractContent(cmt.Content, 30), // 限制最长字数
 		ReceiveUserID:       receiveUserID,
@@ -62,7 +62,7 @@ func SendCommentMessage(cmt models.CommentModel) (err error) {
 	return
 }
 
-func SendArticleLikeMessage(al models.ArticleLikesModel) (err error) {
+func SendArticleLikeNotify(al models.ArticleLikesModel) (err error) {
 	// 自己赞自己，就不通知了
 	if al.UserID == al.ArticleModel.UserID {
 		return
@@ -71,12 +71,12 @@ func SendArticleLikeMessage(al models.ArticleLikesModel) (err error) {
 	// 检验对方是否接受消息
 	var receiveUserConf models.UserMessageConfModel
 	err = global.DB.Take(&receiveUserConf, "user_id = ?", al.ArticleModel.UserID).Error
-	if !receiveUserConf.ReceiveLikeMessage {
+	if !receiveUserConf.ReceiveLikeNotify {
 		return
 	}
 
 	// 同个人给同一篇文章点过赞了，就不新发消息了
-	err = global.DB.Take(&models.MessageModel{}, "type = ? AND article_id = ? AND action_user_id = ?", message_enum.ArticleLikeType, al.ArticleID, al.UserID).Error
+	err = global.DB.Take(&models.NotifyModel{}, "type = ? AND article_id = ? AND action_user_id = ?", notify_enum.ArticleLikeType, al.ArticleID, al.UserID).Error
 	if err == nil {
 		return
 	}
@@ -90,8 +90,8 @@ func SendArticleLikeMessage(al models.ArticleLikesModel) (err error) {
 	al.UserModel = user
 
 	// 入库
-	err = global.DB.Create(&models.MessageModel{
-		Type:                message_enum.ArticleLikeType,
+	err = global.DB.Create(&models.NotifyModel{
+		Type:                notify_enum.ArticleLikeType,
 		ReceiveUserID:       al.ArticleModel.UserID,
 		ActionUserID:        al.UserID,
 		ActionUserNickname:  al.UserModel.Nickname,
@@ -102,7 +102,7 @@ func SendArticleLikeMessage(al models.ArticleLikesModel) (err error) {
 	return
 }
 
-func SendArticleCollectMessage(ac models.ArticleCollectionModel) (err error) {
+func SendArticleCollectNotify(ac models.ArticleCollectionModel) (err error) {
 	// 自己收藏自己，就不通知了
 	if ac.UserID == ac.ArticleModel.UserID {
 		return
@@ -111,12 +111,12 @@ func SendArticleCollectMessage(ac models.ArticleCollectionModel) (err error) {
 	// 检验对方是否接受消息
 	var receiveUserConf models.UserMessageConfModel
 	err = global.DB.Take(&receiveUserConf, "user_id = ?", ac.ArticleModel.UserID).Error
-	if !receiveUserConf.ReceiveCollectMessage {
+	if !receiveUserConf.ReceiveCollectNotify {
 		return
 	}
 
 	// 同个人给同一篇文章收藏过，就不新发消息了
-	err = global.DB.Take(&models.MessageModel{}, "type = ? AND article_id = ? AND action_user_id = ?", message_enum.ArticleCollectType, ac.ArticleID, ac.UserID).Error
+	err = global.DB.Take(&models.NotifyModel{}, "type = ? AND article_id = ? AND action_user_id = ?", notify_enum.ArticleCollectType, ac.ArticleID, ac.UserID).Error
 	if err == nil {
 		return
 	}
@@ -130,8 +130,8 @@ func SendArticleCollectMessage(ac models.ArticleCollectionModel) (err error) {
 	ac.UserModel = user
 
 	// 入库
-	err = global.DB.Create(&models.MessageModel{
-		Type:                message_enum.ArticleLikeType,
+	err = global.DB.Create(&models.NotifyModel{
+		Type:                notify_enum.ArticleLikeType,
 		ReceiveUserID:       ac.ArticleModel.UserID,
 		ActionUserID:        ac.UserID,
 		ActionUserNickname:  ac.UserModel.Nickname,
@@ -142,7 +142,7 @@ func SendArticleCollectMessage(ac models.ArticleCollectionModel) (err error) {
 	return
 }
 
-func SendCommentLikeMessage(cl models.CommentLikesModel) (err error) {
+func SendCommentLikeNotify(cl models.CommentLikesModel) (err error) {
 	// 自己赞自己，就不通知了
 	if cl.UserID == cl.CommentModel.UserID {
 		return
@@ -151,12 +151,12 @@ func SendCommentLikeMessage(cl models.CommentLikesModel) (err error) {
 	// 检验对方是否接受消息
 	var receiveUserConf models.UserMessageConfModel
 	err = global.DB.Take(&receiveUserConf, "user_id = ?", cl.CommentModel.UserID).Error
-	if !receiveUserConf.ReceiveLikeMessage {
+	if !receiveUserConf.ReceiveLikeNotify {
 		return
 	}
 
 	// 同个人给同一篇评论点过赞了，就不新发消息了
-	err = global.DB.Take(&models.MessageModel{}, "type = ? AND comment_id = ? AND action_user_id = ?", message_enum.CommentLikeType, cl.CommentID, cl.UserID).Error
+	err = global.DB.Take(&models.NotifyModel{}, "type = ? AND comment_id = ? AND action_user_id = ?", notify_enum.CommentLikeType, cl.CommentID, cl.UserID).Error
 	if err == nil {
 		return
 	}
@@ -170,8 +170,8 @@ func SendCommentLikeMessage(cl models.CommentLikesModel) (err error) {
 	cl.UserModel = user
 
 	// 入库
-	err = global.DB.Create(&models.MessageModel{
-		Type:                message_enum.CommentLikeType,
+	err = global.DB.Create(&models.NotifyModel{
+		Type:                notify_enum.CommentLikeType,
 		ReceiveUserID:       cl.CommentModel.UserID,
 		ActionUserID:        cl.UserID,
 		ActionUserNickname:  cl.UserModel.Nickname,
@@ -182,7 +182,7 @@ func SendCommentLikeMessage(cl models.CommentLikesModel) (err error) {
 	return
 }
 
-func SendSystemMessage(receiver uint, title, content, link, href string) error {
+func SendSystemNotify(receiver uint, title, content, link, href string) error {
 	// todo 被删除的文章 评论的 id 要记录下
 	var user models.UserModel
 	err := global.DB.Where("id = ?", receiver).Take(&user).Error
@@ -190,8 +190,8 @@ func SendSystemMessage(receiver uint, title, content, link, href string) error {
 		return fmt.Errorf("用户不存在: %s", err)
 	}
 
-	var msg = models.MessageModel{
-		Type:          message_enum.SystemType,
+	var msg = models.NotifyModel{
+		Type:          notify_enum.SystemType,
 		ReceiveUserID: receiver,
 		Title:         title,
 		Content:       content,

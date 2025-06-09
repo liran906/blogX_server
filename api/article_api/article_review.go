@@ -49,7 +49,7 @@ func (ArticleApi) ArticleReviewView(c *gin.Context) {
 	if req.Status == enum.ArticleStatusPublish {
 		fMsg := fmt.Sprintf("您提交审核的文章 [ID:%d]%s 已成功通过！\n", a.ID, a.Title)
 		href := fmt.Sprintf("%s/aritcle/%d", global.Config.System.Addr(), a.ID)
-		err = message_service.SendSystemMessage(a.UserID, "文章审核通过", fMsg+req.Msg, a.Title, href)
+		err = message_service.SendSystemNotify(a.UserID, "文章审核通过", fMsg+req.Msg, a.Title, href)
 		if err != nil {
 			res.Fail(err, "发送消息失败", c)
 			return
@@ -57,7 +57,7 @@ func (ArticleApi) ArticleReviewView(c *gin.Context) {
 	} else if req.Status == enum.ArticleStatusPublish {
 		fMsg := fmt.Sprintf("您提交审核的文章 [ID:%d]%s 没有通过！\n", a.ID, a.Title)
 		href := fmt.Sprintf("%s/aritcle/%d", global.Config.System.Addr(), a.ID)
-		err = message_service.SendSystemMessage(a.UserID, "文章审核未通过", fMsg+req.Msg, a.Title, href)
+		err = message_service.SendSystemNotify(a.UserID, "文章审核未通过", fMsg+req.Msg, a.Title, href)
 		if err != nil {
 			res.Fail(err, "发送消息失败", c)
 			return

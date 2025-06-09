@@ -34,7 +34,7 @@ func FlagDB() {
 		&models.GlobalNotificationModel{},
 		&models.UserUploadImage{},
 		&models.CommentLikesModel{},
-		&models.MessageModel{},
+		&models.NotifyModel{},
 		&models.UserMessageConfModel{},
 	)
 	if err != nil {

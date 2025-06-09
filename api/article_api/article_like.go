@@ -60,7 +60,7 @@ func (ArticleApi) ArticleLikeView(c *gin.Context) {
 
 			// 通知点赞
 			al.ArticleModel = a
-			err = message_service.SendArticleLikeMessage(al)
+			err = message_service.SendArticleLikeNotify(al)
 			if err != nil {
 				log.SetItemWarn("消息发送失败", err.Error())
 			}

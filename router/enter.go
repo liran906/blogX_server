@@ -30,6 +30,7 @@ func Run() {
 	UserRouter(nr)
 	ArticleRouter(nr)
 	CommentRouter(nr)
+	NotifyRouter(nr)
 
 	MytestRouter(nr) // 测试用
 
