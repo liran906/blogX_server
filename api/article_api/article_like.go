@@ -8,6 +8,7 @@ import (
 	"blogX_server/models"
 	"blogX_server/models/enum"
 	"blogX_server/service/log_service"
+	"blogX_server/service/message_service"
 	"blogX_server/service/redis_service/redis_article"
 	"blogX_server/utils/jwts"
 	"errors"
@@ -43,10 +44,12 @@ func (ArticleApi) ArticleLikeView(c *gin.Context) {
 	err = global.DB.Take(&al, "article_id = ? and user_id = ?", a.ID, uid).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			err = global.DB.Create(&models.ArticleLikesModel{
+			// 创建新的点赞记录
+			al = models.ArticleLikesModel{
 				ArticleID: a.ID,
 				UserID:    uid,
-			}).Error
+			}
+			err = global.DB.Create(&al).Error
 			if err != nil {
 				res.Fail(err, "点赞失败", c)
 				return
@@ -54,6 +57,13 @@ func (ArticleApi) ArticleLikeView(c *gin.Context) {
 			// redis文章点赞数+1
 			redis_article.AddArticleLike(req.ID)
 			res.SuccessWithMsg("点赞成功", c)
+
+			// 通知点赞
+			al.ArticleModel = a
+			err = message_service.SendArticleLikeMessage(al)
+			if err != nil {
+				log.SetItemWarn("消息发送失败", err.Error())
+			}
 			return
 		}
 		res.Fail(err, "读取点赞数据失败", c)

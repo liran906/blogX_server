@@ -9,6 +9,7 @@ import (
 	"blogX_server/models"
 	"blogX_server/models/enum"
 	"blogX_server/service/log_service"
+	"blogX_server/service/message_service"
 	"blogX_server/utils/jwts"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -48,6 +49,16 @@ func (ArticleApi) ArticleRemoveView(c *gin.Context) {
 		return
 	}
 	log.SetItem(fmt.Sprintf("删除文章 %d", a.ID), mps)
+
+	// 消息通知
+	if claims.UserID != a.UserID { // 只可能是 admin
+		// todo 删除理由
+		err = message_service.SendSystemMessage(a.UserID, "您发布的文章被删除", "违反社区规定", "", "")
+		if err != nil {
+			res.Fail(err, "删除消息发送失败", c)
+			return
+		}
+	}
 	res.SuccessWithMsg("文章删除成功", c)
 }
 
@@ -84,6 +95,13 @@ func (ArticleApi) ArticleBatchRemoveView(c *gin.Context) {
 		log.SetItem(fmt.Sprintf("删除文章 %d", a.ID), mps)
 		succ = append(succ, a.ID)
 		count++
+
+		// 消息通知
+		// todo 删除理由
+		err = message_service.SendSystemMessage(a.UserID, "您发布的文章被删除", "违反社区规定", "", "")
+		if err != nil {
+			log.SetItemWarn("删除消息发送失败", fmt.Sprintf("文章id:%d 作者id:%d, Error: %s", a.ID, a.UserID, err))
+		}
 	}
 
 	var result = map[string]any{

@@ -8,6 +8,7 @@ import (
 	"blogX_server/models"
 	"blogX_server/models/enum"
 	"blogX_server/service/log_service"
+	"blogX_server/service/message_service"
 	"blogX_server/service/redis_service/redis_comment"
 	"blogX_server/utils/jwts"
 	"errors"
@@ -43,10 +44,11 @@ func (CommentApi) CommentLikeView(c *gin.Context) {
 	err = global.DB.Take(&cl, "comment_id = ? and user_id = ?", cmt.ID, uid).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			err = global.DB.Create(&models.CommentLikesModel{
+			cl = models.CommentLikesModel{
 				UserID:    uid,
 				CommentID: req.ID,
-			}).Error
+			}
+			err = global.DB.Create(&cl).Error
 			if err != nil {
 				res.Fail(err, "点赞失败", c)
 				return
@@ -54,6 +56,13 @@ func (CommentApi) CommentLikeView(c *gin.Context) {
 			// redis 评论点赞数+1
 			redis_comment.AddCommentLikeCount(req.ID)
 			res.SuccessWithMsg("点赞成功", c)
+
+			// 通知点赞
+			cl.CommentModel = cmt
+			err = message_service.SendCommentLikeMessage(cl)
+			if err != nil {
+				log.SetItemWarn("消息发送失败", err.Error())
+			}
 			return
 		}
 		res.Fail(err, "读取点赞数据失败", c)

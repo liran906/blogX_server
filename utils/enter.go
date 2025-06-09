@@ -47,3 +47,11 @@ func Unique[T comparable](data []T) []T {
 	}
 	return unique
 }
+
+func ExtractContent(content string, length int) string {
+	runes := []rune(content)
+	if len(runes) > length {
+		return string(runes[:length]) + "..."
+	}
+	return content
+}

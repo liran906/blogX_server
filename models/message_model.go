@@ -16,6 +16,7 @@ type MessageModel struct {
 	ArticleID           uint              `json:"articleID"`
 	ArticleTitle        string            `gorm:"size:128" json:"articleTitle"`
 	CommentID           uint              `json:"commentID"`
+	CommentContent      string            `json:"commentContent"`
 	LinkLabel           string            `gorm:"size:32" json:"linkLabel"`
 	LinkHref            string            `gorm:"size:256" json:"linkHref"`
 	IsRead              bool              `gorm:"not null; default:false"json:"isRead"`

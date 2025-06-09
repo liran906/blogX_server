@@ -9,6 +9,7 @@ import (
 	"blogX_server/models"
 	"blogX_server/models/enum"
 	"blogX_server/service/log_service"
+	"blogX_server/service/message_service"
 	"blogX_server/utils/jwts"
 	"errors"
 	"fmt"
@@ -48,5 +49,21 @@ func (CommentApi) CommentRemoveView(c *gin.Context) {
 	}
 
 	log.SetTitle(fmt.Sprintf("删除评论[%d]成功", cmt.ID))
+
+	// 消息通知
+	if claims.UserID != cmt.UserID {
+		var msg string
+		if claims.Role == enum.AdminRoleType {
+			msg = "管理员删除"
+		} else {
+			msg = "文章作者删除"
+		}
+		// todo 删除理由
+		err = message_service.SendSystemMessage(cmt.UserID, "您发布的评论被删除", msg, "", "")
+		if err != nil {
+			res.Fail(err, "删除消息发送失败", c)
+			return
+		}
+	}
 	res.SuccessWithMsg("评论删除成功", c)
 }

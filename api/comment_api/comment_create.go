@@ -9,6 +9,7 @@ import (
 	"blogX_server/models/enum"
 	"blogX_server/service/comment_service"
 	"blogX_server/service/log_service"
+	"blogX_server/service/message_service"
 	"blogX_server/service/redis_service/redis_article"
 	"blogX_server/service/redis_service/redis_comment"
 	"blogX_server/utils/jwts"
@@ -45,8 +46,8 @@ func (CommentApi) CommentCreateView(c *gin.Context) {
 	// 确定深度以及根评论 ID
 	var depth = 0
 	var rootID *uint
+	var parent models.CommentModel
 	if req.ParentID != nil {
-		var parent models.CommentModel
 		err := global.DB.Take(&parent, req.ParentID).Error
 		if err != nil {
 			res.Fail(err, "获取父评论失败", c)
@@ -62,13 +63,9 @@ func (CommentApi) CommentCreateView(c *gin.Context) {
 		} else {
 			// 获取文章 id
 			req.ArticleID = parent.ArticleID
-			_, err = verifyArticle(req.ArticleID)
-			if err != nil {
-				res.FailWithError(err, c)
-				return
-			}
 		}
 
+		// 本次评论的 root 及 depth
 		depth = parent.Depth + 1
 		if parent.RootID == nil {
 			rootID = &parent.ID
@@ -81,12 +78,20 @@ func (CommentApi) CommentCreateView(c *gin.Context) {
 		}
 	}
 
+	// 校验文章
+	article, err := verifyArticle(req.ArticleID)
+	if err != nil {
+		res.FailWithError(err, c)
+		return
+	}
+
 	req.Content = xss.Filter(req.Content)
 
 	log := log_service.GetActionLog(c)
 	log.ShowAll()
 	log.SetTitle("创建评论失败")
 
+	// 创建
 	var cmt = models.CommentModel{
 		UserID:    claims.UserID,
 		Content:   req.Content,
@@ -96,6 +101,7 @@ func (CommentApi) CommentCreateView(c *gin.Context) {
 		Depth:     depth,
 	}
 
+	// 入库
 	err = global.DB.Create(&cmt).Error
 	if err != nil {
 		res.Fail(err, "无法评论该文章", c)
@@ -119,6 +125,18 @@ func (CommentApi) CommentCreateView(c *gin.Context) {
 
 	log.SetTitle("创建评论成功")
 	res.SuccessWithMsg("创建评论成功", c)
+
+	// SendCommentMessage 发送提醒消息
+	// ======================================
+	// 进去内部函数在 preload  cmt的fk，总是会报错
+	// 怀疑是 mysql 没有那么快写入并可读取
+	// 所以在外部把相关字段填好再传入吧
+	cmt.ParentModel = &parent
+	cmt.ArticleModel = article
+	err = message_service.SendCommentMessage(cmt)
+	if err != nil {
+		log.SetItemWarn("消息发送失败", err.Error())
+	}
 }
 
 func verifyArticle(articleID uint) (article models.ArticleModel, err error) {

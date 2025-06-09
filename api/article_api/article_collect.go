@@ -8,6 +8,7 @@ import (
 	"blogX_server/models"
 	"blogX_server/models/enum"
 	"blogX_server/service/log_service"
+	"blogX_server/service/message_service"
 	"blogX_server/service/redis_service/redis_article"
 	"blogX_server/utils/jwts"
 	"errors"
@@ -66,18 +67,18 @@ func (ArticleApi) ArticleCollectView(c *gin.Context) {
 		}
 	}
 
-	ac := models.ArticleCollectionModel{
-		ArticleID:          req.ArticleID,
-		UserID:             uid,
-		CollectionFolderID: req.CollectionID,
-	}
-
 	// 日志
 	log := log_service.GetActionLog(c)
 	log.ShowRequest()
 	log.ShowResponse()
 	log.SetLevel(enum.LogTraceLevel)
 	log.SetTitle(fmt.Sprintf("增加收藏 %d", req.ArticleID))
+
+	ac := models.ArticleCollectionModel{
+		ArticleID:          req.ArticleID,
+		UserID:             uid,
+		CollectionFolderID: req.CollectionID,
+	}
 
 	// userID articleID collectionFolderID 是一组联合 CK，如果有重复写入会自己报错
 	// 所以不在这里显示判断是否有重复
@@ -106,4 +107,11 @@ func (ArticleApi) ArticleCollectView(c *gin.Context) {
 	global.DB.Model(&cf).Update("article_count", gorm.Expr("article_count + 1"))
 	redis_article.AddArticleCollect(req.ArticleID)
 	res.SuccessWithMsg("收藏成功", c)
+
+	// 通知点赞
+	ac.ArticleModel = a
+	err = message_service.SendArticleCollectMessage(ac)
+	if err != nil {
+		log.SetItemWarn("消息发送失败", err.Error())
+	}
 }

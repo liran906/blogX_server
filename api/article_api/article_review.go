@@ -8,6 +8,7 @@ import (
 	"blogX_server/models"
 	"blogX_server/models/enum"
 	"blogX_server/service/log_service"
+	"blogX_server/service/message_service"
 	"fmt"
 	"github.com/gin-gonic/gin"
 )
@@ -36,23 +37,31 @@ func (ArticleApi) ArticleReviewView(c *gin.Context) {
 
 	err = global.DB.Model(&a).Update("Status", req.Status).Error
 	if err != nil {
-		res.Fail(err, "审核失败", c)
+		res.Fail(err, "审核提交失败", c)
 		return
 	}
 
 	// 日志
 	log := log_service.GetActionLog(c)
 	log.ShowAll()
+	log.SetTitle("文章审核")
 
-	// TODO 给文章提交的用户发送消息
-	if req.Msg == "" && req.Status == enum.ArticleStatusPublish {
-		req.Msg = fmt.Sprintf("您发布审核的文章 [ID:%d]%s 已成功通过审核！", a.ID, a.Title)
-		log.SetTitle("文章审核成功")
+	if req.Status == enum.ArticleStatusPublish {
+		fMsg := fmt.Sprintf("您提交审核的文章 [ID:%d]%s 已成功通过！\n", a.ID, a.Title)
+		href := fmt.Sprintf("%s/aritcle/%d", global.Config.System.Addr(), a.ID)
+		err = message_service.SendSystemMessage(a.UserID, "文章审核通过", fMsg+req.Msg, a.Title, href)
+		if err != nil {
+			res.Fail(err, "发送消息失败", c)
+			return
+		}
+	} else if req.Status == enum.ArticleStatusPublish {
+		fMsg := fmt.Sprintf("您提交审核的文章 [ID:%d]%s 没有通过！\n", a.ID, a.Title)
+		href := fmt.Sprintf("%s/aritcle/%d", global.Config.System.Addr(), a.ID)
+		err = message_service.SendSystemMessage(a.UserID, "文章审核未通过", fMsg+req.Msg, a.Title, href)
+		if err != nil {
+			res.Fail(err, "发送消息失败", c)
+			return
+		}
 	}
-	if req.Msg == "" && req.Status == enum.ArticleStatusPublish {
-		req.Msg = fmt.Sprintf("您发布审核的文章 [ID:%d]%s 没有通过审核！", a.ID, a.Title)
-		log.SetTitle("文章审核失败")
-	}
-
-	res.SuccessWithMsg("成功审核", c)
+	res.SuccessWithMsg("审核提交成功", c)
 }

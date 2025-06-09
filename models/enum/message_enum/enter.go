@@ -12,6 +12,6 @@ const (
 	ArticleCommentType   Type = 5
 	CommentLikeType      Type = 6
 	CommentUnlikeType    Type = 7
-	CommentReplayType    Type = 8
+	CommentReplyType     Type = 8
 	SystemType           Type = 9
 )
