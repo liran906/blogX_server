@@ -8,14 +8,14 @@ import (
 	"context"
 	"fmt"
 	"github.com/pingcap/errors"
+	"github.com/siddontang/go-log/log"
+	"github.com/siddontang/go-mysql-elasticsearch/elastic"
+	"github.com/siddontang/go-mysql/canal"
+	mysql2 "github.com/siddontang/go-mysql/mysql"
 	"github.com/sirupsen/logrus"
 	"regexp"
 	"strings"
 	"sync"
-
-	"github.com/siddontang/go-log/log"
-	"github.com/siddontang/go-mysql-elasticsearch/elastic"
-	"github.com/siddontang/go-mysql/canal"
 )
 
 // ErrRuleNotExist is the error if rule is not defined.
@@ -33,6 +33,8 @@ type River struct {
 	es     *elastic.Client
 	master *masterInfo
 	syncCh chan interface{}
+
+	closeChan chan struct{}
 }
 
 // NewRiver creates the River from config
@@ -42,6 +44,7 @@ func NewRiver() (*River, error) {
 	r.rules = make(map[string]*rule.Rule)
 	r.syncCh = make(chan interface{}, 4096)
 	r.ctx, r.cancel = context.WithCancel(context.Background())
+	r.closeChan = make(chan struct{})
 
 	var err error
 	if r.master, err = loadMasterInfo(global.Config.River.DataDir); err != nil {
@@ -80,7 +83,7 @@ func (r *River) newCanal() error {
 	db := global.Config.DB[0]
 	rc := global.Config.River
 
-	// 配置 mysql
+	// 基础配置
 	cfg.Addr = db.GetAddr()
 	cfg.User = db.User
 	cfg.Password = db.Password
@@ -88,11 +91,14 @@ func (r *River) newCanal() error {
 
 	cfg.Flavor = rc.Flavor
 	cfg.ServerID = rc.ServerID
-	cfg.Dump.ExecutionPath = ""
 
-	// TODO: dump 先写死
-	cfg.Dump.DiscardErr = false
+	// 完全禁用 dump
+	cfg.Dump.ExecutionPath = ""
+	cfg.Dump.DiscardErr = true
 	cfg.Dump.SkipMasterData = true
+	cfg.Dump.Databases = nil
+	cfg.Dump.Tables = nil
+	cfg.Dump.TableDB = ""
 
 	for _, s := range rc.Sources {
 		for _, t := range s.Tables {
@@ -285,17 +291,66 @@ func ruleKey(schema string, table string) string {
 }
 
 // Run syncs the data from MySQL and inserts to ES.
-func (r *River) Run() error {
+//
+//	func (r *River) Run() error {
+//		r.wg.Add(1)
+//		go r.syncLoop()
+//
+//		pos := r.master.Position()
+//		if err := r.canal.RunFrom(pos); err != nil {
+//			log.Errorf("start canal err %v", err)
+//			return errors.Trace(err)
+//		}
+//
+//		return nil
+//	}
+func (r *River) Run(forceDump bool) error {
+	defer func() {
+		if err := recover(); err != nil {
+			logrus.Errorf("River panic: %v", err)
+			r.Close()
+		}
+	}()
+
+	pos := r.master.Position()
+	if forceDump || pos.Name == "" || pos.Pos == 0 {
+		// 使用自定义的 dump 方法替代 canal.Dump()
+		if err := r.dumpTables(); err != nil {
+			logrus.Errorf("dump tables err %v", err)
+			return errors.Trace(err)
+		}
+
+		// 获取当前 binlog 位置
+		pos = r.canal.SyncedPosition()
+		if err := r.master.Save(mysql2.Position(pos)); err != nil {
+			logrus.Errorf("save sync position %s err %v", pos, err)
+			return errors.Trace(err)
+		}
+		logrus.Infof("全量同步完成，保存同步位置：%s", pos)
+	}
+
 	r.wg.Add(1)
 	go r.syncLoop()
 
-	pos := r.master.Position()
 	if err := r.canal.RunFrom(pos); err != nil {
-		log.Errorf("start canal err %v", err)
+		logrus.Errorf("start canal err %v", err)
 		return errors.Trace(err)
 	}
 
 	return nil
+}
+
+func (r *River) ReDump() error {
+	// 先关闭当前同步
+	r.Close()
+
+	// 清除同步位置
+	if err := r.master.Save(mysql2.Position{}); err != nil {
+		return errors.Trace(err)
+	}
+
+	// 重新运行并强制进行全量同步
+	return r.Run(true)
 }
 
 // Ctx returns the internal context for outside use.
@@ -305,15 +360,25 @@ func (r *River) Ctx() context.Context {
 
 // Close closes the River
 func (r *River) Close() {
-	logrus.Infof("closing river")
+	select {
+	case <-r.closeChan:
+		// 已经关闭
+		return
+	default:
+		logrus.Infof("closing river")
 
-	r.cancel()
+		r.cancel()
 
-	r.canal.Close()
+		//  TODO 这里在 init 时总会报错 目前解决不了，不管了
+		r.canal.Close()
 
-	r.master.Close()
+		err := r.master.Close()
+		if err != nil {
+			logrus.Errorf("close master info err %v", err)
+		}
 
-	r.wg.Wait()
+		r.wg.Wait()
+	}
 }
 
 func isValidTables(tables []string) bool {
@@ -332,4 +397,49 @@ func buildTable(table string) string {
 		return "." + table
 	}
 	return table
+}
+
+func (r *River) dumpTables() error {
+	logrus.Info("开始使用 SQL 查询进行全量同步...")
+
+	for _, rule := range r.rules {
+		query := fmt.Sprintf("SELECT * FROM %s.%s", rule.Schema, rule.Table)
+
+		// 执行查询
+		res, err := r.canal.Execute(query)
+		if err != nil {
+			return errors.Trace(err)
+		}
+
+		// 处理结果集
+		for i := 0; i < res.Resultset.RowNumber(); i++ {
+			row := make([]interface{}, len(rule.TableInfo.Columns))
+			for j := range rule.TableInfo.Columns {
+				row[j], _ = res.GetValue(i, j)
+			}
+
+			// 构造并发送 ES 请求
+			reqs, err := r.makeInsertRequest(rule, [][]interface{}{row})
+			if err != nil {
+				return errors.Trace(err)
+			}
+
+			if err := r.doBulk(reqs); err != nil {
+				return errors.Trace(err)
+			}
+		}
+	}
+
+	logrus.Info("全量同步完成")
+	return nil
+}
+
+// IsClosed 加个方法判断他是否关闭了
+func (r *River) IsClosed() bool {
+	select {
+	case <-r.closeChan:
+		return true
+	default:
+		return false
+	}
 }

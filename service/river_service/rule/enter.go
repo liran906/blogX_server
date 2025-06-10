@@ -73,14 +73,20 @@ func (r *Rule) Prepare() error {
 
 // CheckFilter checkers whether the field needs to be filtered.
 func (r *Rule) CheckFilter(field string) bool {
-	if r.Filter == nil {
-		return true
-	}
+	//if r.Filter == nil {
+	//	return true
+	//}
+	//
+	//for _, f := range r.Filter {
+	//	if f == field {
+	//		return true
+	//	}
+	//}
+	//return false
 
-	for _, f := range r.Filter {
-		if f == field {
-			return true
-		}
-	}
-	return false
+	// 如果字段在映射规则中存在，则不过滤
+	_, exists := r.FieldMapping[field]
+	//logrus.Debugf("检查字段 %s 是否在映射规则中: %v", field, exists)
+	return exists
+
 }

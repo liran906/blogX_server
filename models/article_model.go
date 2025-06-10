@@ -21,8 +21,8 @@ type ArticleModel struct {
 	CommentCount   int                `gorm:"not null; default:0" json:"commentCount"`
 	CollectCount   int                `gorm:"not null; default:0" json:"collectCount"`
 	OpenForComment bool               `gorm:"not null; default:true" json:"openForComment"`
-	PinnedByUser   bool               `gorm:"not null; default:false" json:"pinnedByUser"` // 0就是没有被置顶，其他数字就是置顶顺序，1为最顶
-	PinnedByAdmin  uint               `gorm:"not null; default:0" json:"pinnedByAdmin"`    // 0就是没有被置顶，其他数字就是置顶顺序，1为最顶
+	PinnedByUser   bool               `gorm:"not null; default:false" json:"pinnedByUser"`
+	PinnedByAdmin  uint               `gorm:"not null; default:0" json:"pinnedByAdmin"` // TODO
 
 	// FK
 	UserModel     UserModel      `gorm:"foreignKey:UserID;references:ID" json:"-"`

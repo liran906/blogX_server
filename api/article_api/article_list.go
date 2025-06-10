@@ -137,7 +137,7 @@ func (ArticleApi) ArticleListView(c *gin.Context) {
 			Preloads:     []string{"UserModel", "CategoryModel"},
 			Where:        query,
 			DefaultOrder: defaultOrder,
-			Debug:        true,
+			Debug:        false,
 		})
 	if err != nil {
 		res.Fail(err, "查询失败", c)
