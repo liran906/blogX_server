@@ -12,7 +12,8 @@ import (
 func NotifyRouter(rg *gin.RouterGroup) {
 	app := api.App.NotifyApi
 
+	rg.GET("notify/unread", mdw.AuthMiddleware, app.UserUnreadMessageView)
 	rg.GET("notify", mdw.BindQueryMiddleware[notify_api.NotifyListReq], mdw.AuthMiddleware, app.NotifyListView)
-	rg.PUT("notify/read", mdw.BindJsonMiddleware[notify_api.NotifyReadReq], mdw.AuthMiddleware, app.NotifyReadView)
+	rg.PATCH("notify", mdw.BindJsonMiddleware[notify_api.NotifyReadReq], mdw.AuthMiddleware, app.NotifyReadView)
 	rg.DELETE("notify", mdw.BindJsonMiddleware[notify_api.NotifyRemoveReq], mdw.AuthMiddleware, app.NotifyRemoveView)
 }

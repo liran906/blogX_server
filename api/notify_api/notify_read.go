@@ -20,6 +20,7 @@ type NotifyReadReq struct {
 	NotifyType int8 `json:"notifyType"` // 一键已读的前提下，1-评论与回复 2-赞和收藏 3-系统通知
 }
 
+// NotifyReadView 将消息设为已读
 func (NotifyApi) NotifyReadView(c *gin.Context) {
 	req := c.MustGet("bindReq").(NotifyReadReq)
 	claims := jwts.MustGetClaimsFromGin(c)
