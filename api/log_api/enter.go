@@ -163,7 +163,7 @@ func (LogApi) LogReadView(c *gin.Context) {
 }
 
 func (LogApi) LogRemoveView(c *gin.Context) {
-	var req models.RemoveRequest
+	var req models.IDListRequest
 	err := c.ShouldBindJSON(&req)
 	if err != nil {
 		res.FailWithError(err, c)

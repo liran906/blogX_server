@@ -83,7 +83,7 @@ func (BannerApi) BannerListView(c *gin.Context) {
 }
 
 func (BannerApi) BannerRemoveView(c *gin.Context) {
-	req := c.MustGet("bindReq").(models.RemoveRequest)
+	req := c.MustGet("bindReq").(models.IDListRequest)
 
 	var removeList []models.BannerModel
 	global.DB.Find(&removeList, "id in ?", req.IDList)

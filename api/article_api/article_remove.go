@@ -64,7 +64,7 @@ func (ArticleApi) ArticleRemoveView(c *gin.Context) {
 
 // ArticleBatchRemoveView 批量删除，只能管理员
 func (ArticleApi) ArticleBatchRemoveView(c *gin.Context) {
-	req := c.MustGet("bindReq").(models.RemoveRequest)
+	req := c.MustGet("bindReq").(models.IDListRequest)
 
 	if len(req.IDList) == 0 {
 		res.FailWithMsg("没有指定删除对象", c)

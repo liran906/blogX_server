@@ -16,7 +16,7 @@ type IDRequest struct {
 	ID uint `uri:"id" json:"id" form:"id"`
 }
 
-type RemoveRequest struct {
+type IDListRequest struct {
 	IDList []uint `json:"idList"`
 }
 

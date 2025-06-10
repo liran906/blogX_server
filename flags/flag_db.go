@@ -36,6 +36,7 @@ func FlagDB() {
 		&models.CommentLikesModel{},
 		&models.NotifyModel{},
 		&models.UserMessageConfModel{},
+		&models.UserGlobalNotificationModel{},
 	)
 	if err != nil {
 		logrus.Errorf("failed to migrate DB: %s\n", err)

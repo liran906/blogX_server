@@ -7,6 +7,7 @@ import (
 	"blogX_server/api/banner_api"
 	"blogX_server/api/captcha_api"
 	"blogX_server/api/comment_api"
+	"blogX_server/api/global_notification_api"
 	"blogX_server/api/image_api"
 	"blogX_server/api/log_api"
 	"blogX_server/api/mytest_api"
@@ -16,15 +17,16 @@ import (
 )
 
 type Api struct {
-	SiteApi    site_api.SiteApi
-	LogApi     log_api.LogApi
-	ImageApi   image_api.ImageApi
-	BannerApi  banner_api.BannerApi
-	CaptchaApi captcha_api.CaptchaApi
-	UserApi    user_api.UserApi
-	ArticleApi article_api.ArticleApi
-	CommentApi comment_api.CommentApi
-	NotifyApi  notify_api.NotifyApi
+	SiteApi               site_api.SiteApi
+	LogApi                log_api.LogApi
+	ImageApi              image_api.ImageApi
+	BannerApi             banner_api.BannerApi
+	CaptchaApi            captcha_api.CaptchaApi
+	UserApi               user_api.UserApi
+	ArticleApi            article_api.ArticleApi
+	CommentApi            comment_api.CommentApi
+	NotifyApi             notify_api.NotifyApi
+	GlobalNotificationApi global_notification_api.GlobalNotificationApi
 
 	MyTestApi mytest_api.MyTestApi // 测试用
 }

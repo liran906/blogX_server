@@ -31,6 +31,7 @@ func Run() {
 	ArticleRouter(nr)
 	CommentRouter(nr)
 	NotifyRouter(nr)
+	GlobalNotificationRouter(nr)
 
 	MytestRouter(nr) // 测试用
 

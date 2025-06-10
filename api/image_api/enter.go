@@ -125,7 +125,7 @@ func (ImageApi) ImageListView(c *gin.Context) {
 }
 
 func (ImageApi) ImageRemoveView(c *gin.Context) {
-	req := c.MustGet("bindReq").(models.RemoveRequest)
+	req := c.MustGet("bindReq").(models.IDListRequest)
 
 	var removeList []models.ImageModel
 	global.DB.Find(&removeList, "id in ?", req.IDList)

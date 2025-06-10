@@ -14,7 +14,7 @@ import (
 )
 
 func (ArticleApi) ArticleCollectionRemoveView(c *gin.Context) {
-	req := c.MustGet("bindReq").(models.RemoveRequest)
+	req := c.MustGet("bindReq").(models.IDListRequest)
 	claims := jwts.MustGetClaimsFromGin(c)
 
 	var collections []models.ArticleCollectionModel

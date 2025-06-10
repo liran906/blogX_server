@@ -19,7 +19,7 @@ func ArticleRouter(rg *gin.RouterGroup) {
 	rg.GET("article", mdw.BindQueryMiddleware[article_api.ArticleListReq], app.ArticleListView)
 	rg.GET("article/:id", mdw.BindUriMiddleware[models.IDRequest], app.ArticleDetailView)
 	rg.DELETE("article/:id", mdw.BindUriMiddleware[models.IDRequest], mdw.AuthMiddleware, app.ArticleRemoveView)
-	rg.DELETE("article", mdw.BindJsonMiddleware[models.RemoveRequest], mdw.AdminMiddleware, app.ArticleBatchRemoveView)
+	rg.DELETE("article", mdw.BindJsonMiddleware[models.IDListRequest], mdw.AdminMiddleware, app.ArticleBatchRemoveView)
 
 	// 用户置顶
 	rg.PUT("article/pin", mdw.BindJsonMiddleware[article_api.ArticlePinReq], mdw.AuthMiddleware, app.ArticlePinView)
@@ -30,18 +30,18 @@ func ArticleRouter(rg *gin.RouterGroup) {
 	// 点赞收藏 CD
 	rg.POST("article/:id", mdw.BindUriMiddleware[models.IDRequest], mdw.AuthMiddleware, app.ArticleLikeView)
 	rg.POST("article/collect/", mdw.BindJsonMiddleware[article_api.ArticleCollectReq], mdw.AuthMiddleware, app.ArticleCollectView)
-	rg.DELETE("article/collect", mdw.BindJsonMiddleware[models.RemoveRequest], mdw.AuthMiddleware, app.ArticleCollectionRemoveView)
+	rg.DELETE("article/collect", mdw.BindJsonMiddleware[models.IDListRequest], mdw.AuthMiddleware, app.ArticleCollectionRemoveView)
 
 	// 浏览记录 CRD
 	rg.POST("article/history", mdw.BindJsonMiddleware[article_api.ArticleCountReadReq], app.ArticleCountReadView)
 	rg.GET("article/history", mdw.BindQueryMiddleware[article_api.ArticleReadListReq], mdw.AuthMiddleware, app.ArticleReadListView)
-	rg.DELETE("article/history", mdw.BindJsonMiddleware[models.RemoveRequest], mdw.AuthMiddleware, app.ArticleReadRemoveView)
+	rg.DELETE("article/history", mdw.BindJsonMiddleware[models.IDListRequest], mdw.AuthMiddleware, app.ArticleReadRemoveView)
 
 	// 文章分类 CRUD
 	rg.POST("article/category", mdw.BindJsonMiddleware[article_api.ArticleCategoryCreateReq], mdw.AuthMiddleware, app.ArticleCategoryCreateView)
 	rg.PUT("article/category", mdw.BindJsonMiddleware[article_api.ArticleCategoryUpdateReq], mdw.AuthMiddleware, app.ArticleCategoryUpdateView)
 	rg.GET("article/category", mdw.BindQueryMiddleware[article_api.ArticleCategoryListReq], mdw.AuthMiddleware, app.ArticleCategoryListView)
-	rg.DELETE("article/category", mdw.BindJsonMiddleware[models.RemoveRequest], mdw.AuthMiddleware, app.ArticleCategoryRemoveView)
+	rg.DELETE("article/category", mdw.BindJsonMiddleware[models.IDListRequest], mdw.AuthMiddleware, app.ArticleCategoryRemoveView)
 
 	// 分类及标签选项
 	rg.GET("article/category/options", mdw.AuthMiddleware, app.ArticleCategoryOptionsView)
@@ -52,5 +52,5 @@ func ArticleRouter(rg *gin.RouterGroup) {
 	rg.PUT("article/collections", mdw.BindJsonMiddleware[article_api.ArticleCollectionUpdateReq], mdw.AuthMiddleware, app.ArticleCollectionFolderUpdateView)
 	rg.GET("article/collections", mdw.BindQueryMiddleware[article_api.ArticleCollectionFolderListReq], mdw.AuthMiddleware, app.ArticleCollectionFolderListView)
 	rg.GET("article/collection", mdw.BindQueryMiddleware[article_api.ArticleCollectionListReq], app.ArticleCollectionListView)
-	rg.DELETE("article/collections", mdw.BindJsonMiddleware[models.RemoveRequest], mdw.AuthMiddleware, app.ArticleCollectionFolderRemoveView)
+	rg.DELETE("article/collections", mdw.BindJsonMiddleware[models.IDListRequest], mdw.AuthMiddleware, app.ArticleCollectionFolderRemoveView)
 }
