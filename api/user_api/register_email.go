@@ -100,7 +100,7 @@ func (UserApi) RegisterEmailView(c *gin.Context) {
 		LastLoginTime:  time.Now(),
 	}
 
-	err = transaction.CreateUserAndUserConfig(user)
+	err = transaction.CreateUserAndUserConfigTx(user)
 	if err != nil {
 		res.FailWithError(err, c)
 		return

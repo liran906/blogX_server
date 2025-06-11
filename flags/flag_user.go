@@ -102,7 +102,7 @@ func (FlagUser) Create() {
 	u.LastLoginTime = time.Now()
 
 	// 入库
-	err := transaction.CreateUserAndUserConfig(u)
+	err := transaction.CreateUserAndUserConfigTx(u)
 	if err != nil {
 		fmt.Println("入库失败")
 		return

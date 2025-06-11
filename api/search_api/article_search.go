@@ -31,7 +31,7 @@ type ArticleBaseInfo struct {
 
 type ArticleListResp struct {
 	models.ArticleModel
-	AdminPinned   uint    `json:"adminPinned"`
+	AdminPinned   bool    `json:"adminPinned"`
 	UserNickname  string  `json:"userNickname,omitempty"`
 	UserAvatarURL string  `json:"userAvatarURL,omitempty"`
 	CategoryName  *string `json:"categoryName,omitempty"`

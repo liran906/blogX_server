@@ -1,4 +1,4 @@
-// Path: ./api/article_api/article_pin.go
+// Path: ./api/article_api/aritcle_admin_pin.go
 
 package article_api
 
@@ -9,24 +9,14 @@ import (
 	"blogX_server/models"
 	"blogX_server/models/enum"
 	"blogX_server/service/log_service"
-	"blogX_server/utils/jwts"
 	"github.com/gin-gonic/gin"
 	"time"
 )
 
-type ArticlePinReq struct {
-	IDList []uint `json:"idList"` // 这里前端注意，顺序就是排序。如果已有 2，增加 1，那么 3 个都要发过来
-}
-
-func (ArticleApi) ArticlePinView(c *gin.Context) {
+// ArticleAdminPinView 管理员将文章整体置顶
+func (ArticleApi) ArticleAdminPinView(c *gin.Context) {
+	// 这里前端注意，ArticlePinReq 顺序就是排序。如果已有 2，增加 1，那么 3 个都要发过来
 	req := c.MustGet("bindReq").(ArticlePinReq)
-	claims := jwts.MustGetClaimsFromGin(c)
-
-	// 置顶数量限制
-	if len(req.IDList) > global.Config.Site.Article.MaxPin {
-		res.FailWithMsg("已达到普通用户最大置顶数", c)
-		return
-	}
 
 	// 校验请求的文章是否存在
 	var aModels []models.ArticleModel
@@ -43,31 +33,15 @@ func (ArticleApi) ArticlePinView(c *gin.Context) {
 		}
 	}
 
-	// 用户权限校验
-	for _, a := range aModels {
-		// 每次只能修改同一作者的置顶
-		var ori = aModels[0].UserID
-		if ori != a.UserID {
-			res.FailWithMsg("只能修改同一作者的置顶", c)
-			return
-		}
-
-		// 非管理员只能修改自己的用户置顶
-		if a.UserID != claims.UserID && claims.Role != enum.AdminRoleType {
-			res.FailWithMsg("没有置顶文章权限", c)
-			return
-		}
-	}
-
 	// 日志
 	log := log_service.GetActionLog(c)
 	log.ShowRequest()
 	log.ShowResponse()
 	log.SetLevel(enum.LogTraceLevel)
-	log.SetTitle("更新站点置顶")
+	log.SetTitle("用户更新置顶")
 
 	// 用事务更新
-	err = transaction.UpdateUserPinnedArticlesTx(claims.UserID, req.IDList)
+	err = transaction.UpdateSitePinnedArticlesTx(req.IDList)
 	if err != nil {
 		res.Fail(err, "置顶失败", c)
 		return
@@ -79,42 +53,35 @@ func (ArticleApi) ArticlePinView(c *gin.Context) {
 	res.SuccessWithMsg("置顶成功", c)
 }
 
-type ArticlePinListResp struct {
+type ArticleAdminPinListResp struct {
 	Rank            int       `json:"rank"`
 	ArticleID       uint      `json:"articleID"`
 	CreatedAt       time.Time `json:"createdAt"`
 	ArticleTitle    string    `json:"articleTitle"`
 	ArticleAbstract string    `json:"articleAbstract"`
+	AuthorID        uint      `json:"authorID"`
 }
 
-func (ArticleApi) ArticlePinListView(c *gin.Context) {
-	uid := c.MustGet("bindReq").(models.IDRequest).ID
-
-	var u models.UserModel
-	err := global.DB.Take(&u, uid).Error
-	if err != nil {
-		res.Fail(err, "用户不存在", c)
-		return
-	}
-
+func (ArticleApi) ArticleAdminPinListView(c *gin.Context) {
 	var pinnedArticles []models.UserPinnedArticleModel
-	err = global.DB.Preload("ArticleModel").Order("`rank` ASC").Find(&pinnedArticles, "user_id = ?", uid).Error
+	err := global.DB.Preload("ArticleModel").Order("`rank` ASC").Find(&pinnedArticles, "user_id = ?", 0).Error
 	if err != nil {
 		res.Fail(err, "获取置顶文章失败", c)
 		return
 	}
 	if len(pinnedArticles) == 0 {
-		res.SuccessWithMsg("当前用户没有置顶文章", c)
+		res.SuccessWithMsg("当前没有置顶文章", c)
 		return
 	}
-	var list []ArticlePinListResp
+	var list []ArticleAdminPinListResp
 	for _, a := range pinnedArticles {
-		article := ArticlePinListResp{
+		article := ArticleAdminPinListResp{
 			Rank:            a.Rank,
 			ArticleID:       a.ArticleID,
 			CreatedAt:       a.CreatedAt,
 			ArticleTitle:    a.ArticleModel.Title,
 			ArticleAbstract: a.ArticleModel.Abstract,
+			AuthorID:        a.ArticleModel.UserID,
 		}
 		list = append(list, article)
 	}

@@ -22,7 +22,7 @@ type ArticleModel struct {
 	CollectCount   int                `gorm:"not null; default:0" json:"collectCount"`
 	OpenForComment bool               `gorm:"not null; default:true" json:"openForComment"`
 	PinnedByUser   bool               `gorm:"not null; default:false" json:"pinnedByUser"`
-	PinnedByAdmin  uint               `gorm:"not null; default:0" json:"pinnedByAdmin"` // TODO
+	PinnedByAdmin  bool               `gorm:"not null; default:false" json:"pinnedByAdmin"`
 
 	// FK
 	UserModel     UserModel      `gorm:"foreignKey:UserID;references:ID" json:"-"`
