@@ -369,7 +369,7 @@ func (r *River) Close() {
 
 		r.cancel()
 
-		//  TODO 这里在 init 时总会报错 目前解决不了，不管了
+		//  TODO 这里在 init 时总会报错 目前解决不了, 不管了
 		r.canal.Close()
 
 		err := r.master.Close()

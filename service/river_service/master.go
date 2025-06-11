@@ -3,7 +3,9 @@
 package river_service
 
 import (
+	"blogX_server/global"
 	"bytes"
+	"fmt"
 	"github.com/pingcap/errors"
 	"github.com/siddontang/go-mysql/mysql"
 	"github.com/sirupsen/logrus"
@@ -103,20 +105,30 @@ func (m *masterInfo) Save(pos mysql.Position) error {
 	// 没有 master.info 的话第一次启动会报错，第二次就好了
 	_, err1 := os.Stat(m.filePath)
 	if os.IsNotExist(err1) {
-		m.Name = "mysql-bin.000004"
-		m.Pos = 42597
-		logrus.Infof("master.info 不存在，立即创建: %s", m.filePath)
-		var buf bytes.Buffer
-		e := toml.NewEncoder(&buf)
-		if err := e.Encode(m); err != nil {
-			return errors.Trace(err)
+		err := readBackupMasterInfo(global.Config.River.DataDir)
+		if err == nil {
+			// 恢复备份成功
+			logrus.Infof("已从备份恢复 master.info")
+			return nil
+		} else {
+			// 恢复备份失败
+			logrus.Debugf("备份恢复失败 %v", err)
+
+			//m.Name = "mysql-bin.000004"
+			//m.Pos = 42597
+			logrus.Infof("master.info 及备份不存在，立即创建: %s", m.filePath)
+			var buf bytes.Buffer
+			e := toml.NewEncoder(&buf)
+			if err := e.Encode(m); err != nil {
+				return errors.Trace(err)
+			}
+			if err1 = ioutil2.WriteFileAtomic(m.filePath, buf.Bytes(), 0644); err1 != nil {
+				logrus.Errorf("创建 master.info 失败: %v", err1)
+				return errors.Trace(err1)
+			}
+			m.lastSaveTime = time.Now()
+			return nil
 		}
-		if err1 = ioutil2.WriteFileAtomic(m.filePath, buf.Bytes(), 0644); err1 != nil {
-			logrus.Errorf("创建 master.info 失败: %v", err1)
-			return errors.Trace(err1)
-		}
-		m.lastSaveTime = time.Now()
-		return nil
 	}
 
 	n := time.Now()
@@ -154,4 +166,35 @@ func (m *masterInfo) Close() error {
 	pos := m.Position()
 
 	return m.Save(pos)
+}
+
+func readBackupMasterInfo(dataDir string) (err error) {
+	backupPath := path.Join(dataDir, "backup")
+	_, err = os.Stat(backupPath)
+	if err != nil {
+		return
+	}
+
+	dirEntry, err := os.ReadDir(backupPath)
+	if err != nil {
+		return fmt.Errorf("读取备份目录失败: %v", err)
+	}
+
+	backupFile := path.Join(backupPath, dirEntry[len(dirEntry)-1].Name())
+	byteData, err := os.ReadFile(backupFile)
+	if err != nil {
+		return fmt.Errorf("读取备份文件 %s 失败: %v", backupFile, err)
+	}
+
+	// 确保目标目录存在
+	if err := os.MkdirAll(dataDir, 0755); err != nil {
+		return fmt.Errorf("创建目标目录失败: %v", err)
+	}
+
+	err = os.WriteFile(path.Join(dataDir, "master.info"), byteData, 0644)
+	if err != nil {
+		return fmt.Errorf("恢复 master.info 失败: %v", err)
+	}
+
+	return nil
 }

@@ -18,7 +18,7 @@ func InitIndex(index, mapping string) {
 	if ExistsIndex(index) {
 		DeleteIndex(index)
 
-		// 删除 master.info
+		// 备份并删除 master.info
 		backupMasterInfo()
 	}
 	CreateIndex(index, mapping)
@@ -35,8 +35,8 @@ func InitIndex(index, mapping string) {
 	}
 
 	r.Run(false)
-	fmt.Println("=== river run")
-	fmt.Println(r.IsClosed())
+
+	// TODO 这里在 init 时总会报错 目前解决不了, 不管了
 	r.Close()
 }
 
@@ -84,10 +84,16 @@ func backupMasterInfo() error {
 		return fmt.Errorf("创建备份目录失败: %v", err)
 	}
 
+	// 备份文件不超过 64 个
+	dirEntry, _ := os.ReadDir(backupDir)
+	for len(dirEntry) >= 64 {
+		os.Remove(filepath.Join(backupDir, dirEntry[0].Name()))
+	}
+
 	// 生成备份文件名（使用当前日期）
 	now := time.Now()
-	backupFile := filepath.Join(backupDir, fmt.Sprintf("master_%02d%02d%02d%02d.info",
-		now.Month(), now.Day(), now.Hour(), now.Minute()))
+	backupFile := filepath.Join(backupDir, fmt.Sprintf("master_%03d%02d%02d.info",
+		now.YearDay(), now.Hour(), now.Minute()))
 
 	// 读取源文件
 	content, err := os.ReadFile(masterFile)
