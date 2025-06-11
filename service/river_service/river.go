@@ -33,6 +33,8 @@ type River struct {
 	es     *elastic.Client
 	master *masterInfo
 	syncCh chan interface{}
+
+	dumpDoneCh chan struct{}
 }
 
 // NewRiver creates the River from config
@@ -42,6 +44,8 @@ func NewRiver() (*River, error) {
 	r.rules = make(map[string]*rule.Rule)
 	r.syncCh = make(chan interface{}, 4096)
 	r.ctx, r.cancel = context.WithCancel(context.Background())
+
+	r.dumpDoneCh = make(chan struct{})
 
 	var err error
 	if r.master, err = loadMasterInfo(global.Config.River.DataDir); err != nil {
@@ -73,6 +77,10 @@ func NewRiver() (*River, error) {
 	r.es = elastic.NewClient(cfg)
 
 	return r, nil
+}
+
+func (r *River) WaitDumpDone() <-chan struct{} {
+	return r.dumpDoneCh
 }
 
 func (r *River) newCanal() error {
@@ -294,6 +302,9 @@ func (r *River) Run() error {
 		log.Errorf("start canal err %v", err)
 		return errors.Trace(err)
 	}
+
+	// 数据同步完成后关闭 channel
+	close(r.dumpDoneCh)
 
 	return nil
 }

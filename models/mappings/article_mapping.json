@@ -50,17 +50,17 @@
       "status": {
         "type": "integer"
       },
-      "open_for_comment": {
+      "collect_count": {
         "type": "integer"
+      },
+      "open_for_comment": {
+        "type": "boolean"
       },
       "pinned_by_user": {
         "type": "boolean"
       },
       "pinned_by_admin": {
         "type": "boolean"
-      },
-      "collect_count": {
-        "type": "integer"
       }
     }
   }

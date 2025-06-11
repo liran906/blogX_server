@@ -75,6 +75,10 @@ func (h *eventHandler) OnRow(e *canal.RowsEvent) error {
 		return nil
 	}
 
+	//
+	logrus.Debugf("处理行事件：schema=%s, table=%s, action=%s",
+		e.Table.Schema, e.Table.Name, e.Action)
+	//
 	var reqs []*elastic.BulkRequest
 	var err error
 	switch e.Action {
@@ -341,6 +345,20 @@ func (r *River) makeReqColumnData(col *schema.TableColumn, value interface{}) in
 			}
 			return vt.Format(mysqlDateFormat)
 		}
+	case schema.TYPE_NUMBER:
+		// 检查字段名是否包含布尔值相关的关键字
+		if strings.Contains(strings.ToLower(col.Name), "is_") ||
+			strings.Contains(strings.ToLower(col.Name), "open_for_comment") ||
+			strings.Contains(strings.ToLower(col.Name), "pinned_by") {
+			switch v := value.(type) {
+			case int8, int16, int32, int64, int:
+				return reflect.ValueOf(v).Int() != 0
+			case uint8, uint16, uint32, uint64, uint:
+				return reflect.ValueOf(v).Uint() != 0
+			case float32, float64:
+				return reflect.ValueOf(v).Float() != 0
+			}
+		}
 	}
 
 	return value
@@ -367,6 +385,10 @@ func (r *River) makeInsertReqData(req *elastic.BulkRequest, rule *rule.Rule, val
 	req.Data = make(map[string]interface{}, len(values))
 	req.Action = elastic.ActionIndex
 
+	//
+	logrus.Debugf("开始处理插入数据，表：%s", rule.Table)
+
+	//
 	for i, c := range rule.TableInfo.Columns {
 		if !rule.CheckFilter(c.Name) {
 			continue
@@ -376,11 +398,24 @@ func (r *River) makeInsertReqData(req *elastic.BulkRequest, rule *rule.Rule, val
 			mysql, elastic, fieldType := r.getFieldParts(k, v)
 			if mysql == c.Name {
 				mapped = true
-				req.Data[elastic] = r.getFieldValue(&c, fieldType, values[i])
+
+				//req.Data[elastic] = r.getFieldValue(&c, fieldType, values[i])
+
+				value := r.getFieldValue(&c, fieldType, values[i])
+				req.Data[elastic] = value
+
+				logrus.Debugf("字段映射转换：mysql字段=%s, es字段=%s, 类型=%s, 值=%v",
+					mysql, elastic, fieldType, value)
+
 			}
 		}
 		if mapped == false {
-			req.Data[c.Name] = r.makeReqColumnData(&c, values[i])
+			//req.Data[c.Name] = r.makeReqColumnData(&c, values[i])
+
+			value := r.makeReqColumnData(&c, values[i])
+			req.Data[c.Name] = value
+			logrus.Debugf("字段直接转换：字段=%s, 值=%v", c.Name, value)
+
 		}
 	}
 }
@@ -392,6 +427,10 @@ func (r *River) makeUpdateReqData(req *elastic.BulkRequest, rule *rule.Rule,
 	// maybe dangerous if something wrong delete before?
 	req.Action = elastic.ActionUpdate
 
+	//
+	logrus.Debugf("开始处理更新数据，表：%s", rule.Table)
+
+	//
 	for i, c := range rule.TableInfo.Columns {
 		mapped := false
 		if !rule.CheckFilter(c.Name) {
@@ -399,8 +438,13 @@ func (r *River) makeUpdateReqData(req *elastic.BulkRequest, rule *rule.Rule,
 		}
 		if reflect.DeepEqual(beforeValues[i], afterValues[i]) {
 			//nothing changed
+			logrus.Debugf("字段未变化：%s, 值=%v", c.Name, beforeValues[i])
+
 			continue
 		}
+		logrus.Debugf("字段发生变化：%s, 旧值=%v, 新值=%v",
+			c.Name, beforeValues[i], afterValues[i])
+
 		for k, v := range rule.FieldMapping {
 			mysql, elastic, fieldType := r.getFieldParts(k, v)
 			if mysql == c.Name {
@@ -465,6 +509,12 @@ func (r *River) getParentID(rule *rule.Rule, row []interface{}, columnName strin
 func (r *River) doBulk(reqs []*elastic.BulkRequest) error {
 	if len(reqs) == 0 {
 		return nil
+	}
+
+	// 在发送到 ES 之前添加日志
+	for _, req := range reqs {
+		logrus.Debugf("Bulk request data: index=%s, type=%s, id=%s, data=%+v",
+			req.Index, req.Type, req.ID, req.Data)
 	}
 
 	if resp, err := r.es.Bulk(reqs); err != nil {

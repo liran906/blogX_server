@@ -73,14 +73,17 @@ func (r *Rule) Prepare() error {
 
 // CheckFilter checkers whether the field needs to be filtered.
 func (r *Rule) CheckFilter(field string) bool {
-	if r.Filter == nil {
-		return true
-	}
+	//if r.Filter == nil {
+	//	return true
+	//}
+	//
+	//for _, f := range r.Filter {
+	//	if f == field {
+	//		return true
+	//	}
+	//}
+	//return false
+	_, exists := r.FieldMapping[field]
+	return exists
 
-	for _, f := range r.Filter {
-		if f == field {
-			return true
-		}
-	}
-	return false
 }
