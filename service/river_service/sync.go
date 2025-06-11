@@ -6,7 +6,6 @@ import (
 	"blogX_server/global"
 	"blogX_server/service/river_service/rule"
 	"bytes"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	mysql2 "github.com/siddontang/go-mysql/mysql"
@@ -137,7 +136,6 @@ func (r *River) syncLoop() {
 		case v := <-r.syncCh:
 			switch v := v.(type) {
 			case posSaver:
-				//logrus.Debugf("收到位置更新：%+v", v)
 				now := time.Now()
 				if v.force || now.Sub(lastSavedTime) > 3*time.Second {
 					lastSavedTime = now
@@ -146,7 +144,6 @@ func (r *River) syncLoop() {
 					pos = v.pos
 				}
 			case []*elastic.BulkRequest:
-				//logrus.Debugf("收到 %d 个批量请求", len(v))
 				reqs = append(reqs, v...)
 				needFlush = len(reqs) >= bulkSize
 			}
@@ -326,39 +323,14 @@ func (r *River) makeReqColumnData(col *schema.TableColumn, value interface{}) in
 		if err == nil && f != nil {
 			return f
 		}
-	//case schema.TYPE_DATETIME, schema.TYPE_TIMESTAMP:
-	//	switch v := value.(type) {
-	//	case string:
-	//		vt, err := time.ParseInLocation(mysql.TimeFormat, string(v), time.Local)
-	//		if err != nil || vt.IsZero() { // failed to parse date or zero date
-	//			return nil
-	//		}
-	//		return vt.Format(time.RFC3339)
-	//	}
 	case schema.TYPE_DATETIME, schema.TYPE_TIMESTAMP:
 		switch v := value.(type) {
 		case string:
-			// 尝试解码 Base64
-			if decoded, err := base64.StdEncoding.DecodeString(v); err == nil {
-				v = string(decoded)
+			vt, err := time.ParseInLocation(mysql.TimeFormat, string(v), time.Local)
+			if err != nil || vt.IsZero() { // failed to parse date or zero date
+				return nil
 			}
-
-			// 支持多种时间格式
-			formats := []string{
-				mysql.TimeFormat,
-				"2006-01-02 15:04:05.000",
-				time.RFC3339,
-				"2006-01-02T15:04:05Z",
-			}
-
-			for _, format := range formats {
-				if vt, err := time.ParseInLocation(format, v, time.Local); err == nil {
-					return vt.Format(time.RFC3339) // ES 推荐格式
-				}
-			}
-			return nil
-		case []byte:
-			return r.makeReqColumnData(col, string(v))
+			return vt.Format(time.RFC3339)
 		}
 	case schema.TYPE_DATE:
 		switch v := value.(type) {
@@ -391,104 +363,25 @@ func (r *River) getFieldParts(k string, v string) (string, string, string) {
 	return mysql, elastic, fieldType
 }
 
-//func (r *River) makeInsertReqData(req *elastic.BulkRequest, rule *rule.Rule, values []interface{}) {
-//	req.Data = make(map[string]interface{}, len(values))
-//	req.Action = elastic.ActionIndex
-//
-//	for i, c := range rule.TableInfo.Columns {
-//		if !rule.CheckFilter(c.Name) {
-//			continue
-//		}
-//		// 添加日志以便调试
-//		logrus.Debugf("处理字段 %s，类型 %v，值 %v", c.Name, c.Type, values[i])
-//
-//		mapped := false
-//		//for k, v := range rule.FieldMapping {
-//		//	mysql, elastic, fieldType := r.getFieldParts(k, v)
-//		//	if mysql == c.Name {
-//		//		mapped = true
-//		//		req.Data[elastic] = r.getFieldValue(&c, fieldType, values[i])
-//		//	}
-//		//}
-//		//if mapped == false {
-//		//	req.Data[c.Name] = r.makeReqColumnData(&c, values[i])
-//		//}
-//		for k, v := range rule.FieldMapping {
-//			mysql, elastic, fieldType := r.getFieldParts(k, v)
-//			if mysql == c.Name {
-//				mapped = true
-//				value := r.getFieldValue(&c, fieldType, values[i])
-//				if value != nil {
-//					req.Data[elastic] = value
-//					logrus.Debugf("映射字段 %s -> %s，值 %v", mysql, elastic, value)
-//				}
-//			}
-//		}
-//		if !mapped {
-//			value := r.makeReqColumnData(&c, values[i])
-//			if value != nil {
-//				req.Data[c.Name] = value
-//			}
-//		}
-//		// =====
-//
-//	}
-//}
-
 func (r *River) makeInsertReqData(req *elastic.BulkRequest, rule *rule.Rule, values []interface{}) {
-	if len(values) == 0 {
-		logrus.Warn("收到空值数组，跳过处理")
-		return
-	}
-
 	req.Data = make(map[string]interface{}, len(values))
 	req.Action = elastic.ActionIndex
 
-	// 安全检查
-	if len(values) < len(rule.TableInfo.Columns) {
-		logrus.Warnf("值的数量(%d)小于列数量(%d)，可能导致索引越界",
-			len(values), len(rule.TableInfo.Columns))
-		return
-	}
-
 	for i, c := range rule.TableInfo.Columns {
-		// 添加索引检查
-		if i >= len(values) {
-			logrus.Warnf("列索引(%d)超出值数组范围(%d)，字段: %s",
-				i, len(values), c.Name)
-			break
-		}
-
 		if !rule.CheckFilter(c.Name) {
 			continue
 		}
-
-		//logrus.Debugf("处理字段 %s，类型 %v，值 %v", c.Name, c.Type, values[i])
-
 		mapped := false
 		for k, v := range rule.FieldMapping {
 			mysql, elastic, fieldType := r.getFieldParts(k, v)
 			if mysql == c.Name {
 				mapped = true
-				value := r.getFieldValue(&c, fieldType, values[i])
-				if value != nil {
-					req.Data[elastic] = value
-					//logrus.Debugf("映射字段 %s -> %s，值 %v", mysql, elastic, value)
-				}
+				req.Data[elastic] = r.getFieldValue(&c, fieldType, values[i])
 			}
 		}
-
-		if !mapped && values[i] != nil {
-			value := r.makeReqColumnData(&c, values[i])
-			if value != nil {
-				req.Data[c.Name] = value
-			}
+		if mapped == false {
+			req.Data[c.Name] = r.makeReqColumnData(&c, values[i])
 		}
-	}
-
-	// 如果没有成功映射任何字段，记录警告
-	if len(req.Data) == 0 {
-		logrus.Warn("没有成功映射任何字段")
 	}
 }
 

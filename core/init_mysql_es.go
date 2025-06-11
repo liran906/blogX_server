@@ -31,7 +31,7 @@ func InitMysqlES() {
 	}
 
 	go func() {
-		r.Run(false)
+		r.Run()
 		r.Close()
 	}()
 

@@ -34,7 +34,7 @@ func InitIndex(index, mapping string) {
 		return
 	}
 
-	r.Run(false)
+	r.Run()
 
 	// TODO 这里在 init 时总会报错 目前解决不了, 不管了
 	r.Close()
