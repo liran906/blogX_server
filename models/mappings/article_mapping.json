@@ -53,6 +53,9 @@
       },
       "open_for_comment": {
         "type": "integer"
+      },
+      "pinned_by_admin": {
+        "type": "boolean"
       }
     }
   }

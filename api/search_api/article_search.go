@@ -7,6 +7,7 @@ import (
 	"blogX_server/common/res"
 	"blogX_server/global"
 	"blogX_server/models"
+	"blogX_server/models/enum"
 	"blogX_server/utils/jwts"
 	"context"
 	"encoding/json"
@@ -31,7 +32,6 @@ type ArticleBaseInfo struct {
 
 type ArticleListResp struct {
 	models.ArticleModel
-	AdminPinned   bool    `json:"adminPinned"`
 	UserNickname  string  `json:"userNickname,omitempty"`
 	UserAvatarURL string  `json:"userAvatarURL,omitempty"`
 	CategoryName  *string `json:"categoryName,omitempty"`
@@ -39,6 +39,16 @@ type ArticleListResp struct {
 
 func (SearchApi) ArticleSearchView(c *gin.Context) {
 	req := c.MustGet("bindReq").(ArticleSearchReq)
+	req.PageInfo.Normalize()
+
+	claims, err := jwts.ParseTokenFromRequest(c)
+	if err != nil || claims == nil {
+		// 未登录状态，只能看一页
+		if req.PageInfo.Page > 1 || req.PageInfo.Limit > 10 {
+			res.FailWithMsg("登录查看更多", c)
+			return
+		}
+	}
 
 	// 搜索顺序判断
 	var sortMap = map[int8]string{
@@ -52,6 +62,64 @@ func (SearchApi) ArticleSearchView(c *gin.Context) {
 	}
 	sortKey := sortMap[req.Type]
 
+	// 读取缓存中的数据
+	//readMap := redis_article.GetAllReadCounts()
+	//likeMap := redis_article.GetAllLikeCounts()
+	//collectMap := redis_article.GetAllCollectCounts()
+	//commentMap := redis_article.GetAllCommentCounts()
+
+	// 没有开启 ES，也能实现服务降级（用 mysql）的搜索
+	if global.ESClient == nil {
+		var defaultOrder string
+		if req.Type == 0 {
+			// 这里的 type 0 就是置顶在前，其他按创建日期排序
+			// 找出置顶文章 id 列表
+			var pinnedArticleIDList []uint
+			err = global.DB.Model(&models.UserPinnedArticleModel{UserID: 0}).Order("`rank` ASC").Pluck("article_id", &pinnedArticleIDList).Error
+			if err != nil {
+				res.Fail(err, "读取置顶文章失败", c)
+				return
+			}
+			// 置顶在前
+			for _, aid := range pinnedArticleIDList {
+				defaultOrder += fmt.Sprintf("id = %d DESC, ", aid)
+			}
+			defaultOrder += "created_at DESC"
+		} else {
+			defaultOrder = sortMap[req.Type] + " DESC"
+		}
+
+		where := global.DB.Where("")
+		if req.Tag != "" {
+			where = where.Where("tags LIKE ?", "%"+req.Tag+"%")
+		}
+
+		_list, count, _ := common.ListQuery(models.ArticleModel{
+			Status: enum.ArticleStatusPublish,
+		}, common.Options{
+			PageInfo:     req.PageInfo,
+			Preloads:     []string{"UserModel", "CategoryModel"},
+			Likes:        []string{"title", "abstract"}, // 这里不考虑正文了
+			Where:        where,
+			DefaultOrder: defaultOrder,
+		})
+		var list []ArticleListResp
+		for _, a := range _list {
+			item := ArticleListResp{
+				ArticleModel:  a,
+				UserNickname:  a.UserModel.Nickname,
+				UserAvatarURL: a.UserModel.AvatarURL,
+			}
+			if a.CategoryModel != nil {
+				item.CategoryName = &a.CategoryModel.Name
+			}
+			list = append(list, item)
+		}
+		res.SuccessWithList(list, count, c)
+		return
+	}
+
+	// 以下是正常开启了 ES 的服务：
 	// 创建一个布尔查询对象，用于组合多个查询条件
 	query := elastic.NewBoolQuery()
 
@@ -84,12 +152,9 @@ func (SearchApi) ArticleSearchView(c *gin.Context) {
 		// 例如：elastic.NewMatchQuery("title", req.Key).Boost(3) 让标题匹配的权重更高
 	}
 
-	// 管理员置顶的优先展示
-
-	// 校验登录状态
-	claims, err := jwts.ParseTokenFromRequest(c)
-	if err == nil && claims != nil { // 登录了
-		// 找用户感兴趣的标签(权重最低)
+	// 查询type 为“猜你喜欢”，并且登录了
+	if req.Type == 0 && claims != nil {
+		// 找用户感兴趣的标签
 		var uc models.UserConfigModel
 		err = global.DB.Take(&uc, "user_id = ?", claims.UserID).Error
 		if err != nil {
@@ -99,18 +164,19 @@ func (SearchApi) ArticleSearchView(c *gin.Context) {
 
 		if len(uc.Tags) > 0 {
 			tagQuery := elastic.NewBoolQuery()
+			var tags []interface{}
 			for _, tag := range uc.Tags {
-				// 文章的 tag 中搜索是否有 keyword（精确）匹配
-				// tag 之间是 or 的关系，所以用 should
-				tagQuery.Should(elastic.NewTermQuery("tags", tag))
+				// 将 uc.Tags 转化为 []interface{}，适配 NewTermsQuery 方法
+				tags = append(tags, tag)
 			}
+			// 文章的 tag 中搜索是否有 keyword（精确）匹配
+			// tag 之间是 or 的关系，所以用 should
+			tagQuery.Should(elastic.NewTermsQuery("tags", tags...))
 			query.Must(tagQuery) // tagQuery 与 之前的模糊匹配是 and 的关系，所以用 must
 		}
-
-	} else { // 没有登录
-
 	}
 
+	// 设置高亮显示
 	highlight := elastic.NewHighlight()
 	highlight.Field("title")
 	highlight.Field("abstract")
@@ -118,12 +184,13 @@ func (SearchApi) ArticleSearchView(c *gin.Context) {
 
 	result, err := global.ESClient.
 		Search(models.ArticleModel{}.GetIndex()). // 搜索的是哪一个 index
-		Query(query).                             // 什么类型的查询以及具体查询条件
-		Highlight(highlight).                     // 高亮关键词
-		From(req.GetOffset()).                    // 从哪一条开始显示
-		Size(req.GetLimit()).                     // 往后显示多少条
-		Sort(sortKey, false).                     // 排序
-		Do(context.Background())                  // 执行
+		Query(query). // 什么类型的查询以及具体查询条件
+		Highlight(highlight). // 高亮关键词
+		From(req.GetOffset()). // 从哪一条开始显示
+		Size(req.GetLimit()). // 往后显示多少条
+		//Sort("pinned_by_admin", false).           // 优先置顶文章
+		Sort(sortKey, false). // 排序
+		Do(context.Background()) // 执行
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -131,14 +198,14 @@ func (SearchApi) ArticleSearchView(c *gin.Context) {
 
 	count := int(result.Hits.TotalHits.Value)      // 获取搜索结果的总条数
 	searchResult := make(map[uint]ArticleBaseInfo) // 创建一个 map 用于存储搜索结果，key 为文章 ID，value 为文章基本信息
-	var articleIDList []uint                       // 创建一个文章的 idList
+	var esSortedIDList []uint                      // 创建一个由 ES 算法排序的文章 idList
 
 	for _, hit := range result.Hits.Hits { // 遍历每一个搜索命中的文档
 		var abi ArticleBaseInfo                // 创建文章基本信息对象
 		err = json.Unmarshal(hit.Source, &abi) // 将 ES 文档源数据（_source）解析为 ArticleBaseInfo 结构体
 		if err != nil {
 			logrus.Errorf("json 解析失败: %v", err) // 如果解析失败，记录错误
-			continue                            // 继续处理下一条
+			continue                                // 继续处理下一条
 		}
 
 		// 如果存在标题的高亮结果，使用高亮后的标题替换原标题
@@ -151,18 +218,44 @@ func (SearchApi) ArticleSearchView(c *gin.Context) {
 			abi.Abstract = hit.Highlight["abstract"][0] // 高亮结果是一个数组，取第一个元素
 		}
 
-		searchResult[abi.ID] = abi                    // 将处理后的文章信息存入结果 map
-		articleIDList = append(articleIDList, abi.ID) // 保存搜索出来的文章 id
+		searchResult[abi.ID] = abi                      // 将处理后的文章信息存入结果 map
+		esSortedIDList = append(esSortedIDList, abi.ID) // 保存搜索出来的文章 id
 	}
 
-	// 按照 es 搜索出来的次序
+	// TODO ==｜关于最终的输出顺序｜==
+	// TODO
+	// TODO type 为 0 的时候，直接按照 es 搜索出来的次序（当然，还要考虑管理员置顶）
+	// TODO 其他的 type 则用 mysql 排序（因为 es 的排序无法实时同步 redis 中的数据）
+	// TODO 其实 es 最大的作用就是模糊搜索时候的快速匹配，所以非模糊的时候（type1-6）用处没那么大
+	// TODO 还有个作用就是高亮显示，只要有 key 就会对应高亮
 	var defaultOrder string
-	for _, aid := range articleIDList {
+	// 如果是进入网站主页（type 是 0，没有 key，也没有 tag）那么管理员置顶的优先展示
+	if req.Type == 0 {
+		if req.Key == "" && req.Tag == "" {
+			// 找出置顶文章 id 列表
+			var pinnedArticleIDList []uint
+			err = global.DB.Model(&models.UserPinnedArticleModel{}).Where("user_id = ?", 0).
+				Order("`rank` ASC").Pluck("article_id", &pinnedArticleIDList).Error
+			if err != nil {
+				res.Fail(err, "读取置顶文章失败", c)
+				return
+			}
+			// 将置顶文章 id 放到最前面
+			esSortedIDList = append(pinnedArticleIDList, esSortedIDList...)
+		}
+
+	} else {
+		// type 为 1-6，顺序先读取 redis 的数据在排序
+	}
+
+	// 根据 esSortedIDList 中的顺序，写出 SQL 的排序语句
+	for _, aid := range esSortedIDList {
 		defaultOrder += fmt.Sprintf("id = %d DESC, ", aid)
 	}
-	defaultOrder = strings.TrimSuffix(defaultOrder, ", ")
+	defaultOrder = strings.TrimSuffix(defaultOrder, ", ") // 修个尾巴
 
-	where := global.DB.Where("id IN ?", articleIDList)
+	// 查询 db
+	where := global.DB.Where("id IN ?", esSortedIDList)
 	_list, _, _ := common.ListQuery(models.ArticleModel{}, common.Options{
 		Preloads:     []string{"UserModel", "CategoryModel"},
 		Where:        where,
@@ -173,7 +266,6 @@ func (SearchApi) ArticleSearchView(c *gin.Context) {
 	for _, a := range _list {
 		item := ArticleListResp{
 			ArticleModel:  a,
-			AdminPinned:   a.PinnedByAdmin,
 			UserNickname:  a.UserModel.Nickname,
 			UserAvatarURL: a.UserModel.AvatarURL,
 		}
