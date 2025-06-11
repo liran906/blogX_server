@@ -36,7 +36,7 @@ func (p *PageInfo) GetLimit() int {
 	return p.Limit
 }
 
-// GetOffset 计算 offset
+// GetOffset 计算 offset(考虑页数之后，当前从第几条开始)
 func (p *PageInfo) GetOffset() int {
 	return (p.GetPage() - 1) * p.GetLimit()
 }

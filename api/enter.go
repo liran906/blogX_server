@@ -12,6 +12,7 @@ import (
 	"blogX_server/api/log_api"
 	"blogX_server/api/mytest_api"
 	"blogX_server/api/notify_api"
+	"blogX_server/api/search_api"
 	"blogX_server/api/site_api"
 	"blogX_server/api/user_api"
 )
@@ -27,6 +28,7 @@ type Api struct {
 	CommentApi            comment_api.CommentApi
 	NotifyApi             notify_api.NotifyApi
 	GlobalNotificationApi global_notification_api.GlobalNotificationApi
+	SearchApi             search_api.SearchApi
 
 	MyTestApi mytest_api.MyTestApi // 测试用
 }

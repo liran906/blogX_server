@@ -32,6 +32,7 @@ func Run() {
 	CommentRouter(nr)
 	NotifyRouter(nr)
 	GlobalNotificationRouter(nr)
+	SearchRouter(nr)
 
 	MytestRouter(nr) // 测试用
 

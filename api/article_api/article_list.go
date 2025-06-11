@@ -12,6 +12,7 @@ import (
 	"blogX_server/utils/jwts"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"strings"
 )
 
 type ArticleListReq struct {
@@ -85,11 +86,11 @@ func (ArticleApi) ArticleListView(c *gin.Context) {
 	var defaultOrder string
 	var pinnedArticles []models.UserPinnedArticleModel
 	err = global.DB.Where("user_id = ?", u.ID). // 如果想加 .Order(...) 等其他链式操作，就必须把条件提取为 .Where(...) 单独写，否则 .Order(...) 就会被忽略
-							Order("`rank` asc").        // 注意 rank 是 MySQL 的保留关键字，必须用反引号 `rank` 包裹，才能作为字段名使用
+							Order("`rank` ASC").        // 注意 rank 是 MySQL 的保留关键字，必须用反引号 `rank` 包裹，才能作为字段名使用
 							Find(&pinnedArticles).Error // 另外，order 要在 find（执行）之前，否则失效
 	if err == nil {
 		for _, m := range pinnedArticles {
-			defaultOrder += fmt.Sprintf("id = %d desc, ", m.ArticleID)
+			defaultOrder += fmt.Sprintf("id = %d DESC, ", m.ArticleID)
 		}
 	}
 	// 支持的排序方式
@@ -103,17 +104,18 @@ func (ArticleApi) ArticleListView(c *gin.Context) {
 		"comment_count asc":  {},
 		"collect_count asc":  {},
 	}
+	// 如果用户自己传入了顺序
 	if req.Order != "" {
-		_, ok := orderColumnMap[req.Order]
-		if !ok {
+		_, exists := orderColumnMap[strings.ToLower(req.Order)]
+		if !exists {
 			res.FailWithMsg("不支持的排序方式", c)
 			return
 		}
 		// 置顶还是在最前
-		req.Order = fmt.Sprintf("%s%s, created_at desc", defaultOrder, req.Order)
+		req.Order = fmt.Sprintf("%s%s,", defaultOrder, req.Order)
 	}
 	// 最后加上时间倒序
-	defaultOrder += "created_at desc"
+	defaultOrder += "created_at DESC"
 
 	// 解析时间戳并查询
 	query, err := common.TimeQuery(req.StartTime, req.EndTime)
