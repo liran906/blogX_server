@@ -8,6 +8,7 @@ import (
 	"blogX_server/global"
 	"blogX_server/models"
 	"blogX_server/models/enum"
+	"blogX_server/service/redis_service/redis_article"
 	"blogX_server/utils/jwts"
 	"context"
 	"encoding/json"
@@ -63,10 +64,10 @@ func (SearchApi) ArticleSearchView(c *gin.Context) {
 	sortKey := sortMap[req.Type]
 
 	// 读取缓存中的数据
-	//readMap := redis_article.GetAllReadCounts()
-	//likeMap := redis_article.GetAllLikeCounts()
-	//collectMap := redis_article.GetAllCollectCounts()
-	//commentMap := redis_article.GetAllCommentCounts()
+	readMap := redis_article.GetAllReadCounts()
+	likeMap := redis_article.GetAllLikeCounts()
+	collectMap := redis_article.GetAllCollectCounts()
+	commentMap := redis_article.GetAllCommentCounts()
 
 	// 没有开启 ES，也能实现服务降级（用 mysql）的搜索
 	if global.ESClient == nil {
@@ -105,6 +106,10 @@ func (SearchApi) ArticleSearchView(c *gin.Context) {
 		})
 		var list []ArticleListResp
 		for _, a := range _list {
+			a.ReadCount += readMap[a.ID]
+			a.LikeCount += likeMap[a.ID]
+			a.CollectCount += collectMap[a.ID]
+			a.CommentCount += commentMap[a.ID]
 			item := ArticleListResp{
 				ArticleModel:  a,
 				UserNickname:  a.UserModel.Nickname,
@@ -184,12 +189,12 @@ func (SearchApi) ArticleSearchView(c *gin.Context) {
 
 	result, err := global.ESClient.
 		Search(models.ArticleModel{}.GetIndex()). // 搜索的是哪一个 index
-		Query(query). // 什么类型的查询以及具体查询条件
-		Highlight(highlight). // 高亮关键词
-		From(req.GetOffset()). // 从哪一条开始显示
-		Size(req.GetLimit()). // 往后显示多少条
+		Query(query).                             // 什么类型的查询以及具体查询条件
+		Highlight(highlight).                     // 高亮关键词
+		From(req.GetOffset()).                    // 从哪一条开始显示
+		Size(req.GetLimit()).                     // 往后显示多少条
 		//Sort("pinned_by_admin", false).           // 优先置顶文章
-		Sort(sortKey, false). // 排序
+		Sort(sortKey, false).    // 排序
 		Do(context.Background()) // 执行
 	if err != nil {
 		fmt.Println(err)
@@ -205,7 +210,7 @@ func (SearchApi) ArticleSearchView(c *gin.Context) {
 		err = json.Unmarshal(hit.Source, &abi) // 将 ES 文档源数据（_source）解析为 ArticleBaseInfo 结构体
 		if err != nil {
 			logrus.Errorf("json 解析失败: %v", err) // 如果解析失败，记录错误
-			continue                                // 继续处理下一条
+			continue                            // 继续处理下一条
 		}
 
 		// 如果存在标题的高亮结果，使用高亮后的标题替换原标题
@@ -264,6 +269,10 @@ func (SearchApi) ArticleSearchView(c *gin.Context) {
 
 	var list []ArticleListResp
 	for _, a := range _list {
+		a.ReadCount += readMap[a.ID]
+		a.LikeCount += likeMap[a.ID]
+		a.CollectCount += collectMap[a.ID]
+		a.CommentCount += commentMap[a.ID]
 		item := ArticleListResp{
 			ArticleModel:  a,
 			UserNickname:  a.UserModel.Nickname,
