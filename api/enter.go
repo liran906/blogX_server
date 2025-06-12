@@ -3,6 +3,7 @@
 package api
 
 import (
+	"blogX_server/api/ai_api"
 	"blogX_server/api/article_api"
 	"blogX_server/api/banner_api"
 	"blogX_server/api/captcha_api"
@@ -29,6 +30,7 @@ type Api struct {
 	NotifyApi             notify_api.NotifyApi
 	GlobalNotificationApi global_notification_api.GlobalNotificationApi
 	SearchApi             search_api.SearchApi
+	AiApi                 ai_api.AiApi
 
 	MyTestApi mytest_api.MyTestApi // 测试用
 }
