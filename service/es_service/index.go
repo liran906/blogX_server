@@ -45,30 +45,32 @@ func InitIndex(index, mapping string) {
 	}
 
 	// 使用 context 设置超时
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
-	defer cancel()
+	//ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
+	//defer cancel()
 
-	// 在一个 goroutine 中运行 River
-	go func() {
-		if err := r.Run(); err != nil {
-			logrus.Errorf("River run error: %v", err)
-			os.Exit(1)
-		}
-	}()
+	//// 在一个 goroutine 中运行 River
+	//go func() {
+	//	if err := r.Run(); err != nil {
+	//		logrus.Errorf("River run error: %v", err)
+	//		os.Exit(1)
+	//	}
+	//}()
+	//
+	//// 等待数据同步完成或超时
+	//logrus.Info("等待数据同步完成...")
+	//select {
+	//case <-r.WaitDumpDone():
+	//	logrus.Info("数据同步完成")
+	//	r.Close()
+	//	os.Exit(0)
+	//case <-ctx.Done():
+	//	logrus.Error("数据同步超时")
+	//	r.Close()
+	//	os.Exit(1)
+	//}
+	r.Run()
 
-	// 等待数据同步完成或超时
-	logrus.Info("等待数据同步完成...")
-	select {
-	case <-r.WaitDumpDone():
-		logrus.Info("数据同步完成")
-		r.Close()
-		os.Exit(0)
-	case <-ctx.Done():
-		logrus.Error("数据同步超时")
-		r.Close()
-		os.Exit(1)
-	}
-
+	r.Close()
 }
 
 func CreateIndex(index, mapping string) {

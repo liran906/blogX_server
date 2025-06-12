@@ -16,8 +16,8 @@ type Rule struct {
 	Table  string   `yaml:"table"`
 	Index  string   `yaml:"index"`
 	Type   string   `yaml:"type"`
-	Parent string   `yaml:"parent"`
-	ID     []string `yaml:"id"`
+	Parent string   `yaml:"-"`
+	ID     []string `yaml:"-"`
 
 	// Default, a MySQL table field name is mapped to Elasticsearch field name.
 	// Sometimes, you want to use different name, e.g, the MySQL file name is title,
@@ -25,14 +25,14 @@ type Rule struct {
 	FieldMapping map[string]string `yaml:"field"`
 
 	// MySQL table information
-	TableInfo *schema.Table
+	TableInfo *schema.Table `yaml:"-"`
 
 	//only MySQL fields in filter will be synced , default sync all fields
-	Filter []string `yaml:"filter"`
+	Filter []string `yaml:"-"`
 
 	// Elasticsearch pipeline
 	// To pre-process documents before indexing
-	Pipeline string `yaml:"pipeline"`
+	Pipeline string `yaml:"-"`
 }
 
 func NewDefaultRule(schema string, table string) *Rule {
@@ -73,17 +73,17 @@ func (r *Rule) Prepare() error {
 
 // CheckFilter checkers whether the field needs to be filtered.
 func (r *Rule) CheckFilter(field string) bool {
-	//if r.Filter == nil {
-	//	return true
-	//}
-	//
-	//for _, f := range r.Filter {
-	//	if f == field {
-	//		return true
-	//	}
-	//}
-	//return false
-	_, exists := r.FieldMapping[field]
-	return exists
+	if r.Filter == nil {
+		return true
+	}
+
+	for _, f := range r.Filter {
+		if f == field {
+			return true
+		}
+	}
+	return false
+	//_, exists := r.FieldMapping[field]
+	//return exists
 
 }
