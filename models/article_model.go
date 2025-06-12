@@ -3,7 +3,9 @@ package models
 import (
 	"blogX_server/models/ctype"
 	"blogX_server/models/enum"
+	"blogX_server/service/text_service"
 	_ "embed"
+	"gorm.io/gorm"
 )
 
 type ArticleModel struct {
@@ -41,4 +43,46 @@ func (ArticleModel) Mapping() string {
 // GetIndex 获取索引名字（index 就像 mysql 中的 table name 一样）
 func (ArticleModel) GetIndex() string {
 	return "article_index"
+}
+
+// AfterCreate 在创建后把文章内容按照 md 格式拆分为小标题+文字的形式，并且入 text_model 库
+func (a *ArticleModel) AfterCreate(tx *gorm.DB) (err error) {
+	// 已发布的文章才进行
+	if a.Status != enum.ArticleStatusPublish {
+		return
+	}
+
+	_list := text_service.MDContentTransformation(a.ID, a.Title, a.Content)
+
+	if len(_list) == 0 {
+		return nil
+	}
+
+	var list []TextModel
+	for _, txt := range _list {
+		list = append(list, TextModel{
+			ArticleID: a.ID,
+			Head:      txt.Head,
+			Body:      txt.Body,
+		})
+	}
+
+	err = tx.Create(&list).Error
+	return
+}
+
+// BeforeDelete 在删除文章之前，把对应的 text_model 删除
+func (a *ArticleModel) BeforeDelete(tx *gorm.DB) (err error) {
+	err = tx.Where("article_id = ?", a.ID).Delete(&TextModel{}).Error
+	return
+}
+
+// AfterUpdate 在删除文章后，把对应的 text_model 删除再重建
+// 也可以到对应 api 去判断文章（标题 正文 状态）有没有变化，有变化才执行重构
+func (a *ArticleModel) AfterUpdate(tx *gorm.DB) (err error) {
+	err = a.BeforeDelete(tx)
+	if err != nil {
+		return
+	}
+	return a.AfterCreate(tx)
 }

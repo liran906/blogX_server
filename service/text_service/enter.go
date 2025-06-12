@@ -3,20 +3,25 @@
 package text_service
 
 import (
-	"blogX_server/models"
 	"fmt"
 	"strings"
 )
 
+type TextModel struct {
+	ArticleID uint
+	Head      string
+	Body      string
+}
+
 // MDContentTransformation 把一段 md 格式的 article 对象转换为 分段标题+分段内容 格式的 textModel 列表
-func MDContentTransformation(article models.ArticleModel) (list []models.TextModel) {
+func MDContentTransformation(aid uint, title, content string) (list []TextModel) {
 	var heads []string
 	var bodies []string
 	var body string
 	var flag bool // 针对代码块内的 #
 
-	heads = append(heads, article.Title)
-	lines := strings.Split(article.Content, "\n")
+	heads = append(heads, title)
+	lines := strings.Split(content, "\n")
 	for _, line := range lines {
 		if strings.HasPrefix(line, "```") {
 			flag = !flag
@@ -41,8 +46,8 @@ func MDContentTransformation(article models.ArticleModel) (list []models.TextMod
 	}
 
 	for i := 0; i < len(heads); i++ {
-		list = append(list, models.TextModel{
-			ArticleID: article.ID,
+		list = append(list, TextModel{
+			ArticleID: aid,
 			Head:      heads[i],
 			Body:      bodies[i],
 		})
