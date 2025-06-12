@@ -89,11 +89,11 @@ func (SearchApi) TextSearchView(c *gin.Context) {
 
 	result, err := global.ESClient.
 		Search(models.TextModel{}.GetIndex()). // 搜索的是哪一个 index
-		Query(query). // 什么类型的查询以及具体查询条件
-		Highlight(highlight). // 高亮关键词
-		From(req.PageInfo.GetOffset()). // 从哪一条开始显示
-		Size(req.PageInfo.Limit). // 往后显示多少条
-		Do(context.Background()) // 执行
+		Query(query).                          // 什么类型的查询以及具体查询条件
+		Highlight(highlight).                  // 高亮关键词
+		From(req.PageInfo.GetOffset()).        // 从哪一条开始显示
+		Size(req.PageInfo.Limit).              // 往后显示多少条
+		Do(context.Background())               // 执行
 	if err != nil {
 		source, _ := query.Source()
 		byteData, _ := json.Marshal(source)
@@ -111,7 +111,7 @@ func (SearchApi) TextSearchView(c *gin.Context) {
 		err = json.Unmarshal(hit.Source, &item) // 将 ES 文档源数据（_source）解析为 ArticleBaseInfo 结构体
 		if err != nil {
 			logrus.Errorf("json 解析失败: %v", err) // 如果解析失败，记录错误
-			continue                                // 继续处理下一条
+			continue                            // 继续处理下一条
 		}
 
 		// 如果存在高亮结果，使用高亮后的标题替换原标题
