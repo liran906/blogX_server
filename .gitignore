@@ -12,4 +12,4 @@ blogX_server
 todo.md
 count_go_lines.sh
 count_log.txt
-var/backup/*
+var/*

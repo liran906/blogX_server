@@ -38,6 +38,11 @@ func MDContentTransformation(aid uint, title, content string) (list []TextModel)
 		bodies = append(bodies, formatBody(body))
 	}
 
+	// 最后一行是标题，且没有换行，会造成 body 少一个，所以手动补上
+	if strings.HasPrefix(lines[len(lines)-1], "#") {
+		bodies = append(bodies, "")
+	}
+
 	if len(bodies) != len(heads) {
 		fmt.Println("文章分段数量不一致：len(bodies) != len(heads)")
 		fmt.Printf("%q   %d\n", heads, len(heads))

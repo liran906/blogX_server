@@ -4,22 +4,18 @@ package es_service
 
 import (
 	"blogX_server/global"
-	"blogX_server/service/river_service"
 	"context"
 	"fmt"
 	"github.com/sirupsen/logrus"
 	"os"
 	"path"
 	"path/filepath"
-	"runtime"
 	"time"
 )
 
 func InitIndex(index, mapping string) {
 	if ExistsIndex(index) {
 		DeleteIndex(index)
-		// 备份并删除 master.info
-		//backupMasterInfo()
 	}
 	masterFile := path.Join(global.Config.River.DataDir, "master.info")
 	if _, err := os.Stat(masterFile); !os.IsNotExist(err) {
@@ -32,45 +28,6 @@ func InitIndex(index, mapping string) {
 	}
 
 	CreateIndex(index, mapping)
-
-	// 启动服务，dump 数据
-	if !global.Config.River.Enable {
-		return
-	}
-	runtime.GOMAXPROCS(runtime.NumCPU())
-	r, err := river_service.NewRiver()
-	if err != nil {
-		logrus.Error("river init error: ", err)
-		return
-	}
-
-	// 使用 context 设置超时
-	//ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
-	//defer cancel()
-
-	//// 在一个 goroutine 中运行 River
-	//go func() {
-	//	if err := r.Run(); err != nil {
-	//		logrus.Errorf("River run error: %v", err)
-	//		os.Exit(1)
-	//	}
-	//}()
-	//
-	//// 等待数据同步完成或超时
-	//logrus.Info("等待数据同步完成...")
-	//select {
-	//case <-r.WaitDumpDone():
-	//	logrus.Info("数据同步完成")
-	//	r.Close()
-	//	os.Exit(0)
-	//case <-ctx.Done():
-	//	logrus.Error("数据同步超时")
-	//	r.Close()
-	//	os.Exit(1)
-	//}
-	r.Run()
-
-	r.Close()
 }
 
 func CreateIndex(index, mapping string) {

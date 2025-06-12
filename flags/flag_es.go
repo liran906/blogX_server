@@ -16,6 +16,9 @@ func ESInitIndex() {
 	}
 	article := models.ArticleModel{}
 	es_service.InitIndex(article.GetIndex(), article.Mapping())
+
+	text := models.TextModel{}
+	es_service.InitIndex(text.GetIndex(), text.Mapping())
 }
 
 // 查询某个 index:
