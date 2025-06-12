@@ -7,14 +7,14 @@ import (
 	"strings"
 )
 
-type TextModel struct {
-	ArticleID uint
-	Head      string
-	Body      string
+type TextStruct struct {
+	ArticleID uint   `json:"article_id"` // 注意这里 json 标签要和 es 一样
+	Head      string `json:"head"`
+	Body      string `json:"body"`
 }
 
 // MDContentTransformation 把一段 md 格式的 article 对象转换为 分段标题+分段内容 格式的 textModel 列表
-func MDContentTransformation(aid uint, title, content string) (list []TextModel) {
+func MDContentTransformation(aid uint, title, content string) (list []TextStruct) {
 	var heads []string
 	var bodies []string
 	var body string
@@ -51,7 +51,7 @@ func MDContentTransformation(aid uint, title, content string) (list []TextModel)
 	}
 
 	for i := 0; i < len(heads); i++ {
-		list = append(list, TextModel{
+		list = append(list, TextStruct{
 			ArticleID: aid,
 			Head:      heads[i],
 			Body:      bodies[i],

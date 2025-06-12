@@ -21,8 +21,10 @@ import (
 
 type ArticleSearchReq struct {
 	common.PageInfo
-	Type int8   `form:"type" binding:"oneof=0 1 2 3 4 5 6"` // 0-猜你喜欢 1-最新发布 2-最多回复 3-最多点赞 4-最多收藏 5-最多阅读量 6-最新更新
-	Tag  string `form:"tag"`
+	Type      int8   `form:"type" binding:"oneof=0 1 2 3 4 5 6"` // 0-猜你喜欢 1-最新发布 2-最多回复 3-最多点赞 4-最多收藏 5-最多阅读量 6-最新更新
+	Tag       string `form:"tag"`
+	StartTime string `form:"startTime"` // format "2006-01-02 15:04:05"
+	EndTime   string `form:"endTime"`
 }
 
 type ArticleBaseInfo struct {
@@ -95,6 +97,13 @@ func (SearchApi) ArticleSearchView(c *gin.Context) {
 			where = where.Where("tags LIKE ?", "%"+req.Tag+"%")
 		}
 
+		// 解析时间戳并查询
+		where, err = common.TimeQueryWithBase(where, req.StartTime, req.EndTime)
+		if err != nil {
+			res.FailWithMsg(err.Error(), c)
+			return
+		}
+
 		_list, count, _ := common.ListQuery(models.ArticleModel{
 			Status: enum.ArticleStatusPublish,
 		}, common.Options{
@@ -103,6 +112,7 @@ func (SearchApi) ArticleSearchView(c *gin.Context) {
 			Likes:        []string{"title", "abstract"}, // 这里不考虑正文了
 			Where:        where,
 			DefaultOrder: defaultOrder,
+			Debug:        false,
 		})
 		var list []ArticleListResp
 		for _, a := range _list {
@@ -185,7 +195,6 @@ func (SearchApi) ArticleSearchView(c *gin.Context) {
 	highlight := elastic.NewHighlight()
 	highlight.Field("title")
 	highlight.Field("abstract")
-	highlight.Field("content")
 
 	result, err := global.ESClient.
 		Search(models.ArticleModel{}.GetIndex()). // 搜索的是哪一个 index
@@ -193,11 +202,10 @@ func (SearchApi) ArticleSearchView(c *gin.Context) {
 		Highlight(highlight).                     // 高亮关键词
 		From(req.GetOffset()).                    // 从哪一条开始显示
 		Size(req.GetLimit()).                     // 往后显示多少条
-		//Sort("pinned_by_admin", false).           // 优先置顶文章
-		Sort(sortKey, false).    // 排序
-		Do(context.Background()) // 执行
+		Sort(sortKey, false).                     // 排序
+		Do(context.Background())                  // 执行
 	if err != nil {
-		fmt.Println(err)
+		res.Fail(err, "查询失败", c)
 		return
 	}
 
@@ -224,7 +232,7 @@ func (SearchApi) ArticleSearchView(c *gin.Context) {
 		}
 
 		searchResult[abi.ID] = abi                      // 将处理后的文章信息存入结果 map
-		esSortedIDList = append(esSortedIDList, abi.ID) // 保存搜索出来的文章 id
+		esSortedIDList = append(esSortedIDList, abi.ID) // (按顺序)保存搜索出来的文章 id
 	}
 
 	// TODO ==｜关于最终的输出顺序｜==
@@ -261,10 +269,19 @@ func (SearchApi) ArticleSearchView(c *gin.Context) {
 
 	// 查询 db
 	where := global.DB.Where("id IN ?", esSortedIDList)
+
+	// 解析时间戳并查询
+	where, err = common.TimeQueryWithBase(where, req.StartTime, req.EndTime)
+	if err != nil {
+		res.Fail(err, "时间解析失败", c)
+		return
+	}
+
 	_list, _, _ := common.ListQuery(models.ArticleModel{}, common.Options{
 		Preloads:     []string{"UserModel", "CategoryModel"},
 		Where:        where,
 		DefaultOrder: defaultOrder,
+		Debug:        false,
 	})
 
 	var list []ArticleListResp
