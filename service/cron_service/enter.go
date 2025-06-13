@@ -19,7 +19,8 @@ func Cron() {
 	// 每天固定时间 去同步文章数据
 	_, err1 := crontab.AddFunc(global.Config.Redis.ArticleSyncTime, SyncArticle)
 	_, err2 := crontab.AddFunc(global.Config.Redis.CommentSyncTime, SyncComment)
-	if err1 != nil || err2 != nil {
+	_, err3 := crontab.AddFunc(global.Config.Redis.SiteDataSyncTime, SyncData)
+	if err1 != nil || err2 != nil || err3 != nil {
 		logrus.Panicln("crontab.AddFunc err:", err1)
 		logrus.Panicln("crontab.AddFunc err:", err2)
 		return

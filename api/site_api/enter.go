@@ -10,6 +10,7 @@ import (
 	"blogX_server/middleware"
 	"blogX_server/models/enum"
 	"blogX_server/service/log_service"
+	"blogX_server/service/redis_service/redis_site"
 	"blogX_server/utils/jwts"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
@@ -25,6 +26,16 @@ type SiteInfoRequest struct {
 	Name string `uri:"name"`
 }
 
+type SiteInfoResponse struct {
+	conf.Site
+	AI struct {
+		Enable bool `json:"enable"`
+	}
+	Cloud struct {
+		Enable bool `json:"enable"`
+	}
+}
+
 // 每个路由绑定到一个视图（View），也就是对应一个页面
 
 // SiteInfoView 查看站点配置
@@ -37,8 +48,22 @@ func (SiteApi) SiteInfoView(c *gin.Context) {
 	}
 
 	if req.Name == "site" {
-		global.Config.Site.About.Version = global.Version // 不从配置文件读取，从 global cost中读取
-		res.SuccessWithData(global.Config.Site, c)
+		// 站点流量+1
+		redis_site.IncreaseFlow()
+		// 把 ai 和云存储是否开启也封装进来
+		res.SuccessWithData(SiteInfoResponse{
+			Site: global.Config.Site,
+			AI: struct {
+				Enable bool `json:"enable"`
+			}{
+				Enable: global.Config.Ai.Enable,
+			},
+			Cloud: struct {
+				Enable bool `json:"enable"`
+			}{
+				Enable: global.Config.Cloud.QNY.Enable,
+			},
+		}, c)
 		return
 	}
 

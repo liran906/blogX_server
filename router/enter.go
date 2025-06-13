@@ -20,6 +20,8 @@ func Run() {
 
 	// 全部记录日志
 	nr.Use(mdw.LogMiddleware)
+	// 全部计算点击率
+	nr.Use(mdw.IncreaseSiteClickMiddleware)
 
 	// 具体路由
 	LogRouter(nr)

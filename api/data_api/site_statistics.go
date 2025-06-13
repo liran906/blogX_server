@@ -8,6 +8,7 @@ import (
 	"blogX_server/models"
 	"blogX_server/models/enum"
 	"blogX_server/service/redis_service/redis_article"
+	"blogX_server/service/redis_service/redis_site"
 	"github.com/gin-gonic/gin"
 	"strconv"
 	"time"
@@ -21,9 +22,10 @@ type SiteStatisticsReq struct {
 type SiteStatisticsResp struct {
 	StartTime          time.Time `json:"startTime"`
 	EndTime            time.Time `json:"endTime"`
+	FlowCount          int       `json:"flowCount"`
+	ClickCount         int       `json:"clickCount"`
 	TotalUserCount     int64     `json:"totalUserCount"`
 	TotalArticleCount  int64     `json:"totalArticleCount"`
-	FlowCount          int64     `json:"flowCount"`
 	LoginCount         int64     `json:"loginCount"`
 	RegisterCount      int64     `json:"registerCount"`
 	NewArticleCount    int64     `json:"newArticleCount"`
@@ -64,6 +66,7 @@ func (DataApi) SiteStatisticsView(c *gin.Context) {
 	between := "created_at BETWEEN ? AND ?"
 
 	var resp SiteStatisticsResp
+	var siteData []models.DataModel
 	resp.StartTime = startDate
 	resp.EndTime = endDate
 	global.DB.Model(&models.UserModel{}).Count(&resp.TotalUserCount)                                                                        // 所有用户
@@ -74,6 +77,13 @@ func (DataApi) SiteStatisticsView(c *gin.Context) {
 	global.DB.Where(between, startDate, endDate).Model(&models.ArticleLikesModel{}).Count(&resp.LikeCount)                                  // 新增点赞
 	global.DB.Where(between, startDate, endDate).Model(&models.ArticleCollectionModel{}).Count(&resp.CollectCount)                          // 新增收藏
 	global.DB.Where(between, startDate, endDate).Model(&models.CommentModel{}).Count(&resp.CommentCount)                                    // 新增评论
+	global.DB.Where("date BETWEEN ? AND ?", startDate, endDate).Model(&models.DataModel{}).Find(&siteData)                                  // 站点点击量、流量
+
+	// 点击量和流量
+	for _, data := range siteData {
+		resp.FlowCount += data.FlowCount
+		resp.ClickCount += data.ClickCount
+	}
 
 	// 下面都是在统计活跃文章
 	activeArticleIds := make(map[uint]struct{})
@@ -124,6 +134,10 @@ func (DataApi) SiteStatisticsView(c *gin.Context) {
 			key, _ := strconv.Atoi(k)
 			activeArticleIds[uint(key)] = struct{}{}
 		}
+
+		// 点击量和流量也要加上
+		resp.FlowCount += redis_site.GetFlow(time.Now().Format("2006-01-02"))
+		resp.ClickCount += redis_site.GetClick(time.Now().Format("2006-01-02"))
 	}
 	resp.ActiveArticleCount = int64(len(activeArticleIds))
 	res.Success(resp, "成功", c)
