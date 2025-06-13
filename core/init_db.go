@@ -17,7 +17,7 @@ func InitDB() (db *gorm.DB, masterDB *gorm.DB) {
 	gdb := global.Config.DB
 	n := len(gdb) // 配置数据库数量
 	if n == 0 {
-		logrus.Fatalln("没有配置 DB")
+		logrus.Fatalln("DB is not configured, please check the settings.yaml file")
 	}
 
 	dbWriteConf := gdb[0] // 写库

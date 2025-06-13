@@ -63,6 +63,7 @@ func (SiteApi) SiteInfoView(c *gin.Context) {
 		data = rep
 	case "cloud":
 		rep := global.Config.Cloud.QNY
+		rep.AccessKey = "******" // 保护敏感信息
 		rep.SecretKey = "******" // 保护敏感信息
 		data = rep
 	case "qq":

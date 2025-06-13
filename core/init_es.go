@@ -12,6 +12,7 @@ func InitES() *elastic.Client {
 	es := global.Config.ES
 	if es.Addr == "" {
 		// es 吃配置，所以如果不足以运行，url 留空就不加载 es 了
+		logrus.Warnln("ES addr is empty, skip loading ES")
 		return nil
 	}
 	client, err := elastic.NewClient(
