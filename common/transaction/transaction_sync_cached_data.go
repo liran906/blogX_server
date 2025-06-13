@@ -46,6 +46,7 @@ func SyncArticleTx(articleList []models.ArticleModel, maps map[string]map[uint]i
 	collectMap := maps["collect"]
 	commentMap := maps["comment"]
 	return global.DBMaster.Transaction(func(tx *gorm.DB) error {
+		// 这里是遍历数据库查出来的文章，所以也不怕 redis 中有数据，而 db 被删了的情况
 		for _, article := range articleList {
 			// 遍历每一篇文章提取出更新数据
 			updateMap := make(map[string]any, 4)

@@ -34,6 +34,7 @@ func Run() {
 	GlobalNotificationRouter(nr)
 	SearchRouter(nr)
 	AIRouter(nr)
+	DataRouter(nr)
 
 	MytestRouter(nr) // 测试用
 

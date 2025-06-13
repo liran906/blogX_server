@@ -8,6 +8,7 @@ import (
 	"blogX_server/api/banner_api"
 	"blogX_server/api/captcha_api"
 	"blogX_server/api/comment_api"
+	"blogX_server/api/data_api"
 	"blogX_server/api/global_notification_api"
 	"blogX_server/api/image_api"
 	"blogX_server/api/log_api"
@@ -31,6 +32,7 @@ type Api struct {
 	GlobalNotificationApi global_notification_api.GlobalNotificationApi
 	SearchApi             search_api.SearchApi
 	AiApi                 ai_api.AiApi
+	DataApi               data_api.DataApi
 
 	MyTestApi mytest_api.MyTestApi // 测试用
 }
