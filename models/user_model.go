@@ -33,7 +33,7 @@ type UserModel struct {
 	// FK
 	UserConfigModel      *UserConfigModel      `gorm:"foreignKey:UserID;references:ID" json:"-"` // 注意是指针，否则会报错：嵌套循环
 	UserMessageConfModel *UserMessageConfModel `gorm:"foreignKey:UserID;references:ID" json:"-"`
-	Articles             []ArticleModel        `gorm:"foreignKey:UserID" json:"-"`
+	ArticleModels        []ArticleModel        `gorm:"foreignKey:UserID" json:"-"`
 
 	// M2M
 	Images []ImageModel `gorm:"many2many:user_upload_images;joinForeignKey:UserID;JoinReferences:ImageID" json:"images"`

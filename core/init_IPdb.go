@@ -21,6 +21,9 @@ func InitIPDB() {
 }
 
 func GetLocationFromIP(ip string) (string, error) {
+	if ip == "" {
+		return "", nil
+	}
 	// 先判断是否是内网
 	isPrivate, err := IPutil.IsPrivateIP(ip)
 	if err != nil {
