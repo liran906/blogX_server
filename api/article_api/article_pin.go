@@ -64,7 +64,7 @@ func (ArticleApi) ArticlePinView(c *gin.Context) {
 	log.ShowRequest()
 	log.ShowResponse()
 	log.SetLevel(enum.LogTraceLevel)
-	log.SetTitle("更新站点置顶")
+	log.SetTitle("用户文章置顶")
 
 	// 用事务更新
 	err = transaction.UpdateUserPinnedArticlesTx(claims.UserID, req.IDList)

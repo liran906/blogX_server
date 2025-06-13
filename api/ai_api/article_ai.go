@@ -70,10 +70,10 @@ func (AiApi) ArticleAiView(c *gin.Context) {
 
 		result, err := global.ESClient.
 			Search(models.ArticleModel{}.GetIndex()). // 搜索的是哪一个 index
-			Query(query). // 什么类型的查询以及具体查询条件
-			From(0). // 从哪一条开始显示
-			Size(5). // 往后显示多少条
-			Do(context.Background()) // 执行
+			Query(query).                             // 什么类型的查询以及具体查询条件
+			From(0).                                  // 从哪一条开始显示
+			Size(5).                                  // 往后显示多少条
+			Do(context.Background())                  // 执行
 		if err != nil {
 			source, _ := query.Source()
 			byteData, _ := json.Marshal(source)

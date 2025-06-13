@@ -14,8 +14,11 @@ import (
 
 type ArticleDetailResp struct {
 	models.ArticleModel
-	UserNickname  string `json:"userNickname"`
-	UserAvatarURL string `json:"userAvatarURL"`
+	UserNickname  string  `json:"userNickname"`
+	UserAvatarURL string  `json:"userAvatarURL"`
+	CategoryName  *string `json:"categoryName"`
+	IsLiked       bool    `json:"isLiked"`
+	IsCollected   bool    `json:"isCollected"`
 }
 
 func (ArticleApi) ArticleDetailView(c *gin.Context) {
@@ -26,17 +29,17 @@ func (ArticleApi) ArticleDetailView(c *gin.Context) {
 	}
 
 	var a models.ArticleModel
-	err := global.DB.Preload("UserModel").Take(&a, req.ID).Error
+	var resp ArticleDetailResp
+	err := global.DB.Preload("UserModel").Preload("CategoryModel").Take(&a, req.ID).Error
 	if err != nil {
 		res.Fail(err, "文章不存在", c)
 		return
 	}
-	_ = redis_article.UpdateCachedFieldsForArticle(&a) // 读取缓存数据
 
 	// 提取身份信息，判断查询种类
 	claims, err := jwts.ParseTokenFromRequest(c)
 	// 未登录无法看未发布的文章
-	if err != nil && a.Status != enum.ArticleStatusPublish {
+	if (err != nil || claims == nil) && a.Status != enum.ArticleStatusPublish {
 		res.FailWithMsg("文章不存在", c)
 		return
 	}
@@ -46,12 +49,27 @@ func (ArticleApi) ArticleDetailView(c *gin.Context) {
 			res.FailWithMsg("文章不存在", c)
 			return
 		}
+		// 查询文章是否被自己收藏及点赞
+		err := global.DB.Take(&models.ArticleCollectionModel{}, "article_id = ? AND user_id = ?", a.ID, claims.UserID).Error
+		if err == nil {
+			resp.IsCollected = true
+		}
+		err = global.DB.Take(&models.ArticleLikesModel{}, "article_id = ? AND user_id = ?", a.ID, claims.UserID).Error
+		if err == nil {
+			resp.IsLiked = true
+		}
 	}
 
-	resp := ArticleDetailResp{
-		ArticleModel:  a,
-		UserNickname:  a.UserModel.Nickname,
-		UserAvatarURL: a.UserModel.AvatarURL,
+	// 从 redis 更新点赞收藏等数据
+	redis_article.UpdateCachedFieldsForArticle(&a)
+
+	// 更新响应体的其他字段
+	resp.ArticleModel = a
+	resp.UserNickname = a.UserModel.Nickname
+	resp.UserAvatarURL = a.UserModel.AvatarURL
+
+	if a.CategoryModel != nil {
+		resp.CategoryName = &a.CategoryModel.Name
 	}
 	res.SuccessWithData(resp, c)
 }
