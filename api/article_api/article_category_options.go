@@ -10,6 +10,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// ArticleCategoryOptionsView 是用于**获取当前登录用户的文章分类选项列表（options）**的
+// 常用于前端页面上的 下拉选择框（select），比如在用户写文章时选择“属于哪个分类”
 func (ArticleApi) ArticleCategoryOptionsView(c *gin.Context) {
 	claims := jwts.MustGetClaimsFromRequest(c)
 

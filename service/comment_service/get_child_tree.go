@@ -22,6 +22,7 @@ type CommentResponse struct {
 	Depth         int                `json:"depth"`
 	LikeCount     int                `json:"likeCount"`
 	ReplyCount    int                `json:"replyCount"`
+	IsLiked       bool               `json:"isLiked"`
 	ChildComments []*CommentResponse `json:"childComments"`
 }
 
@@ -34,24 +35,24 @@ func PreloadAllChildren(comment *models.CommentModel) {
 }
 
 // PreloadAllChildrenResponseFromID 返回一个 CommentResponse，其中的 ChildComments 逐级嵌入所有的 childCommentResponse
-func PreloadAllChildrenResponseFromID(cid uint) (resp *CommentResponse) {
+func PreloadAllChildrenResponseFromID(cid uint, userLikeMap map[uint]struct{}) (resp *CommentResponse) {
 	var cmt models.CommentModel
 	global.DB.Preload("UserModel").Preload("ChildListModel").Take(&cmt, cid)
-	return PreloadAllChildrenResponseFromModel(&cmt)
+	return PreloadAllChildrenResponseFromModel(&cmt, userLikeMap)
 }
 
-func PreloadAllChildrenResponseFromModel(cmt *models.CommentModel) (resp *CommentResponse) {
+func PreloadAllChildrenResponseFromModel(cmt *models.CommentModel, userLikeMap map[uint]struct{}) (resp *CommentResponse) {
 	// 两种实现，功能完全一致
 
 	// preloadByAttr 是更简单的实现，但需要维护 depth 属性
-	return preloadByAttr(cmt)
+	return preloadByAttr(cmt, userLikeMap)
 
 	// preloadByClosure 利用闭包（depth 的递归和回溯）判断是否达到层数限制
 	//return preloadByClosure(cmt)
 }
 
 // preloadByClosure 利用闭包（depth 的递归和回溯）判断是否达到层数限制
-func preloadByClosure(cmt *models.CommentModel) (resp *CommentResponse) {
+func preloadByClosure(cmt *models.CommentModel, userLikeMap map[uint]struct{}) (resp *CommentResponse) {
 	var depth int
 	// 也可以 helper 函数多传入一个 depth 参数，这样不需要回溯了
 	var preloadHelper func(*models.CommentModel) *CommentResponse
@@ -77,6 +78,10 @@ func preloadByClosure(cmt *models.CommentModel) (resp *CommentResponse) {
 			ReplyCount:    cmt.ReplyCount + redis_comment.GetCommentReplyCount(cmt.ID),
 			ChildComments: []*CommentResponse{},
 		}
+		// 判断是否被本人点过赞
+		if _, ok := userLikeMap[cmt.ID]; ok {
+			resp.IsLiked = true
+		}
 		for i := range cmt.ChildListModel {
 			child := cmt.ChildListModel[i]
 			resp.ChildComments = append(resp.ChildComments, preloadHelper(child))
@@ -89,7 +94,7 @@ func preloadByClosure(cmt *models.CommentModel) (resp *CommentResponse) {
 }
 
 // preloadByAttr 是更简单的实现，但需要维护 depth 属性
-func preloadByAttr(cmt *models.CommentModel) (resp *CommentResponse) {
+func preloadByAttr(cmt *models.CommentModel, userLikeMap map[uint]struct{}) (resp *CommentResponse) {
 	if cmt.Depth >= global.Config.Site.Article.CommentDepth {
 		return
 	}
@@ -109,9 +114,13 @@ func preloadByAttr(cmt *models.CommentModel) (resp *CommentResponse) {
 		ReplyCount:    cmt.ReplyCount + redis_comment.GetCommentReplyCount(cmt.ID),
 		ChildComments: []*CommentResponse{},
 	}
+	// 判断是否被本人点过赞
+	if _, exists := userLikeMap[cmt.ID]; exists {
+		resp.IsLiked = true
+	}
 	for i := range cmt.ChildListModel {
 		child := cmt.ChildListModel[i]
-		resp.ChildComments = append(resp.ChildComments, preloadByAttr(child))
+		resp.ChildComments = append(resp.ChildComments, preloadByAttr(child, userLikeMap))
 	}
 	return
 }
