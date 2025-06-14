@@ -29,7 +29,7 @@ type ArticleUpdateReq struct {
 
 func (ArticleApi) ArticleUpdateView(c *gin.Context) {
 	req := c.MustGet("bindReq").(ArticleUpdateReq)
-	claims := jwts.MustGetClaimsFromGin(c)
+	claims := jwts.MustGetClaimsFromRequest(c)
 
 	// 取文章
 	var a models.ArticleModel

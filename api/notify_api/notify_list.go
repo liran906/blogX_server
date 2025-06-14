@@ -40,7 +40,7 @@ type NotifyListResp struct {
 
 func (NotifyApi) NotifyListView(c *gin.Context) {
 	req := c.MustGet("bindReq").(NotifyListReq)
-	claims := jwts.MustGetClaimsFromGin(c)
+	claims := jwts.MustGetClaimsFromRequest(c)
 
 	query := global.DB.Where("")
 

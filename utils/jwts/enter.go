@@ -83,14 +83,25 @@ func ParseToken(tokenString string) (*MyClaims, error) {
 }
 
 func ParseTokenFromRequest(c *gin.Context) (*MyClaims, error) {
-	token := c.GetHeader("token")
-	if token == "" {
-		token = c.Query("token")
+	token, err := GetTokenFromRequest(c)
+	if err != nil {
+		return nil, err
 	}
 	return ParseToken(token)
 }
 
-func GetClaimsFromGin(c *gin.Context) (claims *MyClaims, ok bool) {
+func GetTokenFromRequest(c *gin.Context) (string, error) {
+	token := c.GetHeader("token")
+	if token == "" {
+		token = c.Query("token")
+	}
+	if token == "" {
+		return "", errors.New("no token found")
+	}
+	return token, nil
+}
+
+func GetClaimsFromRequest(c *gin.Context) (claims *MyClaims, ok bool) {
 	_claims, ok := c.Get("claims")
 	if !ok {
 		return
@@ -102,8 +113,8 @@ func GetClaimsFromGin(c *gin.Context) (claims *MyClaims, ok bool) {
 	return
 }
 
-func MustGetClaimsFromGin(c *gin.Context) (claims *MyClaims) {
-	claims, _ = GetClaimsFromGin(c)
+func MustGetClaimsFromRequest(c *gin.Context) (claims *MyClaims) {
+	claims, _ = GetClaimsFromRequest(c)
 	if claims == nil {
 		panic("claims is nil")
 	}

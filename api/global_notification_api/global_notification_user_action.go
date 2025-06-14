@@ -18,7 +18,7 @@ import (
 
 func (GlobalNotificationApi) GNUserReadView(c *gin.Context) {
 	req := c.MustGet("bindReq").(models.IDListRequest)
-	claims := jwts.MustGetClaimsFromGin(c)
+	claims := jwts.MustGetClaimsFromRequest(c)
 
 	if len(req.IDList) == 0 {
 		res.FailWithMsg("没有指定对象", c)
@@ -64,7 +64,7 @@ func (GlobalNotificationApi) GNUserReadView(c *gin.Context) {
 
 func (GlobalNotificationApi) GNUserDeleteView(c *gin.Context) {
 	req := c.MustGet("bindReq").(models.IDListRequest)
-	claims := jwts.MustGetClaimsFromGin(c)
+	claims := jwts.MustGetClaimsFromRequest(c)
 
 	if len(req.IDList) == 0 {
 		res.FailWithMsg("没有指定对象", c)

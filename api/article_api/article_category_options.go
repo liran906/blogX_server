@@ -11,7 +11,7 @@ import (
 )
 
 func (ArticleApi) ArticleCategoryOptionsView(c *gin.Context) {
-	claims := jwts.MustGetClaimsFromGin(c)
+	claims := jwts.MustGetClaimsFromRequest(c)
 
 	//var cm []models.CategoryModel
 	//err := global.DB.Find(&cm, "user_id=?", claims.UserID).Error

@@ -20,7 +20,7 @@ type ArticlePinReq struct {
 
 func (ArticleApi) ArticlePinView(c *gin.Context) {
 	req := c.MustGet("bindReq").(ArticlePinReq)
-	claims := jwts.MustGetClaimsFromGin(c)
+	claims := jwts.MustGetClaimsFromRequest(c)
 
 	// 置顶数量限制
 	if len(req.IDList) > global.Config.Site.Article.MaxPin {

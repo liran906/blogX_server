@@ -15,7 +15,7 @@ import (
 
 func (ArticleApi) ArticleReadRemoveView(c *gin.Context) {
 	req := c.MustGet("bindReq").(models.IDListRequest)
-	claims := jwts.MustGetClaimsFromGin(c)
+	claims := jwts.MustGetClaimsFromRequest(c)
 
 	if len(req.IDList) == 0 {
 		res.FailWithMsg("没有指定删除对象", c)

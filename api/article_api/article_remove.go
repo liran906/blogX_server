@@ -21,7 +21,7 @@ import (
 // ArticleRemoveView 删除单篇
 func (ArticleApi) ArticleRemoveView(c *gin.Context) {
 	req := c.MustGet("bindReq").(models.IDRequest)
-	claims := jwts.MustGetClaimsFromGin(c)
+	claims := jwts.MustGetClaimsFromRequest(c)
 
 	var a models.ArticleModel
 	err := global.DB.Take(&a, req.ID).Error

@@ -82,7 +82,7 @@ func (UserApi) SendEmailView(c *gin.Context) {
 
 		// 取用户信息
 		mdw.AuthMiddleware(c)
-		claims, ok := jwts.GetClaimsFromGin(c)
+		claims, ok := jwts.GetClaimsFromRequest(c)
 		if !ok {
 			return
 		}

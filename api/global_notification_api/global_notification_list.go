@@ -27,7 +27,7 @@ type GNListForUserResp struct {
 
 func (GlobalNotificationApi) GNListView(c *gin.Context) {
 	req := c.MustGet("bindReq").(GNListReq)
-	claims := jwts.MustGetClaimsFromGin(c)
+	claims := jwts.MustGetClaimsFromRequest(c)
 
 	// 只有用户侧会用到
 	query := global.DB.Where("")

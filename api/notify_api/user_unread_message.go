@@ -20,7 +20,7 @@ type UserUnreadMessageResp struct {
 
 // UserUnreadMessageView 查看用户未读的所有消息（站内信、系统通知、私信）数量
 func (NotifyApi) UserUnreadMessageView(c *gin.Context) {
-	claims := jwts.MustGetClaimsFromGin(c)
+	claims := jwts.MustGetClaimsFromRequest(c)
 
 	var notifies []models.NotifyModel
 	global.DB.Find(&notifies, "receive_user_id = ? AND is_read = ?", claims.UserID, false)

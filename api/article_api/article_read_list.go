@@ -33,7 +33,7 @@ type ArticleReadListResp struct {
 
 func (ArticleApi) ArticleReadListView(c *gin.Context) {
 	req := c.MustGet("bindReq").(ArticleReadListReq)
-	claims := jwts.MustGetClaimsFromGin(c)
+	claims := jwts.MustGetClaimsFromRequest(c)
 
 	// 没有传入就查自己
 	if req.UserId == 0 {

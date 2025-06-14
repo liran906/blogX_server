@@ -12,6 +12,7 @@ type UserConfigModel struct {
 	DisplayCollections bool       `gorm:"not null; default:true" json:"displayCollections"` // 公开我的收藏
 	DisplayFans        bool       `gorm:"not null; default:true" json:"displayFans"`        // 公开我的粉丝
 	DisplayFollowing   bool       `gorm:"not null; default:true" json:"displayFollowing"`   // 公开我的关注
+	HomepageVisitCount int        `gorm:"not null; default:0" json:"homepageVisitCount"`    // 主页访问量
 
 	// FK
 	UserModel UserModel `gorm:"foreignKey:UserID;references:ID" json:"userModel"` // 外键关联到 User, ref 如果不写会自动关联到 ID

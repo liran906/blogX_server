@@ -23,7 +23,7 @@ type NotifyReadReq struct {
 // NotifyReadView 将消息设为已读
 func (NotifyApi) NotifyReadView(c *gin.Context) {
 	req := c.MustGet("bindReq").(NotifyReadReq)
-	claims := jwts.MustGetClaimsFromGin(c)
+	claims := jwts.MustGetClaimsFromRequest(c)
 
 	query := global.DB.Debug().Model(&models.NotifyModel{}).Where("receive_user_id = ? AND is_read = ?", claims.UserID, false)
 	if req.ReadAll {

@@ -23,7 +23,7 @@ type ArticleCollectionFolderListReq struct {
 
 func (ArticleApi) ArticleCollectionFolderListView(c *gin.Context) {
 	req := c.MustGet("bindReq").(ArticleCollectionFolderListReq)
-	claims := jwts.MustGetClaimsFromGin(c)
+	claims := jwts.MustGetClaimsFromRequest(c)
 
 	// 不查自己要校验
 	if req.UserID != claims.UserID {

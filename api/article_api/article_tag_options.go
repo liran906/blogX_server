@@ -14,7 +14,7 @@ import (
 )
 
 func (ArticleApi) ArticleTagOptionsView(c *gin.Context) {
-	claims := jwts.MustGetClaimsFromGin(c)
+	claims := jwts.MustGetClaimsFromRequest(c)
 
 	// 找到所有发布过的文章
 	var alist []models.ArticleModel

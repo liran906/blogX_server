@@ -20,7 +20,7 @@ func (UserApi) BindEmailView(c *gin.Context) {
 	}
 
 	// 取个 uid
-	claims, ok := jwts.GetClaimsFromGin(c)
+	claims, ok := jwts.GetClaimsFromRequest(c)
 	if !ok {
 		res.FailWithMsg("请登录", c)
 		return

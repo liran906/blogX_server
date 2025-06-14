@@ -15,7 +15,7 @@ import (
 
 func (ArticleApi) ArticleCollectionRemoveView(c *gin.Context) {
 	req := c.MustGet("bindReq").(models.IDListRequest)
-	claims := jwts.MustGetClaimsFromGin(c)
+	claims := jwts.MustGetClaimsFromRequest(c)
 
 	var collections []models.ArticleCollectionModel
 	err := global.DB.Preload("ArticleModel").Find(&collections, "id IN ?", req.IDList).Error

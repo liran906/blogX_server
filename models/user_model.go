@@ -39,6 +39,6 @@ type UserModel struct {
 	Images []ImageModel `gorm:"many2many:user_upload_images;joinForeignKey:UserID;JoinReferences:ImageID" json:"images"`
 }
 
-func (u *UserModel) SiteAge() uint {
-	return uint(time.Now().Sub(u.CreatedAt).Hours() / 24 / 365)
+func (u *UserModel) SiteAge() int {
+	return int(time.Now().Sub(u.CreatedAt).Hours() / 24 / 365)
 }

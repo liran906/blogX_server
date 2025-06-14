@@ -20,9 +20,12 @@ func Cron() {
 	_, err1 := crontab.AddFunc(global.Config.Redis.ArticleSyncTime, SyncArticle)
 	_, err2 := crontab.AddFunc(global.Config.Redis.CommentSyncTime, SyncComment)
 	_, err3 := crontab.AddFunc(global.Config.Redis.SiteDataSyncTime, SyncData)
-	if err1 != nil || err2 != nil || err3 != nil {
+	_, err4 := crontab.AddFunc(global.Config.Redis.UserDataSyncTime, SyncUser)
+	if err1 != nil || err2 != nil || err3 != nil || err4 != nil {
 		logrus.Panicln("crontab.AddFunc err:", err1)
 		logrus.Panicln("crontab.AddFunc err:", err2)
+		logrus.Panicln("crontab.AddFunc err:", err3)
+		logrus.Panicln("crontab.AddFunc err:", err4)
 		return
 	}
 	crontab.Start()

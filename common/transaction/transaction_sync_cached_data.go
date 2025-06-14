@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
+	"strconv"
 )
 
 func SyncCommentTx(commentList []models.CommentModel, maps map[string]map[uint]int) error {
@@ -74,6 +75,20 @@ func SyncArticleTx(articleList []models.ArticleModel, maps map[string]map[uint]i
 				return fmt.Errorf("update article[%d] error: %v", article.ID, err)
 			}
 			logrus.Infof("update article[%d]", article.ID)
+		}
+		return nil
+	})
+}
+
+func SyncUserTx(mps map[string]string) error {
+	return global.DBMaster.Transaction(func(tx *gorm.DB) error {
+		for k, v := range mps {
+			uid, _ := strconv.Atoi(k)
+			num, _ := strconv.Atoi(v)
+			err := global.DB.Where("user_id=?", uid).Model(&models.UserConfigModel{}).Update("homepage_visit_count", gorm.Expr("homepage_visit_count + ?", num)).Error
+			if err != nil {
+				return fmt.Errorf("update user[%s] error: %v", k, err)
+			}
 		}
 		return nil
 	})

@@ -31,7 +31,7 @@ func (ArticleApi) ArticleLikeView(c *gin.Context) {
 		return
 	}
 
-	uid := jwts.MustGetClaimsFromGin(c).UserID
+	uid := jwts.MustGetClaimsFromRequest(c).UserID
 
 	// 日志
 	log := log_service.GetActionLog(c)

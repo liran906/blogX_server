@@ -22,7 +22,7 @@ type NotifyRemoveReq struct {
 
 func (NotifyApi) NotifyRemoveView(c *gin.Context) {
 	req := c.MustGet("bindReq").(NotifyRemoveReq)
-	claims := jwts.MustGetClaimsFromGin(c)
+	claims := jwts.MustGetClaimsFromRequest(c)
 
 	query := global.DB.Debug().Where("receive_user_id = ?", claims.UserID)
 	if req.RemoveAll {

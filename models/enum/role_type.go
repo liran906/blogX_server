@@ -9,3 +9,15 @@ const (
 	UserRoleType  RoleType = 2
 	GuestRoleType RoleType = 3
 )
+
+func (r RoleType) String() string {
+	switch r {
+	case AdminRoleType:
+		return "Admin"
+	case UserRoleType:
+		return "User"
+	case GuestRoleType:
+		return "Guest"
+	}
+	return ""
+}

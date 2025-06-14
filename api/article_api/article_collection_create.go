@@ -22,7 +22,7 @@ type ArticleCollectionCreateReq struct {
 
 func (ArticleApi) ArticleCollectionFolderCreateView(c *gin.Context) {
 	req := c.MustGet("bindReq").(ArticleCollectionCreateReq)
-	claims := jwts.MustGetClaimsFromGin(c)
+	claims := jwts.MustGetClaimsFromRequest(c)
 
 	var cf models.CollectionFolderModel
 	err := global.DB.Where("user_id = ? AND title = ?", claims.UserID, req.Title).Take(&cf).Error

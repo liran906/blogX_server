@@ -20,7 +20,7 @@ type ArticleCategoryUpdateReq struct {
 
 func (ArticleApi) ArticleCategoryUpdateView(c *gin.Context) {
 	req := c.MustGet("bindReq").(ArticleCategoryUpdateReq)
-	claims := jwts.MustGetClaimsFromGin(c)
+	claims := jwts.MustGetClaimsFromRequest(c)
 
 	var cm models.CategoryModel
 	err := global.DB.Take(&cm, req.CategoryId).Error

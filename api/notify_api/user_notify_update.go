@@ -23,7 +23,7 @@ type UserNotifyConfUpdateReq struct {
 
 func (NotifyApi) UserNotifyConfUpdateView(c *gin.Context) {
 	req := c.MustGet("bindReq").(UserNotifyConfUpdateReq)
-	claims := jwts.MustGetClaimsFromGin(c)
+	claims := jwts.MustGetClaimsFromRequest(c)
 
 	if claims.UserID != req.UserID {
 		res.FailWithMsg("只能更新自己的配置信息", c)

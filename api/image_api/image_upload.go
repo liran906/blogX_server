@@ -49,7 +49,7 @@ func uploadImages(files []*multipart.FileHeader, c *gin.Context) (list []*ImageU
 	log.ShowResponse()
 	log.SetTitle("上传图片")
 
-	claims := jwts.MustGetClaimsFromGin(c)
+	claims := jwts.MustGetClaimsFromRequest(c)
 	uid := claims.UserID
 
 	for _, fileHeader := range files {

@@ -21,7 +21,7 @@ type ImageCacheReq struct {
 func (ImageApi) ImageCacheView(c *gin.Context) {
 	req := c.MustGet("bindReq").(ImageCacheReq)
 
-	claims := jwts.MustGetClaimsFromGin(c)
+	claims := jwts.MustGetClaimsFromRequest(c)
 
 	resp, err := http.Get(req.URL)
 	if err != nil {

@@ -35,7 +35,7 @@ func (UserApi) ChangePasswordView(c *gin.Context) {
 	}
 
 	// 获取身份
-	claims, ok := jwts.GetClaimsFromGin(c)
+	claims, ok := jwts.GetClaimsFromRequest(c)
 	if !ok {
 		res.FailWithMsg("登录信息获取失败", c)
 		return

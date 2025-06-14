@@ -27,7 +27,7 @@ type CommentCreateReq struct {
 
 func (CommentApi) CommentCreateView(c *gin.Context) {
 	req := c.MustGet("bindReq").(CommentCreateReq)
-	claims := jwts.MustGetClaimsFromGin(c)
+	claims := jwts.MustGetClaimsFromRequest(c)
 
 	if req.ArticleID == 0 && req.ParentID == nil {
 		res.FailWithMsg("请输入文章 id 或父评论 id", c)

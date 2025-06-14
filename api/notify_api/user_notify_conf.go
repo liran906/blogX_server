@@ -13,7 +13,7 @@ import (
 // 这个方法在 user config 的相关方法中已经实现了
 
 func (NotifyApi) UserNotifyConfView(c *gin.Context) {
-	claims := jwts.MustGetClaimsFromGin(c)
+	claims := jwts.MustGetClaimsFromRequest(c)
 
 	var un models.UserMessageConfModel
 	err := global.DB.Take(&un, "user_id = ?", claims.UserID).Error

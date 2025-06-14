@@ -37,7 +37,7 @@ type UserLoginListResponse struct {
 func (UserApi) UserLoginListView(c *gin.Context) {
 	req := c.MustGet("bindReq").(UserLoginListReq)
 
-	claims, ok := jwts.GetClaimsFromGin(c)
+	claims, ok := jwts.GetClaimsFromRequest(c)
 	if !ok {
 		res.FailWithMsg("获取信息失败，请重新登录", c)
 		return

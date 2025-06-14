@@ -42,7 +42,7 @@ type UserInfoUpdateReq struct {
 func (UserApi) UserInfoUpdateView(c *gin.Context) {
 	req := c.MustGet("bindReq").(UserInfoUpdateReq)
 
-	claims, ok := jwts.GetClaimsFromGin(c)
+	claims, ok := jwts.GetClaimsFromRequest(c)
 	if !ok {
 		res.FailWithMsg("请登录", c)
 		return

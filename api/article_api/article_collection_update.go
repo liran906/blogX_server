@@ -22,7 +22,7 @@ type ArticleCollectionUpdateReq struct {
 
 func (ArticleApi) ArticleCollectionFolderUpdateView(c *gin.Context) {
 	req := c.MustGet("bindReq").(ArticleCollectionUpdateReq)
-	claims := jwts.MustGetClaimsFromGin(c)
+	claims := jwts.MustGetClaimsFromRequest(c)
 
 	var cf models.CollectionFolderModel
 	err := global.DB.Take(&cf, req.CollectionID).Error

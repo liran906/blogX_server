@@ -7,7 +7,6 @@ import (
 	"blogX_server/common/res"
 	"blogX_server/core"
 	"blogX_server/models"
-	"blogX_server/models/enum"
 	"github.com/gin-gonic/gin"
 	"time"
 )
@@ -19,18 +18,18 @@ type UserListReq struct {
 }
 
 type UserListResp struct {
-	ID              uint          `json:"id"`
-	Username        string        `json:"username"`
-	CreatedAt       time.Time     `json:"createdAt"`
-	Status          int8          `json:"status"`
-	Nickname        string        `json:"nickname"`
-	AvatarURL       string        `json:"avatarURL"`
-	Role            enum.RoleType `json:"role"`
-	ArticleCount    int           `json:"articleCount"`
-	SiteAge         uint          `json:"siteAge"`
-	LastLoginIP     string        `json:"lastLoginIP"`
-	LastLoginIPAddr string        `json:"lastLoginIPAddr"`
-	LastLoginTime   time.Time     `json:"lastLoginTime"`
+	ID              uint      `json:"id"`
+	Username        string    `json:"username"`
+	CreatedAt       time.Time `json:"createdAt"`
+	Status          int8      `json:"status"`
+	Nickname        string    `json:"nickname"`
+	AvatarURL       string    `json:"avatarURL"`
+	Role            string    `json:"role"`
+	ArticleCount    int       `json:"articleCount"`
+	SiteAge         int       `json:"siteAge"`
+	LastLoginIP     string    `json:"lastLoginIP"`
+	LastLoginIPAddr string    `json:"lastLoginIPAddr"`
+	LastLoginTime   time.Time `json:"lastLoginTime"`
 }
 
 func (UserApi) UserListView(c *gin.Context) {
@@ -68,7 +67,7 @@ func (UserApi) UserListView(c *gin.Context) {
 			Status:          user.Status,
 			Nickname:        user.Nickname,
 			AvatarURL:       user.AvatarURL,
-			Role:            user.Role,
+			Role:            user.Role.String(),
 			ArticleCount:    len(user.ArticleModels),
 			SiteAge:         user.SiteAge(),
 			LastLoginIP:     user.LastLoginIP,

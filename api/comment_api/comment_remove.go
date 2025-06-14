@@ -19,7 +19,7 @@ import (
 
 func (CommentApi) CommentRemoveView(c *gin.Context) {
 	req := c.MustGet("bindReq").(models.IDRequest)
-	claims := jwts.MustGetClaimsFromGin(c)
+	claims := jwts.MustGetClaimsFromRequest(c)
 
 	var cmt models.CommentModel
 	err := global.DB.Preload("ArticleModel").Take(&cmt, req.ID).Error

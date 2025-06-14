@@ -28,7 +28,7 @@ type ArticleCreateReq struct {
 
 func (ArticleApi) ArticleCreateView(c *gin.Context) {
 	req := c.MustGet("bindReq").(ArticleCreateReq)
-	u, err := jwts.MustGetClaimsFromGin(c).GetUserFromClaims()
+	u, err := jwts.MustGetClaimsFromRequest(c).GetUserFromClaims()
 	if err != nil {
 		res.FailWithMsg("用户信息获取失败", c)
 		return

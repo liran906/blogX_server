@@ -26,7 +26,7 @@ type ArticleCollectReq struct {
 // ArticleCollectView 收藏/取消收藏某篇文章
 func (ArticleApi) ArticleCollectView(c *gin.Context) {
 	req := c.MustGet("bindReq").(ArticleCollectReq)
-	uid := jwts.MustGetClaimsFromGin(c).UserID
+	uid := jwts.MustGetClaimsFromRequest(c).UserID
 	var cf models.CollectionFolderModel
 
 	// 只允许收藏已发布状态的文章

@@ -20,7 +20,7 @@ type ArticleCategoryCreateReq struct {
 
 func (ArticleApi) ArticleCategoryCreateView(c *gin.Context) {
 	req := c.MustGet("bindReq").(ArticleCategoryCreateReq)
-	claims := jwts.MustGetClaimsFromGin(c)
+	claims := jwts.MustGetClaimsFromRequest(c)
 
 	var cm models.CategoryModel
 	err := global.DB.Where("user_id = ? AND name = ?", claims.UserID, req.Name).Take(&cm).Error
