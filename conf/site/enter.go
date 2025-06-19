@@ -44,15 +44,15 @@ type Login struct {
 	Captcha          bool `yaml:"captcha" json:"captcha"`                   // 图片验证码
 }
 
-// Component 单个组件设置
-type Component struct {
-	Title  string `yaml:"title" json:"title"`
-	Enable bool   `yaml:"enable" json:"enable"`
+// IndexRight 右边栏设置
+type IndexRight struct {
+	List []ComponentInfo `json:"list" yaml:"list"`
 }
 
-// RightSidebar 右边栏设置
-type RightSidebar struct {
-	List []Component `json:"list" yaml:"list"`
+// ComponentInfo 右边栏单个组件设置
+type ComponentInfo struct {
+	Title  string `yaml:"title" json:"title"`
+	Enable bool   `yaml:"enable" json:"enable"`
 }
 
 // Article 文章设置

@@ -107,7 +107,7 @@ func (ArticleApi) ArticleCollectionListView(c *gin.Context) {
 			Likes:    []string{"title"},
 			Preloads: []string{"UserModel", "CategoryModel"},
 			Where:    query,
-			Debug:    true,
+			Debug:    false,
 		})
 	if err != nil {
 		res.Fail(err, "查询失败", c)
@@ -118,7 +118,7 @@ func (ArticleApi) ArticleCollectionListView(c *gin.Context) {
 	for _, article := range _list {
 		article.Content = ""                                     // 正文在 list 中不返回
 		_ = redis_article.UpdateCachedFieldsForArticle(&article) // 读取缓存中的数据
-		data := ArticleListResp{                                 // 响应结构体
+		data := ArticleListResp{ // 响应结构体
 			ArticleModel:  article,
 			UserNickname:  article.UserModel.Nickname,
 			UserAvatarURL: article.UserModel.AvatarURL,

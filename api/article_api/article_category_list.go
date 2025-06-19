@@ -7,6 +7,7 @@ import (
 	"blogX_server/common/res"
 	"blogX_server/global"
 	"blogX_server/models"
+	"blogX_server/utils/jwts"
 	"errors"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -26,9 +27,14 @@ type ArticleCategoryListResp struct {
 
 func (ArticleApi) ArticleCategoryListView(c *gin.Context) {
 	req := c.MustGet("bindReq").(ArticleCategoryListReq)
+	claims := jwts.MustGetClaimsFromRequest(c)
 
 	// 这里和教程不一样，我觉得首先必须登录，其次并不需要判断是否是管理员
 	// 按教程：管理员多返回一个 nickname 和 avatar 有什么意义呢？uid 都是有的。
+
+	if req.UserID == 0 {
+		req.UserID = claims.UserID
+	}
 
 	var u models.UserModel
 	err := global.DB.Take(&u, req.UserID).Error

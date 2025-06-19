@@ -14,10 +14,9 @@ import (
 )
 
 type Claims struct {
-	UserID    uint          `json:"userID"`
-	Username  string        `json:"username"`
-	Role      enum.RoleType `json:"role"`
-	CreatedAt time.Time     `json:"createdAt"`
+	UserID   uint          `json:"userID"`
+	Username string        `json:"username"`
+	Role     enum.RoleType `json:"role"`
 }
 
 type MyClaims struct {

@@ -10,6 +10,7 @@ import (
 	"blogX_server/service/redis_service/redis_article"
 	"blogX_server/service/redis_service/redis_user"
 	"blogX_server/utils/jwts"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"time"
 )
@@ -84,15 +85,17 @@ type OtherUserDetailResponse struct {
 
 func (UserApi) UserDetailView(c *gin.Context) {
 	req := c.MustGet("bindReq").(models.IDRequest)
-
-	claims, ok := jwts.GetClaimsFromRequest(c)
-	if !ok {
-		res.FailWithMsg("获取用户信息错误，请重新登录", c)
-		return
-	}
+	claims := jwts.MustGetClaimsFromRequest(c)
 	uid := claims.UserID
 	role := claims.Role
 
+	fmt.Println("id", req.ID)
+
+	// 传入 id 为 0，就请求自己
+	if req.ID == 0 {
+		req.ID = claims.UserID
+	}
+	fmt.Println("id", req.ID)
 	// 读库
 	var u models.UserModel
 	err := global.DB.Preload("ArticleModels").Preload("UserConfigModel").Preload("UserMessageConfModel").Take(&u, "id = ?", req.ID).Error
