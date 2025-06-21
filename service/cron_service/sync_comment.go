@@ -6,6 +6,8 @@ import (
 	"blogX_server/common/transaction"
 	"blogX_server/global"
 	"blogX_server/models"
+	"blogX_server/models/enum"
+	"blogX_server/service/log_service"
 	"blogX_server/service/redis_service/redis_comment"
 	"fmt"
 	"github.com/sirupsen/logrus"
@@ -15,6 +17,9 @@ import (
 func SyncComment() {
 	// 记录时间
 	start := time.Now()
+
+	log := log_service.NewRuntimeLog("同步评论数据", log_service.RuntimeDeltaDay)
+	log.SetItem("开始时间", start.Format("2006-01-02 15:04:05"))
 
 	// 从 redis 中读取数据
 	replyMap := redis_comment.GetAllReplyCounts()
@@ -34,14 +39,21 @@ func SyncComment() {
 
 	if len(activeComments) == 0 {
 		logrus.Info("no active comments to sync")
+		log.SetTitle("无新数据")
+		log.Save()
 		return
 	}
+
+	log.SetTitle("同步失败")
 
 	// 从 DB 中取出本次有修改的评论
 	var commentList []models.CommentModel
 	err := global.DB.Where("id IN ?", mapKeys(activeComments)).Find(&commentList).Error
 	if err != nil {
-		logrus.Errorf("get article list error: %v", err)
+		logrus.Errorf("get comment list error: %v", err)
+		log.SetItemError("查询失败", fmt.Sprintf("get comment list error: %v", err))
+		log.SetLevel(enum.LogErrorLevel)
+		log.Save()
 		return
 	}
 
@@ -49,14 +61,23 @@ func SyncComment() {
 	err = transaction.SyncCommentTx(commentList, maps)
 	if err != nil {
 		logrus.Errorf("sync comment error: %v", err)
+		log.SetItemWarn("事务失败", fmt.Sprintf("sync comment error: %v", err))
+		log.SetLevel(enum.LogWarnLevel)
 		if err = RollbackCommentRedis(replyMap, likeMap); err != nil {
 			logrus.Errorf("rollback to Redis error: %v", err)
+			log.SetItemError("回滚失败", fmt.Sprintf("rollback to Redis error: %v", err))
+			log.SetLevel(enum.LogErrorLevel)
 		} else {
 			logrus.Info("Redis data rolled back...")
+			log.SetItem("回滚成功", "Redis data rolled back...")
 		}
+		log.Save()
 		return
 	}
 	logrus.Infof("update comment complete, total %d comments, %s time elapsed", len(commentList), time.Since(start))
+	log.SetItem("完成", fmt.Sprintf("update comment data complete, total %d article(s) involved, %s time elapsed", len(commentList), time.Since(start)))
+	log.SetTitle("同步成功")
+	log.Save()
 }
 
 // RollbackCommentRedis 如果写入 db 失败，将数据回滚到 redis 中

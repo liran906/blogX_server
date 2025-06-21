@@ -38,6 +38,7 @@ func NewRuntimeLog(serviceName string, delta RuntimeDelta) *RuntimeLog {
 	return &RuntimeLog{
 		serviceName:  serviceName,
 		runtimeDelta: delta,
+		level:        enum.LogInfoLevel,
 	}
 }
 
@@ -60,26 +61,26 @@ func (l *RuntimeLog) Save() {
 	// 记录保存时间
 	l.SetNowTime()
 
-	// 判断是更新还是创建
-	var log *models.LogModel
-
-	global.DB.Find(&log, fmt.Sprintf("service_name = ? and log_type = %d and created_at >= date_sub(now(), %s)",
-		enum.RuntimeLogType, l.GetSqlDelta()), l.serviceName)
-
-	// 更新逻辑
-	if log.ID != 0 {
-		// 更新 content
-		newContent := strings.Join(l.itemList, "\n")
-		content := log.Content + "\n" + newContent
-		global.DB.Model(log).Update("content", content)
-
-		// 清空 itemList 以便下次保存增加新内容
-		l.itemList = []string{}
-		return
-	}
+	//// 判断是更新还是创建
+	//var log *models.LogModel
+	//
+	//global.DB.Find(&log, fmt.Sprintf("service_name = ? and log_type = %d and created_at >= date_sub(now(), %s)",
+	//	enum.RuntimeLogType, l.GetSqlDelta()), l.serviceName)
+	//
+	//// 更新逻辑
+	//if log.ID != 0 {
+	//	// 更新 content
+	//	newContent := strings.Join(l.itemList, "\n")
+	//	content := log.Content + "\n" + newContent
+	//	global.DB.Model(log).Update("content", content)
+	//
+	//	// 清空 itemList 以便下次保存增加新内容
+	//	l.itemList = []string{}
+	//	return
+	//}
 
 	// 创建逻辑
-	log = &models.LogModel{
+	log := &models.LogModel{
 		Title:       l.title,
 		Content:     strings.Join(l.itemList, "\n"),
 		Level:       l.level,
@@ -92,7 +93,7 @@ func (l *RuntimeLog) Save() {
 		return
 	}
 	// 清空 itemList 以便下次保存增加新内容
-	l.itemList = []string{}
+	//l.itemList = []string{}
 }
 
 func (l *RuntimeLog) SetNowTime() {

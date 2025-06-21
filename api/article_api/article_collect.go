@@ -72,7 +72,7 @@ func (ArticleApi) ArticleCollectView(c *gin.Context) {
 	log.ShowRequest()
 	log.ShowResponse()
 	log.SetLevel(enum.LogTraceLevel)
-	log.SetTitle(fmt.Sprintf("增加收藏 %d", req.ArticleID))
+	log.SetTitle(fmt.Sprintf("增加收藏[%d]", req.ArticleID))
 
 	ac := models.ArticleCollectionModel{
 		ArticleID:          req.ArticleID,
@@ -95,7 +95,7 @@ func (ArticleApi) ArticleCollectView(c *gin.Context) {
 			// 更新数量
 			global.DB.Model(&cf).Update("article_count", gorm.Expr("article_count - 1"))
 			redis_article.SubArticleCollect(req.ArticleID)
-			log.SetTitle(fmt.Sprintf("取消收藏 %d", req.ArticleID))
+			log.SetTitle(fmt.Sprintf("取消收藏[%d]", req.ArticleID))
 			res.SuccessWithMsg("取消收藏成功", c)
 			return
 		} else {

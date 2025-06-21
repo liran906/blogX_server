@@ -5,7 +5,10 @@ package cron_service
 import (
 	"blogX_server/global"
 	"blogX_server/models"
+	"blogX_server/models/enum"
+	"blogX_server/service/log_service"
 	"blogX_server/service/redis_service/redis_site"
+	"fmt"
 	"github.com/sirupsen/logrus"
 	"time"
 )
@@ -17,10 +20,17 @@ func SyncData() {
 	// 记录时间
 	now := time.Now()
 
+	log := log_service.NewRuntimeLog("同步站点数据", log_service.RuntimeDeltaDay)
+	log.SetItem("开始时间", now.Format("2006-01-02 15:04:05"))
+	log.SetTitle("同步失败")
+
 	// 备份之前的数据（如有）
 	mps, err := global.Redis.HGetAll(flowKey).Result()
 	if err != nil {
 		logrus.Errorf("get redis flow data error: %v", err)
+		log.SetItemError("查询失败", fmt.Sprintf("get redis flow data error: %v", err))
+		log.SetLevel(enum.LogErrorLevel)
+		log.Save()
 		return
 	}
 	for k := range mps {
@@ -34,6 +44,9 @@ func SyncData() {
 		}
 	}
 	logrus.Infof("update site statistics complete, %s time elapsed", time.Since(now))
+	log.SetItem("完成", fmt.Sprintf("update site statistics complete, %s time elapsed", time.Since(now)))
+	log.SetTitle("同步成功")
+	log.Save()
 }
 
 func sync(field string) error {

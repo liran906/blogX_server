@@ -38,7 +38,7 @@ func (ArticleApi) ArticleLikeView(c *gin.Context) {
 	log.ShowRequest()
 	log.ShowResponse()
 	log.SetLevel(enum.LogTraceLevel)
-	log.SetTitle(fmt.Sprintf("文章点赞+ %d", req.ID))
+	log.SetTitle(fmt.Sprintf("文章[%d]点赞+", req.ID))
 
 	var al models.ArticleLikesModel
 	err = global.DB.Take(&al, "article_id = ? and user_id = ?", a.ID, uid).Error
@@ -76,7 +76,7 @@ func (ArticleApi) ArticleLikeView(c *gin.Context) {
 	}
 	// redis文章点赞数-1
 	redis_article.SubArticleLike(req.ID)
-	log.SetTitle(fmt.Sprintf("文章点赞- %d", req.ID))
+	log.SetTitle(fmt.Sprintf("文章[%d]点赞-", req.ID))
 	res.SuccessWithMsg("取消点赞成功", c)
 	return
 }
