@@ -40,25 +40,66 @@ func (ArticleApi) ArticleListView(c *gin.Context) {
 	// 提取身份信息，判断查询种类
 	claims, err := jwts.ParseTokenFromRequest(c)
 	if err == nil && claims != nil {
-		// 不指定就查自己
-		if req.UserID == 0 {
-			req.UserID = claims.UserID
-		}
 		// 判断queryTpye
 		if claims.Role == enum.AdminRoleType {
 			queryType = 4
-		} else if req.UserID == claims.UserID {
-			queryType = 3
 		} else {
-			queryType = 2
+			if req.UserID == claims.UserID {
+				queryType = 3
+			} else {
+				queryType = 2
+			}
+			// 非管理员不指定就查自己
+			if req.UserID == 0 {
+				req.UserID = claims.UserID
+			}
+		}
+	} else {
+		// 不登录不指定 id
+		if req.UserID == 0 {
+			res.FailWithMsg("未指定查询 id", c)
+			return
 		}
 	}
 
-	// 不登录不指定 id
+	// 管理员不指定 id 就是查所有
 	if req.UserID == 0 {
-		res.FailWithMsg("未指定查询 id", c)
+		// 发布文章查询
+		_list, count, err := common.ListQuery(
+			models.ArticleModel{
+				CategoryID: req.CategoryID,
+				Status:     req.Status,
+			},
+			common.Options{
+				PageInfo: req.PageInfo,
+				Likes:    []string{"title"},
+				Preloads: []string{"UserModel", "CategoryModel"},
+				Debug:    false,
+			})
+		if err != nil {
+			res.Fail(err, "查询失败", c)
+			return
+		}
+
+		var list []ArticleListResp
+		for _, article := range _list {
+			article.Content = ""                                     // 正文在 list 中不返回
+			_ = redis_article.UpdateCachedFieldsForArticle(&article) // 读取缓存中的数据
+			data := ArticleListResp{ // 响应结构体
+				ArticleModel:  article,
+				UserNickname:  article.UserModel.Nickname,
+				UserAvatarURL: article.UserModel.AvatarURL,
+			}
+			if article.CategoryModel != nil {
+				// 如果分类不为空，赋值给响应结构体
+				data.CategoryName = &article.CategoryModel.Name
+			}
+			list = append(list, data)
+		}
+		res.SuccessWithList(list, count, c)
 		return
 	}
+
 	var u models.UserModel
 	err = global.DB.Take(&u, req.UserID).Error
 	if err != nil {
@@ -86,8 +127,8 @@ func (ArticleApi) ArticleListView(c *gin.Context) {
 	var defaultOrder string
 	var pinnedArticles []models.UserPinnedArticleModel
 	err = global.DB.Where("user_id = ?", u.ID). // 如果想加 .Order(...) 等其他链式操作，就必须把条件提取为 .Where(...) 单独写，否则 .Order(...) 就会被忽略
-							Order("`rank` ASC").        // 注意 rank 是 MySQL 的保留关键字，必须用反引号 `rank` 包裹，才能作为字段名使用
-							Find(&pinnedArticles).Error // 另外，order 要在 find（执行）之前，否则失效
+		Order("`rank` ASC"). // 注意 rank 是 MySQL 的保留关键字，必须用反引号 `rank` 包裹，才能作为字段名使用
+		Find(&pinnedArticles).Error // 另外，order 要在 find（执行）之前，否则失效
 	if err == nil {
 		for _, m := range pinnedArticles {
 			defaultOrder += fmt.Sprintf("id = %d DESC, ", m.ArticleID)
@@ -150,7 +191,7 @@ func (ArticleApi) ArticleListView(c *gin.Context) {
 	for _, article := range _list {
 		article.Content = ""                                     // 正文在 list 中不返回
 		_ = redis_article.UpdateCachedFieldsForArticle(&article) // 读取缓存中的数据
-		data := ArticleListResp{                                 // 响应结构体
+		data := ArticleListResp{ // 响应结构体
 			ArticleModel:  article,
 			UserNickname:  article.UserModel.Nickname,
 			UserAvatarURL: article.UserModel.AvatarURL,

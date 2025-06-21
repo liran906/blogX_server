@@ -22,6 +22,12 @@ type BannerCreateReq struct {
 	Href      string `json:"href"`
 }
 
+type BannerUpdateReq struct {
+	Activated bool   `json:"activated"`
+	URL       string `json:"url"`
+	Href      string `json:"href"`
+}
+
 func (BannerApi) BannerCreateView(c *gin.Context) {
 	req := c.MustGet("bindReq").(BannerCreateReq)
 
@@ -122,7 +128,7 @@ func (BannerApi) BannerUpdateView(c *gin.Context) {
 	}
 
 	// json 请求修改内容
-	var req BannerCreateReq
+	var req BannerUpdateReq
 	err = c.ShouldBindJSON(&req)
 	if err != nil {
 		res.FailWithError(err, c)
