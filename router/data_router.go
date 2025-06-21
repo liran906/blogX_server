@@ -12,7 +12,8 @@ import (
 func DataRouter(rg *gin.RouterGroup) {
 	app := api.App.DataApi
 
+	rg.GET("data/sum", mdw.AdminMiddleware, app.SiteSummaryView)
 	rg.GET("data", mdw.BindJsonMiddleware[data_api.SiteStatisticsReq], mdw.AdminMiddleware, app.SiteStatisticsView)
-	rg.GET("data/week", mdw.BindQueryMiddleware[data_api.SiteGrowthReq], mdw.AdminMiddleware, app.SiteGrowthView)
+	rg.GET("data/growth", mdw.BindQueryMiddleware[data_api.SiteGrowthReq], mdw.AdminMiddleware, app.SiteGrowthView)
 	rg.GET("data/os", mdw.AdminMiddleware, app.SystemStatusView)
 }
