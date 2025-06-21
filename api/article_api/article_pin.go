@@ -87,6 +87,7 @@ type ArticlePinListResp struct {
 	ArticleAbstract string    `json:"articleAbstract"`
 }
 
+// ArticlePinListView 获取某个用户的置顶文章
 func (ArticleApi) ArticlePinListView(c *gin.Context) {
 	uid := c.MustGet("bindReq").(models.IDRequest).ID
 

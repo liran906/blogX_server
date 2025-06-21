@@ -24,8 +24,10 @@ func ArticleRouter(rg *gin.RouterGroup) {
 	// 置顶
 	rg.GET("article/admin_pin", app.ArticleAdminPinListView)
 	rg.GET("article/pin/:id", mdw.BindUriMiddleware[models.IDRequest], app.ArticlePinListView)
-	rg.PUT("article/admin_pin", mdw.BindJsonMiddleware[article_api.ArticlePinReq], mdw.AdminMiddleware, app.ArticleAdminPinView)
-	rg.PUT("article/pin", mdw.BindJsonMiddleware[article_api.ArticlePinReq], mdw.AuthMiddleware, app.ArticlePinView)
+	//rg.PUT("article/admin_pin", mdw.BindJsonMiddleware[article_api.ArticlePinReq], mdw.AdminMiddleware, app.ArticleAdminPinView) // 用下面的新方法取代
+	rg.PUT("article/admin_pin/:id", mdw.BindUriMiddleware[models.IDRequest], mdw.AdminMiddleware, app.ArticleNewAdminPinView) // 配合前端重新写的置顶方法
+	//rg.PUT("article/pin", mdw.BindJsonMiddleware[article_api.ArticlePinReq], mdw.AuthMiddleware, app.ArticlePinView) // 用下面的新方法取代
+	rg.PUT("article/pin/:id", mdw.BindUriMiddleware[models.IDRequest], mdw.AuthMiddleware, app.ArticleNewUserPinView) // 配合前端重新写的置顶方法
 
 	// 审核
 	rg.POST("article/review", mdw.BindJsonMiddleware[article_api.ArticleReviewReq], mdw.AdminMiddleware, app.ArticleReviewView)

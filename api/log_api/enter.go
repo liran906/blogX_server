@@ -32,7 +32,7 @@ type LogListRequest struct {
 type LogListResponse struct {
 	models.LogModel
 	Username      string `json:"username"`
-	UserNickName  string `json:"userNickName"`
+	UserNickname  string `json:"userNickname"`
 	UserAvatarURL string `json:"userAvatarURL"`
 }
 
@@ -132,7 +132,7 @@ func (LogApi) LogListView(c *gin.Context) {
 		list = append(list, LogListResponse{
 			LogModel:      logModel,
 			Username:      logModel.UserModel.Username,
-			UserNickName:  logModel.UserModel.Nickname,
+			UserNickname:  logModel.UserModel.Nickname,
 			UserAvatarURL: logModel.UserModel.AvatarURL,
 		})
 	}

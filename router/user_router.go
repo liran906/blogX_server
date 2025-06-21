@@ -24,6 +24,6 @@ func UserRouter(rg *gin.RouterGroup) {
 	rg.PUT("user/pwd/reset", mdw.BindJsonMiddleware[user_api.ResetPasswordReq], mdw.CaptchaMiddleware, mdw.EmailVerifyMiddleware, app.ResetPasswordView)
 	rg.PUT("user/bind_email", mdw.CaptchaMiddleware, mdw.AuthMiddleware, mdw.EmailVerifyMiddleware, app.BindEmailView)
 	rg.PUT("user/update", mdw.BindJsonMiddleware[user_api.UserInfoUpdateReq], mdw.AuthMiddleware, app.UserInfoUpdateView)
-	rg.PUT("user/update/admin", mdw.BindJsonMiddleware[user_api.AdminUpdateUserReq], mdw.AdminMiddleware, app.AdminUpdateUserView)
+	rg.PUT("user/admin_update", mdw.BindJsonMiddleware[user_api.AdminUpdateUserReq], mdw.AdminMiddleware, app.AdminUpdateUserView)
 	rg.DELETE("user/logout", mdw.AuthMiddleware, app.UserLogoutView)
 }
