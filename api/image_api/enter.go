@@ -18,14 +18,6 @@ import (
 
 type ImageApi struct{}
 
-type ImageUploadResponse struct {
-	Filename string `json:"filename"`
-	Size     int64  `json:"size"`
-	Hash     string `json:"hash"`
-	Title    string `json:"title"`
-	Message  string `json:"message"`
-}
-
 type ImageListReq struct {
 	common.PageInfo
 	Filename  string `form:"filename"`
@@ -46,32 +38,6 @@ type UserInfo struct {
 	UserID   uint          `json:"userID"`
 	Username string        `json:"username"`
 	Role     enum.RoleType `json:"role"`
-}
-
-func (ImageApi) ImageUploadView(c *gin.Context) {
-	form, err := c.MultipartForm()
-	if err != nil {
-		res.FailWithError(err, c)
-		return
-	}
-
-	files := form.File["file"] // 前端上传时使用 file 作为 key
-	if len(files) == 0 {
-		res.FailWithMsg("没有上传任何文件", c)
-		return
-	}
-	if len(files) > 10 {
-		res.FailWithMsg("一次上传不能超过10张", c)
-		return
-	}
-
-	list, count := uploadImages(files, c)
-
-	if count == len(files) {
-		res.SuccessWithList(list, count, c)
-	} else {
-		res.WithList(list, len(files), count, c)
-	}
 }
 
 func (ImageApi) ImageListView(c *gin.Context) {

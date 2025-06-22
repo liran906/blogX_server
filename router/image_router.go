@@ -14,6 +14,7 @@ func ImageRouter(r *gin.RouterGroup) {
 	app := api.App.ImageApi
 
 	r.POST("image", mdw.AuthMiddleware, app.ImageUploadView)
+	r.POST("image/batch", mdw.AuthMiddleware, app.ImageBatchUploadView)
 	r.POST("image/cache", mdw.BindJsonMiddleware[image_api.ImageCacheReq], mdw.AuthMiddleware, app.ImageCacheView)
 	r.GET("image", mdw.BindQueryMiddleware[image_api.ImageListReq], mdw.AdminMiddleware, app.ImageListView)
 	r.DELETE("image", mdw.BindJsonMiddleware[models.IDListRequest], mdw.AdminMiddleware, app.ImageRemoveView)

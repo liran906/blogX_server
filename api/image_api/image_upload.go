@@ -3,6 +3,7 @@
 package image_api
 
 import (
+	"blogX_server/common/res"
 	"blogX_server/global"
 	"blogX_server/models"
 	"blogX_server/service/cloud_service/qny_cloud_service"
@@ -10,38 +11,35 @@ import (
 	"blogX_server/utils/file"
 	"blogX_server/utils/hash"
 	"blogX_server/utils/jwts"
-	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-	"io"
-	"mime/multipart"
 	"os"
 	"strings"
 )
 
-type respCode int8
-
-const (
-	respCodeSuccess respCode = 0
-	respCodeFail    respCode = 1
-	respCodeDupe    respCode = 2
-)
-
-func (rc respCode) String() string {
-	switch rc {
-	case respCodeSuccess:
-		return "上传成功"
-	case respCodeFail:
-		return "上传失败"
-	case respCodeDupe:
-		return "上传成功"
-	}
-	return ""
+type ImageUploadResponse struct {
+	Filename string `json:"filename"`
+	Size     int64  `json:"size"`
+	Hash     string `json:"hash"`
+	Title    string `json:"title"`
+	Message  string `json:"message"`
 }
 
-// uploadImages 批量上传图像
-func uploadImages(files []*multipart.FileHeader, c *gin.Context) (list []*ImageUploadResponse, count int) {
+// ImageUploadView 上传单张，返回 url（优先云端）
+func (ImageApi) ImageUploadView(c *gin.Context) {
+	fileHeader, err := c.FormFile("file")
+	if err != nil {
+		res.FailWithError(err, c)
+		return
+	}
+	// 文件大小判断
+	s := global.Config.Upload.ImageSizeLimit
+	if fileHeader.Size > int64(s*1024*1024) {
+		res.FailWithMsg(fmt.Sprintf("文件大小大于%dMB", s), c)
+		return
+	}
+
 	// 记录日志
 	log := log_service.GetActionLog(c)
 	log.ShowRequestHeader()
@@ -52,124 +50,77 @@ func uploadImages(files []*multipart.FileHeader, c *gin.Context) (list []*ImageU
 	claims := jwts.MustGetClaimsFromRequest(c)
 	uid := claims.UserID
 
-	for _, fileHeader := range files {
-		var rCode respCode
-		var msg string
-		var hashString string
+	var msg string
 
-		byteData, err := readMultiPartFile(fileHeader)
-		if err != nil {
-			rCode, msg = respCodeFail, err.Error()
-		} else {
-			// 计算 hashString
-			hashString = hash.Md5(byteData)
-			// 上传单张
-			rCode, msg = uploadImage(byteData, fileHeader.Filename, "uploaded", uid)
-		}
-
-		// 日志
-		log.SetItemTrace(rCode.String(), msg)
-		// 回复列表结构体
-		uploadResp := &ImageUploadResponse{
-			Filename: fileHeader.Filename,
-			Size:     fileHeader.Size,
-			Title:    rCode.String(),
-			Message:  msg,
-			Hash:     hashString,
-		}
-		// 成功数量（包括dupe）
-		if rCode != respCodeFail {
-			count++
-			uploadResp.Message = "" // 成功不返回msg
-		}
-		list = append(list, uploadResp)
-	}
-	return
-}
-
-func readMultiPartFile(fileHeader *multipart.FileHeader) (byteData []byte, err error) {
-	// 大小限制
-	sizeLimit := global.Config.Upload.ImageSizeLimit // 单位 MB
-	if int(fileHeader.Size) > sizeLimit*1024*1024 {
-		msg := fmt.Sprintf("文件大小 %.1fMB, 超过 %dMB限制", float32(fileHeader.Size)/1024/1024, sizeLimit)
-		err = errors.New(msg)
-		return
-	}
-
-	// 读取文件
-	f, err := fileHeader.Open()
+	byteData, err := readMultiPartFile(fileHeader)
 	if err != nil {
+		res.Fail(err, "读取文件失败", c)
 		return
 	}
 
-	// 读取字节流
-	byteData, err = io.ReadAll(f)
-	if err != nil {
-		return
-	}
-	return
-}
-
-func uploadImage(byteData []byte, filename, src string, uid uint) (code respCode, msg string) {
 	// 计算 hashString
 	hashString := hash.Md5(byteData)
+	filename := fileHeader.Filename
 
-	// 合法格式
+	// 格式校验
 	suffix, err := file.ImageSuffix(filename)
 	if err != nil {
-		return respCodeFail, err.Error()
+		res.Fail(err, "非法文件格式", c)
+		return
 	}
 
 	// 入库
-	model := models.ImageModel{
+	imgModel := models.ImageModel{
 		Filename: filename,
 		Path:     fmt.Sprintf("uploads/%s/%s", global.Config.Upload.ImageDir, hashString+"."+suffix),
 		Size:     int64(len(byteData)),
 		Hash:     hashString,
-		Source:   src,
+		Source:   "uploaded",
 	}
 
 	// 尝试入库，靠数据库 `hash` 字段 `unique` 去重
-	err = global.DB.Create(&model).Error
+	err = global.DB.Create(&imgModel).Error
 	if err != nil {
+		var dupeImgModel models.ImageModel
 		if strings.Contains(err.Error(), "Duplicate entry") {
 			// 找出重复的那个
-			var _model models.ImageModel
-			global.DB.Take(&_model, "hash = ?", hashString)
+
+			global.DB.Take(&dupeImgModel, "hash = ?", hashString)
 
 			// 首先判断是不是同一个用户上传的
 			// 如果不是，则加入关系表中
 			relation := models.UserUploadImage{
 				UserID:  uid,
-				ImageID: _model.ID,
+				ImageID: dupeImgModel.ID,
 			}
 			// 关系表尝试入库
 			_err := global.DB.Create(&relation).Error
 			if _err != nil {
 				if strings.Contains(_err.Error(), "Duplicate entry") {
-					msg = fmt.Sprintf("相同用户%d && 相同图片%d", uid, _model.ID)
+					msg = fmt.Sprintf("相同用户%d && 相同图片%d", uid, dupeImgModel.ID)
 					logrus.Infof(msg)
-					return respCodeFail, msg
-				} else {
-					return respCodeFail, _err.Error()
+					res.Fail(err, msg, c)
+					return
 				}
+				res.FailWithError(err, c)
+				return
 			}
-
-			// 成功入库：相同图片，不同用户
-			msg := fmt.Sprintf("上传的%s 与已有%s 重复，hash: %s", filename, _model.Filename, hashString)
-			logrus.Info(msg)
-			return respCodeDupe, msg
 		}
-		return respCodeFail, err.Error()
+		// 成功入库：相同图片，不同用户
+		msg := fmt.Sprintf("上传的%s 与已有%s 重复，hash: %s", filename, dupeImgModel.Filename, hashString)
+		log.SetItemTrace("重复", msg)
+		res.Success(dupeImgModel.WebPath(), "上传成功", c)
+		return
 	}
 
 	// 存入多对多关系数据库
 	err = global.DB.Create(&models.UserUploadImage{
 		UserID:  uid,
-		ImageID: model.ID,
+		ImageID: imgModel.ID,
 	}).Error
 	if err != nil {
-		return respCodeFail, err.Error()
+		res.Fail(err, "上传失败", c)
+		return
 	}
 
 	// DB 部分结束，下面是云存储 or 本地存储 or both
@@ -177,39 +128,65 @@ func uploadImage(byteData []byte, filename, src string, uid uint) (code respCode
 	if global.Config.Cloud.QNY.Enable {
 		url, err := qny_cloud_service.UploadBytes(byteData)
 		if err != nil {
-			return respCodeFail, err.Error()
+			res.Fail(err, "上传云端失败", c)
+			return
 		}
-		model.Url = url
+		imgModel.Url = url
 		// 如果没开启本地存储
 		if !global.Config.Cloud.QNY.LocalSave {
 			// 更新 url
-			global.DB.Model(&model).Update("url", model.Url).Update("path", "")
-			msg := "filename: " + filename + " path: " + model.Path
-			return respCodeSuccess, msg
+			global.DB.Model(&imgModel).Update("url", imgModel.Url).Update("path", "")
+			res.Success(imgModel.Url, msg, c)
+			return
 		}
 	}
 
 	// 把云存储路径更新到 db
-	if model.Url != "" {
-		global.DB.Model(&model).Update("url", model.Url)
+	if imgModel.Url != "" {
+		global.DB.Model(&imgModel).Update("url", imgModel.Url)
 	}
-
-	// 创建文件 这个还是需要 fileHeader
-	//err = c.SaveUploadedFile(fileHeader, model.Path)
-	//if err != nil {
-	//	return respCodeFail, "创建文件失败: " + err.Error()
-	//}
-	//msg = "filename: " + fileHeader.Filename + " path: " + model.Path
-	//return respCodeSuccess, msg
 
 	// 本地存储
 	err = os.MkdirAll("uploads/images", 0777)
 	if err != nil {
-		return respCodeFail, err.Error()
+		res.Fail(err, "上传服务器失败", c)
+		return
 	}
-	err = os.WriteFile(model.Path, byteData, 0666)
+	err = os.WriteFile(imgModel.Path, byteData, 0666)
 	if err != nil {
-		return respCodeFail, err.Error()
+		res.Fail(err, "上传服务器失败", c)
+		return
 	}
-	return respCodeSuccess, fmt.Sprintf("成功上传图片 %s", filename)
+	if imgModel.Url != "" { // 优先云端
+		res.Success(imgModel.Url, msg, c)
+	} else {
+		res.Success(imgModel.WebPath(), msg, c)
+	}
+}
+
+// ImageBatchUploadView 批量上传
+func (ImageApi) ImageBatchUploadView(c *gin.Context) {
+	form, err := c.MultipartForm()
+	if err != nil {
+		res.Fail(err, "文件读取错误", c)
+		return
+	}
+
+	files := form.File["file"] // 前端上传时使用 file 作为 key
+	if len(files) == 0 {
+		res.FailWithMsg("没有上传任何文件", c)
+		return
+	}
+	if len(files) > 10 {
+		res.FailWithMsg("一次上传不能超过10张", c)
+		return
+	}
+
+	list, count := uploadImages(files, c)
+
+	if count == len(files) {
+		res.SuccessWithList(list, count, c)
+	} else {
+		res.WithList(list, len(files), count, c)
+	}
 }

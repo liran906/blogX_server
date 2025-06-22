@@ -20,7 +20,7 @@ func UserRouter(rg *gin.RouterGroup) {
 	rg.GET("user/brief", mdw.BindQueryMiddleware[models.IDRequest], app.UserBriefInfoView)
 	rg.GET("user/login_list", mdw.BindQueryMiddleware[user_api.UserLoginListReq], mdw.AuthMiddleware, app.UserLoginListView)
 	rg.GET("user/list", mdw.BindQueryMiddleware[user_api.UserListReq], mdw.AdminMiddleware, app.UserListView)
-	rg.PUT("user/pwd", mdw.BindJsonMiddleware[user_api.ChangePasswordReq], mdw.AuthMiddleware, app.ChangePasswordView)
+	rg.PUT("user/password", mdw.BindJsonMiddleware[user_api.ChangePasswordReq], mdw.AuthMiddleware, app.ChangePasswordView)
 	rg.PUT("user/pwd/reset", mdw.BindJsonMiddleware[user_api.ResetPasswordReq], mdw.CaptchaMiddleware, mdw.EmailVerifyMiddleware, app.ResetPasswordView)
 	rg.PUT("user/bind_email", mdw.CaptchaMiddleware, mdw.AuthMiddleware, mdw.EmailVerifyMiddleware, app.BindEmailView)
 	rg.PUT("user/update", mdw.BindJsonMiddleware[user_api.UserInfoUpdateReq], mdw.AuthMiddleware, app.UserInfoUpdateView)
