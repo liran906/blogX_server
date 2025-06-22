@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+	"strconv"
 	"time"
 )
 
@@ -74,16 +75,33 @@ func BlockJWTToken(token string, value BlockType) {
 
 // IsBlockedJWTToken checks if a provided JWT token is blocked by querying its status from the Redis database.
 func IsBlockedJWTToken(token string) (blockType BlockType, ok bool) {
-	// 增加前缀
-	key := fmt.Sprintf("jwt_block_%s", token)
-
-	// 查询
-	val, err := global.Redis.Get(key).Result()
+	claims, err := jwts.ParseToken(token)
 	if err != nil {
 		return
 	}
 
-	blockType = ParseBlockType(val)
+	// 增加前缀
+	key1 := fmt.Sprintf("jwt_block_%s", token)
+	key2 := fmt.Sprintf("%dpassword_update", claims.UserID)
+
+	// 查询
+	val, err1 := global.Redis.Get(key1).Result()
+	pwdTime, err2 := global.Redis.Get(key2).Result()
+	if err1 != nil && err2 != nil {
+		return
+	}
+
+	// 修改密码之后的 token 没问题
+	tStamp, _ := strconv.Atoi(pwdTime)
+	if err2 == nil && int64(tStamp) < claims.IssuedAt {
+		return
+	}
+
+	if val == "" {
+		blockType = UserBlockType
+	} else {
+		blockType = ParseBlockType(val)
+	}
 
 	return blockType, true
 }

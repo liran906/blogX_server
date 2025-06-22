@@ -16,30 +16,13 @@ import (
 )
 
 type ChangePasswordReq struct {
-	OldPassword string `json:"oldPassword"`
-	Password    string `json:"password"`
+	OldPwd string `json:"oldPwd"`
+	Pwd    string `json:"pwd"`
 }
 
 func (UserApi) ChangePasswordView(c *gin.Context) {
 	req := c.MustGet("bindReq").(ChangePasswordReq)
-
-	if req.OldPassword == req.Password {
-		res.FailWithMsg("修改后的密码不能相同", c)
-		return
-	}
-
-	// 新密码强度校验
-	if !user.IsValidPassword(req.Password) {
-		res.FailWithMsg("密码不符合要求", c)
-		return
-	}
-
-	// 获取身份
-	claims, ok := jwts.GetClaimsFromRequest(c)
-	if !ok {
-		res.FailWithMsg("登录信息获取失败", c)
-		return
-	}
+	claims := jwts.MustGetClaimsFromRequest(c)
 
 	// 读库
 	u, err := claims.GetUserFromClaims()
@@ -55,13 +38,24 @@ func (UserApi) ChangePasswordView(c *gin.Context) {
 	}
 
 	// 校验旧密码
-	if !pwd.CompareHashAndPassword(u.Password, req.OldPassword) {
+	if !pwd.CompareHashAndPassword(u.Password, req.OldPwd) {
 		res.FailWithMsg("当前密码输入错误", c)
 		return
 	}
 
+	if req.OldPwd == req.Pwd {
+		res.FailWithMsg("修改前后的密码不能相同", c)
+		return
+	}
+
+	// 新密码强度校验
+	if !user.IsValidPassword(req.Pwd) {
+		res.FailWithMsg("密码不符合要求", c)
+		return
+	}
+
 	// 新密码加盐哈希
-	hashPwd, err := pwd.GenerateFromPassword(req.Password)
+	hashPwd, err := pwd.GenerateFromPassword(req.Pwd)
 	if err != nil {
 		res.FailWithMsg("密码设置错误: "+err.Error(), c)
 		return
