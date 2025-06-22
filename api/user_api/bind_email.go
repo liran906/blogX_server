@@ -8,6 +8,7 @@ import (
 	"blogX_server/models"
 	"blogX_server/service/log_service"
 	"blogX_server/utils/jwts"
+	"fmt"
 	"github.com/gin-gonic/gin"
 )
 
@@ -27,6 +28,7 @@ func (UserApi) BindEmailView(c *gin.Context) {
 	}
 	// 比对申请绑定邮箱时的 uid，边界情况之一
 	uid := c.MustGet("userIDFromEmailVerify").(uint) // 中间件绑定的
+	fmt.Println(uid, claims.UserID)
 	if uid != claims.UserID {
 		res.FailWithMsg("用户错误", c)
 		return

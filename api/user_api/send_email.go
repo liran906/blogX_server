@@ -47,9 +47,11 @@ func (UserApi) SendEmailView(c *gin.Context) {
 	// 获取邮箱对应的用户信息
 	var user models.UserModel
 	var userID uint = 0
-	err := global.DB.Take(&user, "email = ?", req.Email).Error
+	var err error
+
 	switch req.Type {
 	case 1:
+		err = global.DB.Take(&user, "email = ?", req.Email).Error
 		// 检查是否已注册
 		if err == nil {
 			res.FailWithMsg("该邮箱已被注册", c)
@@ -58,6 +60,7 @@ func (UserApi) SendEmailView(c *gin.Context) {
 		// 发送
 		err = email_service.SendRegisterCode(req.Email, code)
 	case 2:
+		err = global.DB.Take(&user, "email = ?", req.Email).Error
 		// 检查是否已注册
 		if err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -71,11 +74,13 @@ func (UserApi) SendEmailView(c *gin.Context) {
 		err = email_service.SendResetPasswordCode(req.Email, code, user.ID)
 		userID = user.ID
 	case 3:
+		err = global.DB.Take(&user, "email = ?", req.Email).Error
 		// 检查是否已注册
 		if err == nil {
 			res.FailWithMsg("该邮箱已被注册", c)
 			return
 		}
+		err = nil
 
 		// 取用户信息
 		claims, err := jwts.ParseTokenFromRequest(c)

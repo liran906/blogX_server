@@ -31,7 +31,7 @@ type UserLoginListResponse struct {
 	UA           string         `json:"ua,omitempty"`
 	UserID       uint           `json:"userID"`
 	Username     string         `json:"username,omitempty"`
-	UserNickName string         `json:"userNickName,omitempty"`
+	UserNickname string         `json:"userNickname,omitempty"`
 }
 
 func (UserApi) UserLoginListView(c *gin.Context) {
@@ -99,7 +99,7 @@ func (UserApi) UserLoginListView(c *gin.Context) {
 			UA:           logModel.UA,
 			UserID:       logModel.UserID,
 			Username:     logModel.UserModel.Username,
-			UserNickName: logModel.UserModel.Nickname,
+			UserNickname: logModel.UserModel.Nickname,
 		})
 	}
 
