@@ -30,10 +30,10 @@ type SiteInfoResponse struct {
 	conf.Site
 	AI struct {
 		Enable bool `json:"enable"`
-	}
+	} `json:"ai"`
 	Cloud struct {
 		Enable bool `json:"enable"`
-	}
+	} `json:"cloud"`
 }
 
 // 每个路由绑定到一个视图（View），也就是对应一个页面

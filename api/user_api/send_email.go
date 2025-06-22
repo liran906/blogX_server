@@ -5,7 +5,6 @@ package user_api
 import (
 	"blogX_server/common/res"
 	"blogX_server/global"
-	"blogX_server/middleware"
 	"blogX_server/models"
 	"blogX_server/service/email_service"
 	"blogX_server/utils/email"
@@ -23,9 +22,9 @@ type SendEmailReq struct {
 	Email string `json:"email" binding:"required"`
 }
 
-//type SendEmailResponse struct {
-//	EmailID string `json:"emailID"`
-//}
+type SendEmailResponse struct {
+	EmailID string `json:"emailID"`
+}
 
 func (UserApi) SendEmailView(c *gin.Context) {
 	req := c.MustGet("bindReq").(SendEmailReq)
@@ -33,7 +32,6 @@ func (UserApi) SendEmailView(c *gin.Context) {
 	// 站点未启用邮箱注册
 	if req.Type == 1 && !global.Config.Site.Login.EmailRegister {
 		res.FailWithMsg("站点未启用邮箱注册", c)
-		c.Abort()
 		return
 	}
 
@@ -46,7 +44,6 @@ func (UserApi) SendEmailView(c *gin.Context) {
 	// 这里借用一下验证码现成的方法，生成存储
 	code := base64Captcha.RandText(4, "1234567890") // 生成随机验证码
 	key := base64Captcha.RandomId()                 // 生成不重复 id; tbd：在这里或者其他地方最好保存下 type。也是边界情况之一。
-
 	// 获取邮箱对应的用户信息
 	var user models.UserModel
 	var userID uint = 0
@@ -81,9 +78,9 @@ func (UserApi) SendEmailView(c *gin.Context) {
 		}
 
 		// 取用户信息
-		mdw.AuthMiddleware(c)
-		claims, ok := jwts.GetClaimsFromRequest(c)
-		if !ok {
+		claims, err := jwts.ParseTokenFromRequest(c)
+		if err != nil {
+			res.Fail(err, "请登录", c)
 			return
 		}
 		userID = claims.UserID
@@ -112,5 +109,5 @@ func (UserApi) SendEmailView(c *gin.Context) {
 		return
 	}
 
-	res.Success(key, "成功发送邮件", c)
+	res.Success(SendEmailResponse{EmailID: key}, "成功发送邮件", c)
 }

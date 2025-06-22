@@ -26,18 +26,18 @@ func (CaptchaApi) CaptchaView(c *gin.Context) {
 	captchaConfig := base64Captcha.DriverString{
 		Height:     60,
 		Width:      200,
-		NoiseCount: 2,
+		NoiseCount: 1,
 		// 控制显示在验证码图片中的线条的选项
 		// 1: 直线; 2: 曲线; 4: 点线; 8: 虚线; 16: 中空直线; 32: 中空曲线
-		ShowLineOptions: 1 | 2 | 4,
+		ShowLineOptions: 1 | 2,
 		Length:          4,
-		Source:          "1234567890abcdefghjklmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ",
+		Source:          "1234567890ABCDEFGHJKLMNPQRSTUVWXYZ",
 		BgColor: &color.RGBA{
 			// 背景颜色
-			R: 0, // 红色
-			G: 0, // 绿色
-			B: 0, // 蓝色
-			A: 0, // 透明度
+			R: 255, // 红色
+			G: 255, // 绿色
+			B: 255, // 蓝色
+			A: 100, // 透明度
 		},
 		// 字体文件
 		//Fonts: []string{"wqy-microhei.ttc"},

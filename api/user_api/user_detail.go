@@ -10,7 +10,6 @@ import (
 	"blogX_server/service/redis_service/redis_article"
 	"blogX_server/service/redis_service/redis_user"
 	"blogX_server/utils/jwts"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"time"
 )
@@ -89,13 +88,11 @@ func (UserApi) UserDetailView(c *gin.Context) {
 	uid := claims.UserID
 	role := claims.Role
 
-	fmt.Println("id", req.ID)
-
 	// 传入 id 为 0，就请求自己
 	if req.ID == 0 {
 		req.ID = claims.UserID
 	}
-	fmt.Println("id", req.ID)
+
 	// 读库
 	var u models.UserModel
 	err := global.DB.Preload("ArticleModels").Preload("UserConfigModel").Preload("UserMessageConfModel").Take(&u, "id = ?", req.ID).Error
