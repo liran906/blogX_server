@@ -37,6 +37,7 @@ func Run() {
 	SearchRouter(nr)
 	AIRouter(nr)
 	DataRouter(nr)
+	FocusRouter(nr)
 
 	MytestRouter(nr) // 测试用
 

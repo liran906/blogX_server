@@ -9,6 +9,7 @@ import (
 	"blogX_server/api/captcha_api"
 	"blogX_server/api/comment_api"
 	"blogX_server/api/data_api"
+	"blogX_server/api/focus_api"
 	"blogX_server/api/global_notification_api"
 	"blogX_server/api/image_api"
 	"blogX_server/api/log_api"
@@ -33,6 +34,7 @@ type Api struct {
 	SearchApi             search_api.SearchApi
 	AiApi                 ai_api.AiApi
 	DataApi               data_api.DataApi
+	FocusApi              focus_api.FocusApi
 
 	MyTestApi mytest_api.MyTestApi // 测试用
 }

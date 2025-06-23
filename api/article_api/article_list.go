@@ -92,7 +92,7 @@ func (ArticleApi) ArticleListView(c *gin.Context) {
 		for _, article := range _list {
 			article.Content = ""                                     // 正文在 list 中不返回
 			_ = redis_article.UpdateCachedFieldsForArticle(&article) // 读取缓存中的数据
-			data := ArticleListResp{ // 响应结构体
+			data := ArticleListResp{                                 // 响应结构体
 				ArticleModel:  article,
 				UserNickname:  article.UserModel.Nickname,
 				UserAvatarURL: article.UserModel.AvatarURL,
@@ -134,9 +134,9 @@ func (ArticleApi) ArticleListView(c *gin.Context) {
 	var defaultOrder string
 	var pinnedArticles []models.UserPinnedArticleModel
 	err = global.DB.Where("user_id = ?", u.ID). // 如果想加 .Order(...) 等其他链式操作，就必须把条件提取为 .Where(...) 单独写，否则 .Order(...) 就会被忽略
-		Order("`rank` ASC"). // 注意 rank 是 MySQL 的保留关键字，必须用反引号 `rank` 包裹，才能作为字段名使用
-		Order("created_at DESC"). // 换了新方法之后 大家的 rank 都一样了，所以要靠置顶时间判断先后
-		Find(&pinnedArticles).Error // 另外，order 要在 find（执行）之前，否则失效
+							Order("`rank` ASC").        // 注意 rank 是 MySQL 的保留关键字，必须用反引号 `rank` 包裹，才能作为字段名使用
+							Order("created_at DESC").   // 换了新方法之后 大家的 rank 都一样了，所以要靠置顶时间判断先后
+							Find(&pinnedArticles).Error // 另外，order 要在 find（执行）之前，否则失效
 	if err == nil {
 		for _, m := range pinnedArticles {
 			defaultOrder += fmt.Sprintf("id = %d DESC, ", m.ArticleID)
@@ -199,7 +199,7 @@ func (ArticleApi) ArticleListView(c *gin.Context) {
 	for _, article := range _list {
 		article.Content = ""                                     // 正文在 list 中不返回
 		_ = redis_article.UpdateCachedFieldsForArticle(&article) // 读取缓存中的数据
-		data := ArticleListResp{ // 响应结构体
+		data := ArticleListResp{                                 // 响应结构体
 			ArticleModel:  article,
 			UserNickname:  article.UserModel.Nickname,
 			UserAvatarURL: article.UserModel.AvatarURL,
