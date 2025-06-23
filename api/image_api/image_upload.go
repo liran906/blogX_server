@@ -99,17 +99,17 @@ func (ImageApi) ImageUploadView(c *gin.Context) {
 				if strings.Contains(_err.Error(), "Duplicate entry") {
 					msg = fmt.Sprintf("相同用户%d && 相同图片%d", uid, dupeImgModel.ID)
 					logrus.Infof(msg)
-					res.Fail(err, msg, c)
+					res.Success(returnPath(dupeImgModel), "上传成功", c)
 					return
 				}
-				res.FailWithError(err, c)
+				res.Fail(err, "数据库写入失败", c)
 				return
 			}
 		}
 		// 成功入库：相同图片，不同用户
 		msg := fmt.Sprintf("上传的%s 与已有%s 重复，hash: %s", filename, dupeImgModel.Filename, hashString)
 		log.SetItemTrace("重复", msg)
-		res.Success(dupeImgModel.WebPath(), "上传成功", c)
+		res.Success(returnPath(dupeImgModel), "上传成功", c)
 		return
 	}
 
@@ -136,7 +136,7 @@ func (ImageApi) ImageUploadView(c *gin.Context) {
 		if !global.Config.Cloud.QNY.LocalSave {
 			// 更新 url
 			global.DB.Model(&imgModel).Update("url", imgModel.Url).Update("path", "")
-			res.Success(imgModel.Url, msg, c)
+			res.Success(imgModel.Url, "上传成功", c)
 			return
 		}
 	}
@@ -157,11 +157,8 @@ func (ImageApi) ImageUploadView(c *gin.Context) {
 		res.Fail(err, "上传服务器失败", c)
 		return
 	}
-	if imgModel.Url != "" { // 优先云端
-		res.Success(imgModel.Url, msg, c)
-	} else {
-		res.Success(imgModel.WebPath(), msg, c)
-	}
+
+	res.Success(returnPath(imgModel), "上传成功", c)
 }
 
 // ImageBatchUploadView 批量上传
@@ -188,5 +185,13 @@ func (ImageApi) ImageBatchUploadView(c *gin.Context) {
 		res.SuccessWithList(list, count, c)
 	} else {
 		res.WithList(list, len(files), count, c)
+	}
+}
+
+func returnPath(imgModel models.ImageModel) string {
+	if imgModel.Url != "" { // 优先云端
+		return imgModel.Url
+	} else {
+		return imgModel.WebPath()
 	}
 }

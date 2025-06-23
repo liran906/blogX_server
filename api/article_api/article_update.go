@@ -16,7 +16,7 @@ import (
 )
 
 type ArticleUpdateReq struct {
-	ArticleID      uint               `json:"articleID" binding:"required"`
+	ID             uint               `json:"id" binding:"required"`
 	Title          string             `json:"title" binding:"required"`
 	Abstract       string             `json:"abstract"`
 	CoverURL       string             `json:"coverURL"`
@@ -33,7 +33,7 @@ func (ArticleApi) ArticleUpdateView(c *gin.Context) {
 
 	// 取文章
 	var a models.ArticleModel
-	err := global.DB.Take(&a, req.ArticleID).Error
+	err := global.DB.Take(&a, req.ID).Error
 	if err != nil {
 		res.Fail(err, "文章不存在", c)
 		return
