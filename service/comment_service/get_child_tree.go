@@ -5,25 +5,27 @@ package comment_service
 import (
 	"blogX_server/global"
 	"blogX_server/models"
+	"blogX_server/models/enum/relationship_enum"
 	"blogX_server/service/redis_service/redis_comment"
 	"time"
 )
 
 type CommentResponse struct {
-	ID            uint               `json:"id"`
-	CreatedAt     time.Time          `json:"createdAt"`
-	Content       string             `json:"content"`
-	UserID        uint               `json:"userID"`
-	UserNickname  string             `json:"userNickname"`
-	UserAvatarURL string             `json:"userAvatarURL"`
-	ArticleID     uint               `json:"articleID"`
-	ParentID      *uint              `json:"parentID"`
-	RootID        *uint              `json:"rootID"`
-	Depth         int                `json:"depth"`
-	LikeCount     int                `json:"likeCount"`
-	ReplyCount    int                `json:"replyCount"`
-	IsLiked       bool               `json:"isLiked"`
-	ChildComments []*CommentResponse `json:"childComments"`
+	ID            uint                       `json:"id"`
+	CreatedAt     time.Time                  `json:"createdAt"`
+	Content       string                     `json:"content"`
+	UserID        uint                       `json:"userID"`
+	UserNickname  string                     `json:"userNickname"`
+	UserAvatarURL string                     `json:"userAvatarURL"`
+	ArticleID     uint                       `json:"articleID"`
+	ParentID      *uint                      `json:"parentID"`
+	RootID        *uint                      `json:"rootID"`
+	Depth         int                        `json:"depth"`
+	LikeCount     int                        `json:"likeCount"`
+	ReplyCount    int                        `json:"replyCount"`
+	IsLiked       bool                       `json:"isLiked"`
+	Relation      relationship_enum.Relation `json:"relation"`
+	ChildComments []*CommentResponse         `json:"childComments"`
 }
 
 // PreloadAllChildren 在 comment 对象的 ChildListModel 中，逐级嵌入所有 CommentModel
@@ -35,17 +37,17 @@ func PreloadAllChildren(comment *models.CommentModel) {
 }
 
 // PreloadAllChildrenResponseFromID 返回一个 CommentResponse，其中的 ChildComments 逐级嵌入所有的 childCommentResponse
-func PreloadAllChildrenResponseFromID(cid uint, userLikeMap map[uint]struct{}) (resp *CommentResponse) {
+func PreloadAllChildrenResponseFromID(cid uint, userRelationMap map[uint]relationship_enum.Relation, userLikeMap map[uint]struct{}) (resp *CommentResponse) {
 	var cmt models.CommentModel
 	global.DB.Preload("UserModel").Preload("ChildListModel").Take(&cmt, cid)
-	return PreloadAllChildrenResponseFromModel(&cmt, userLikeMap)
+	return PreloadAllChildrenResponseFromModel(&cmt, userRelationMap, userLikeMap)
 }
 
-func PreloadAllChildrenResponseFromModel(cmt *models.CommentModel, userLikeMap map[uint]struct{}) (resp *CommentResponse) {
+func PreloadAllChildrenResponseFromModel(cmt *models.CommentModel, userRelationMap map[uint]relationship_enum.Relation, userLikeMap map[uint]struct{}) (resp *CommentResponse) {
 	// 两种实现，功能完全一致
 
 	// preloadByAttr 是更简单的实现，但需要维护 depth 属性
-	return preloadByAttr(cmt, userLikeMap)
+	return preloadByAttr(cmt, userRelationMap, userLikeMap)
 
 	// preloadByClosure 利用闭包（depth 的递归和回溯）判断是否达到层数限制
 	//return preloadByClosure(cmt)
@@ -94,7 +96,7 @@ func preloadByClosure(cmt *models.CommentModel, userLikeMap map[uint]struct{}) (
 }
 
 // preloadByAttr 是更简单的实现，但需要维护 depth 属性
-func preloadByAttr(cmt *models.CommentModel, userLikeMap map[uint]struct{}) (resp *CommentResponse) {
+func preloadByAttr(cmt *models.CommentModel, userRelationMap map[uint]relationship_enum.Relation, userLikeMap map[uint]struct{}) (resp *CommentResponse) {
 	if cmt.Depth >= global.Config.Site.Article.CommentDepth {
 		return
 	}
@@ -113,14 +115,16 @@ func preloadByAttr(cmt *models.CommentModel, userLikeMap map[uint]struct{}) (res
 		LikeCount:     cmt.LikeCount + redis_comment.GetCommentLikeCount(cmt.ID),
 		ReplyCount:    cmt.ReplyCount + redis_comment.GetCommentReplyCount(cmt.ID),
 		ChildComments: []*CommentResponse{},
+		Relation:      userRelationMap[cmt.UserID],
 	}
 	// 判断是否被本人点过赞
 	if _, exists := userLikeMap[cmt.ID]; exists {
 		resp.IsLiked = true
 	}
+	//  递归
 	for i := range cmt.ChildListModel {
 		child := cmt.ChildListModel[i]
-		resp.ChildComments = append(resp.ChildComments, preloadByAttr(child, userLikeMap))
+		resp.ChildComments = append(resp.ChildComments, preloadByAttr(child, userRelationMap, userLikeMap))
 	}
 	return
 }

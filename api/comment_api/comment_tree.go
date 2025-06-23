@@ -7,10 +7,12 @@ import (
 	"blogX_server/global"
 	"blogX_server/models"
 	"blogX_server/models/enum"
+	"blogX_server/models/enum/relationship_enum"
 	"blogX_server/service/comment_service"
+	"blogX_server/service/focus_service"
+	"blogX_server/utils"
 	"blogX_server/utils/jwts"
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 )
 
 func (CommentApi) CommentTreeView(c *gin.Context) {
@@ -23,18 +25,29 @@ func (CommentApi) CommentTreeView(c *gin.Context) {
 		return
 	}
 
+	var userRelationMap = map[uint]relationship_enum.Relation{}
 	var userCommentLikeMap = map[uint]struct{}{}
 	claims, err := jwts.ParseTokenFromRequest(c)
 	if err == nil && claims != nil {
-		var commentLikes []models.CommentLikesModel
-		subQuery := global.DB.Model(&models.CommentModel{}).Select("id").Where("article_id = ?", article.ID)
-		err = global.DB.Preload("CommentModel").Find(&commentLikes, "user_id = ? AND comment_id IN (?)", claims.UserID, subQuery).Error
-		if err != nil {
-			logrus.Warnf("查询文章评论数据库失败: %v", err)
-		}
-		if len(commentLikes) > 0 {
-			for _, commentLike := range commentLikes {
-				userCommentLikeMap[commentLike.CommentID] = struct{}{}
+		// 登录了
+		var commentList []models.CommentModel // 文章的评论id列表
+		global.DB.Find(&commentList, "article_id = ?", req.ID)
+
+		if len(commentList) > 0 {
+			// 查我点赞的评论id列表
+			var commentIDList []uint
+			var userIDList []uint
+			for _, model := range commentList {
+				commentIDList = append(commentIDList, model.ID)
+				userIDList = append(userIDList, model.UserID)
+			}
+			userIDList = utils.Unique(userIDList) // 对用户id去重
+			userRelationMap = focus_service.CalcUserPatchRelationship(claims.UserID, userIDList)
+
+			var commentDiggList []models.CommentLikesModel
+			global.DB.Find(&commentDiggList, "user_id = ? and comment_id in ?", claims.UserID, commentIDList)
+			for _, model := range commentDiggList {
+				userCommentLikeMap[model.CommentID] = struct{}{}
 			}
 		}
 	}
@@ -60,7 +73,7 @@ func (CommentApi) CommentTreeView(c *gin.Context) {
 
 	var list []comment_service.CommentResponse
 	for _, cmt := range rootCmts {
-		list = append(list, *comment_service.PreloadAllChildrenResponseFromModel(&cmt, userCommentLikeMap))
+		list = append(list, *comment_service.PreloadAllChildrenResponseFromModel(&cmt, userRelationMap, userCommentLikeMap))
 	}
 	res.SuccessWithList(list, len(rootCmts), c)
 }

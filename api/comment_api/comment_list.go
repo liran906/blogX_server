@@ -8,6 +8,8 @@ import (
 	"blogX_server/global"
 	"blogX_server/models"
 	"blogX_server/models/enum"
+	"blogX_server/models/enum/relationship_enum"
+	"blogX_server/service/focus_service"
 	"blogX_server/service/redis_service/redis_comment"
 	"blogX_server/utils/jwts"
 	"errors"
@@ -26,16 +28,18 @@ type CommentListReq struct {
 }
 
 type CommentListResponse struct {
-	ID              uint      `json:"id"`
-	CreatedAt       time.Time `json:"createdAt"`
-	Content         string    `json:"content"`
-	UserID          uint      `json:"userID"`
-	UserNickname    string    `json:"userNickname"`
-	UserAvatarURL   string    `json:"userAvatarURL"`
-	ArticleID       uint      `json:"articleID"`
-	ArticleTitle    string    `json:"articleTitle"`
-	ArticleCoverURL string    `json:"articleCoverURL"`
-	LikeCount       int       `json:"likeCount"`
+	ID              uint                       `json:"id"`
+	CreatedAt       time.Time                  `json:"createdAt"`
+	Content         string                     `json:"content"`
+	UserID          uint                       `json:"userID"`
+	UserNickname    string                     `json:"userNickname"`
+	UserAvatarURL   string                     `json:"userAvatarURL"`
+	ArticleID       uint                       `json:"articleID"`
+	ArticleTitle    string                     `json:"articleTitle"`
+	ArticleCoverURL string                     `json:"articleCoverURL"`
+	LikeCount       int                        `json:"likeCount"`
+	Relation        relationship_enum.Relation `json:"relation,omitempty"`
+	IsMe            bool                       `json:"isMe"`
 }
 
 func (CommentApi) CommentListView(c *gin.Context) {
@@ -110,6 +114,15 @@ func (CommentApi) CommentListView(c *gin.Context) {
 		res.Fail(err, "查询失败", c)
 	}
 
+	var relationMap = map[uint]relationship_enum.Relation{}
+	if req.Type != 2 {
+		var userIDList []uint
+		for _, model := range _list {
+			userIDList = append(userIDList, model.UserID)
+		}
+		relationMap = focus_service.CalcUserPatchRelationship(claims.UserID, userIDList)
+	}
+
 	var list []CommentListResponse
 	for _, cmt := range _list {
 		list = append(list, CommentListResponse{
@@ -123,6 +136,8 @@ func (CommentApi) CommentListView(c *gin.Context) {
 			ArticleTitle:    cmt.ArticleModel.Title,
 			ArticleCoverURL: cmt.ArticleModel.CoverURL,
 			LikeCount:       cmt.LikeCount + redis_comment.GetCommentLikeCount(cmt.ID),
+			Relation:        relationMap[cmt.UserID],
+			IsMe:            cmt.UserID == claims.UserID,
 		})
 	}
 	if len(list) == 0 {

@@ -7,6 +7,7 @@ import (
 	"blogX_server/global"
 	"blogX_server/models"
 	"blogX_server/utils/jwts"
+	"fmt"
 	"github.com/gin-gonic/gin"
 )
 
@@ -23,6 +24,9 @@ func (FocusApi) FocusUserView(c *gin.Context) {
 		res.FailWithMsg("你时刻都在关注自己", c)
 		return
 	}
+	fmt.Println(claims.UserID)
+	fmt.Println(req.FocusUserID)
+
 	// 查关注的用户是否存在
 	var user models.UserModel
 	err := global.DB.Take(&user, req.FocusUserID).Error

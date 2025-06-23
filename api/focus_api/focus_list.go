@@ -7,10 +7,11 @@ import (
 	"blogX_server/common/res"
 	"blogX_server/global"
 	"blogX_server/models"
+	"blogX_server/models/enum/relationship_enum"
+	"blogX_server/service/focus_service"
 	"blogX_server/utils/jwts"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"time"
 )
 
 type FocusUserListRequest struct {
@@ -19,18 +20,8 @@ type FocusUserListRequest struct {
 	UserID      uint `form:"userID"` // 查用户的关注
 }
 
-type FocusUserListResponse struct {
-	FocusUserID       uint      `json:"focusUserID"`
-	FocusUserNickname string    `json:"focusUserNickname"`
-	FocusUserAvatar   string    `json:"focusUserAvatar"`
-	FocusUserAbstract string    `json:"focusUserAbstract"`
-	CreatedAt         time.Time `json:"createdAt"`
-}
-
-// FocusUserListView 我的关注或用户的关注
 func (FocusApi) FocusUserListView(c *gin.Context) {
 	req := c.MustGet("bindReq").(FocusUserListRequest)
-
 	claims, err := jwts.ParseTokenFromRequest(c)
 
 	if req.UserID != 0 {
@@ -83,14 +74,25 @@ func (FocusApi) FocusUserListView(c *gin.Context) {
 		Preloads: []string{"FocusUserModel"},
 	})
 
-	var list = make([]FocusUserListResponse, 0)
+	var m = map[uint]relationship_enum.Relation{}
+	if err == nil && claims != nil {
+		var userIDList []uint
+		for _, i2 := range _list {
+			userIDList = append(userIDList, i2.FocusUserID)
+		}
+		m = focus_service.CalcUserPatchRelationship(claims.UserID, userIDList)
+
+	}
+
+	var list = make([]UserListResponse, 0)
 	for _, model := range _list {
-		list = append(list, FocusUserListResponse{
-			FocusUserID:       model.FocusUserID,
-			FocusUserNickname: model.FocusUserModel.Nickname,
-			FocusUserAvatar:   model.FocusUserModel.AvatarURL,
-			FocusUserAbstract: model.FocusUserModel.Bio,
-			CreatedAt:         model.CreatedAt,
+		list = append(list, UserListResponse{
+			UserID:       model.FocusUserID,
+			UserNickname: model.FocusUserModel.Nickname,
+			UserAvatar:   model.FocusUserModel.AvatarURL,
+			UserAbstract: model.FocusUserModel.Bio,
+			Relationship: m[model.FocusUserID],
+			CreatedAt:    model.CreatedAt,
 		})
 	}
 
