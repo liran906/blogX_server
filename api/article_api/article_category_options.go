@@ -24,7 +24,7 @@ func (ArticleApi) ArticleCategoryOptionsView(c *gin.Context) {
 	//var resp []models.OptionsRequest[uint]
 	//for _, v := range cm {
 	//	resp = append(resp, models.OptionsRequest[uint]{
-	//		Label: v.Name,
+	//		Label: v.Title,
 	//		Value: v.ID,
 	//	})
 	//}

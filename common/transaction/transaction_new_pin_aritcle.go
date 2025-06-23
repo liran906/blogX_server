@@ -11,8 +11,8 @@ import (
 
 func NewPinArticleTx(uid uint, article *models.ArticleModel) error {
 	return global.DBMaster.Transaction(func(tx *gorm.DB) error {
-
 		// 创建置顶关系
+		// uid == 0 就是 admin 置顶，否则就是用户置顶
 		if err := tx.Create(&models.UserPinnedArticleModel{
 			UserID:    uid,
 			ArticleID: article.ID,
@@ -27,10 +27,18 @@ func NewPinArticleTx(uid uint, article *models.ArticleModel) error {
 				}
 
 				// 删除置顶关系
-				if err := tx.Model(&models.ArticleModel{}).
-					Where("id = ?", article.ID).
-					Update("pinned_by_admin", false).Error; err != nil {
-					return err
+				if uid == 0 {
+					if err := tx.Model(&models.ArticleModel{}).
+						Where("id = ?", article.ID).
+						Update("pinned_by_admin", false).Error; err != nil {
+						return err
+					}
+				} else {
+					if err := tx.Model(&models.ArticleModel{}).
+						Where("id = ?", article.ID).
+						Update("pinned_by_user", false).Error; err != nil {
+						return err
+					}
 				}
 
 				return nil
@@ -39,10 +47,18 @@ func NewPinArticleTx(uid uint, article *models.ArticleModel) error {
 		}
 
 		// 修改文章 pinned 字段
-		if err := tx.Model(&models.ArticleModel{}).
-			Where("id = ?", article.ID).
-			Update("pinned_by_admin", true).Error; err != nil {
-			return err
+		if uid == 0 {
+			if err := tx.Model(&models.ArticleModel{}).
+				Where("id = ?", article.ID).
+				Update("pinned_by_admin", true).Error; err != nil {
+				return err
+			}
+		} else {
+			if err := tx.Model(&models.ArticleModel{}).
+				Where("id = ?", article.ID).
+				Update("pinned_by_user", true).Error; err != nil {
+				return err
+			}
 		}
 
 		return nil

@@ -15,5 +15,6 @@ type QNY struct {
 	Uri       string `yaml:"uri" json:"uri"`
 	Region    string `yaml:"region" json:"region"`
 	Prefix    string `yaml:"prefix" json:"prefix"`
-	Size      int    `yaml:"size" json:"size"` // 大小限制 单位mb
+	Size      int    `yaml:"size" json:"size"`     // 大小限制 单位mb
+	Expiry    int    `yaml:"expiry" json:"expiry"` // 临时 token 过期时间 单位秒
 }
