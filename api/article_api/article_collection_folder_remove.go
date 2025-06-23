@@ -54,7 +54,7 @@ func (ArticleApi) ArticleCollectionFolderRemoveView(c *gin.Context) {
 		// 删除事务
 		err = transaction.RemoveCollectionFolderTx(&coll)
 		if err != nil {
-			log.SetItem("失败", fmt.Sprintf("收藏夹[id: %d][title: %s]", coll.ID, coll.Title))
+			log.SetItem("失败", fmt.Sprintf("收藏夹[id: %d][title: %s][error: %s]", coll.ID, coll.Title, err.Error()))
 			continue
 		}
 		log.SetItem("成功", fmt.Sprintf("收藏夹[id: %d][title: %s]", coll.ID, coll.Title))

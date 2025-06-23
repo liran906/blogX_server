@@ -18,13 +18,11 @@ func RemoveCollectionFolderTx(c *models.CollectionFolderModel) error {
 			return err
 		}
 
-		if len(relations) == 0 {
-			return fmt.Errorf("collection folder %d has no content", c.ID)
-		}
-
-		// 收藏关系表记录删除
-		if err := tx.Delete(&relations).Error; err != nil {
-			return err
+		if len(relations) != 0 {
+			// 收藏关系表记录删除
+			if err := tx.Delete(&relations).Error; err != nil {
+				return err
+			}
 		}
 
 		// 收藏夹表相关记录删除（本体）
