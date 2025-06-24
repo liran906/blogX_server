@@ -15,7 +15,7 @@ func CommentRouter(rg *gin.RouterGroup) {
 
 	rg.POST("comment", mdw.BindJsonMiddleware[comment_api.CommentCreateReq], mdw.AuthMiddleware, app.CommentCreateView)
 	rg.POST("comment/:id", mdw.BindUriMiddleware[models.IDRequest], mdw.AuthMiddleware, app.CommentLikeView)
-	rg.GET("article/:id/comment", mdw.BindUriMiddleware[models.IDRequest], app.CommentTreeView)
+	rg.GET("comment/tree/:id", mdw.BindUriMiddleware[models.IDRequest], app.CommentTreeView)
 	rg.GET("comment", mdw.BindQueryMiddleware[comment_api.CommentListReq], mdw.AuthMiddleware, app.CommentListView)
 	rg.DELETE("comment/:id", mdw.BindUriMiddleware[models.IDRequest], mdw.AuthMiddleware, app.CommentRemoveView)
 }

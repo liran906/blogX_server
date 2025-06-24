@@ -16,7 +16,15 @@ import (
 
 type ArticleCollectionFolderListReq struct {
 	common.PageInfo
-	UserID uint `form:"userID"`
+	UserID    uint `form:"userID"`
+	ArticleID uint `form:"articleID"` // 传入 articleID 就是问这篇文章，有没有被收藏到返回的收藏夹列表中的某几个收藏夹内
+}
+
+type ArticleCollectionFolderListRes struct {
+	models.CollectionFolderModel
+	//UserNickname  string `json:"userNickname,omitempty"`
+	//UserAvatarURL string `json:"userAvatarURL,omitempty"`
+	ArticleUse bool `json:"articleUse,omitempty"`
 }
 
 func (ArticleApi) ArticleCollectionFolderListView(c *gin.Context) {
@@ -57,17 +65,44 @@ func (ArticleApi) ArticleCollectionFolderListView(c *gin.Context) {
 		return
 	}
 
-	list, count, err := common.ListQuery(models.CollectionFolderModel{
+	_list, count, err := common.ListQuery(models.CollectionFolderModel{
 		UserID: req.UserID,
 	}, common.Options{
 		PageInfo: req.PageInfo,
 		Likes:    []string{"title"},
+		Preloads: []string{"UserModel"},
 		Where:    query,
 		Debug:    false,
 	})
 	if err != nil {
 		res.Fail(err, "查询失败", c)
 		return
+	}
+
+	// 如果传入了 articleID，查这个 id 是否被收藏过
+	var articleCollectList []models.ArticleCollectionModel
+	var collectMap = map[uint]struct{}{} // key是收藏夹的 id，有 struct 就代表这个收藏夹收藏了 article id 对应的文章
+	if req.ArticleID != 0 && req.UserID == claims.UserID {
+		global.DB.Model(models.ArticleCollectionModel{}).Find(&articleCollectList, "article_id = ? AND user_id = ?", req.ArticleID, req.UserID)
+		if len(articleCollectList) > 0 {
+			for _, collect := range articleCollectList {
+				collectMap[collect.CollectionFolderID] = struct{}{}
+			}
+		}
+	}
+
+	list := make([]ArticleCollectionFolderListRes, 0, len(_list))
+	for _, cf := range _list {
+		resp := ArticleCollectionFolderListRes{
+			CollectionFolderModel: cf,
+			//UserNickname:          cf.UserModel.Nickname,
+			//UserAvatarURL:         cf.UserModel.AvatarURL,
+			ArticleUse: false,
+		}
+		if _, exists := collectMap[cf.ID]; exists {
+			resp.ArticleUse = true
+		}
+		list = append(list, resp)
 	}
 	res.SuccessWithList(list, count, c)
 }
