@@ -20,8 +20,6 @@ type ArticleListReq struct {
 	UserID     uint               `form:"userID"`
 	CategoryID *uint              `form:"categoryID"`
 	Status     enum.ArticleStatus `form:"status"`
-	StartTime  string             `form:"startTime"` // format "2006-01-02 15:04:05"
-	EndTime    string             `form:"endTime"`
 	Type       int8               `form:"type"`
 }
 

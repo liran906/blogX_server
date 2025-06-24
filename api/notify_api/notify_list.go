@@ -15,9 +15,7 @@ import (
 
 type NotifyListReq struct {
 	common.PageInfo `json:"pageInfo"`
-	NotifyType      int8   `form:"type" binding:"required,oneof=1 2 3"` // 1-评论与回复 2-赞和收藏 3-系统通知
-	StartTime       string `form:"startTime"`                           // format "2006-01-02 15:04:05"
-	EndTime         string `form:"endTime"`
+	NotifyType      int8 `form:"type" binding:"required,oneof=1 2 3"` // 1-评论与回复 2-赞和收藏 3-系统通知 `
 }
 
 type NotifyListResp struct {

@@ -9,10 +9,12 @@ import (
 )
 
 type PageInfo struct {
-	Limit int    `form:"limit"`
-	Page  int    `form:"page"`
-	Key   string `form:"key"`
-	Order string `form:"order"` // 这个 order 由前端写入，优先级高于 defaultorder
+	Limit     int    `form:"limit"`
+	Page      int    `form:"page"`
+	Key       string `form:"key"`
+	Order     string `form:"order"`     // 这个 order 由前端写入，优先级高于 defaultorder
+	StartTime string `form:"startTime"` // format "2006-01-02 15:04:05"
+	EndTime   string `form:"endTime"`
 }
 
 func (p *PageInfo) Normalize() {

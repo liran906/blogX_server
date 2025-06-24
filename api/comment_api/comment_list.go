@@ -20,11 +20,9 @@ import (
 
 type CommentListReq struct {
 	common.PageInfo
-	Type      uint   `form:"type" binding:"oneof=1 2 3"` // 1-我的文章收到的评论 2-我发的评论 3-管理员
-	ArticleId uint   `form:"articleID"`
-	UserId    uint   `form:"userID"`
-	StartTime string `form:"startTime"` // format "2006-01-02 15:04:05"
-	EndTime   string `form:"endTime"`
+	Type      uint `form:"type" binding:"oneof=1 2 3"` // 1-我的文章收到的评论 2-我发的评论 3-管理员
+	ArticleId uint `form:"articleID"`
+	UserId    uint `form:"userID"`
 }
 
 type CommentListResponse struct {

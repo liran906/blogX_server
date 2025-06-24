@@ -20,11 +20,9 @@ type ImageApi struct{}
 
 type ImageListReq struct {
 	common.PageInfo
-	Filename  string `form:"filename"`
-	Path      string `form:"path"`
-	Hash      string `form:"hash"`
-	StartTime string `form:"startTime"` // format "2006-01-02 15:04:05"
-	EndTime   string `form:"endTime"`
+	Filename string `form:"filename"`
+	Path     string `form:"path"`
+	Hash     string `form:"hash"`
 	// TODO 根据用户 id 搜索？
 }
 

@@ -14,9 +14,7 @@ import (
 
 type ArticleReadListReq struct {
 	common.PageInfo
-	UserId    uint   `form:"userID"`
-	StartTime string `form:"startTime"` // format "2006-01-02 15:04:05"
-	EndTime   string `form:"endTime"`
+	UserId uint `form:"userID"`
 }
 
 type ArticleReadListResp struct {

@@ -17,8 +17,6 @@ type UserLoginListReq struct {
 	UserID     uint   `form:"userID"`
 	IP         string `form:"ip"`
 	IPLocation string `form:"ipLocation"`
-	StartTime  string `form:"startTime"` // format "2006-01-02 15:04:05"
-	EndTime    string `form:"endTime"`
 }
 
 type UserLoginListResponse struct {

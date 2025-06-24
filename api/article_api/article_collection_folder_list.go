@@ -16,14 +16,17 @@ import (
 
 type ArticleCollectionFolderListReq struct {
 	common.PageInfo
-	UserID    uint   `form:"userID" binding:"required"`
-	StartTime string `form:"startTime"` // format "2006-01-02 15:04:05"
-	EndTime   string `form:"endTime"`
+	UserID uint `form:"userID"`
 }
 
 func (ArticleApi) ArticleCollectionFolderListView(c *gin.Context) {
 	req := c.MustGet("bindReq").(ArticleCollectionFolderListReq)
 	claims := jwts.MustGetClaimsFromRequest(c)
+
+	// 不指定就查自己
+	if req.UserID == 0 {
+		req.UserID = claims.UserID
+	}
 
 	// 不查自己要校验
 	if req.UserID != claims.UserID {

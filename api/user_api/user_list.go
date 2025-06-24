@@ -14,9 +14,7 @@ import (
 
 type UserListReq struct {
 	common.PageInfo
-	Role      enum.RoleType `form:"role"`
-	StartTime string        `form:"startTime"` // format "2006-01-02 15:04:05"
-	EndTime   string        `form:"endTime"`
+	Role enum.RoleType `form:"role"`
 }
 
 type UserListResp struct {
