@@ -68,7 +68,7 @@ func (ArticleApi) ArticleCreateView(c *gin.Context) {
 
 	// log
 	log := log_service.GetActionLog(c)
-	log.ShowAll()
+	log.ShowResponse()
 	log.SetTitle("发布文章")
 
 	var article = models.ArticleModel{

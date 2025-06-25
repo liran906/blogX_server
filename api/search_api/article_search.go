@@ -21,10 +21,8 @@ import (
 
 type ArticleSearchReq struct {
 	common.PageInfo
-	Type      int8   `form:"type" binding:"oneof=0 1 2 3 4 5 6"` // 0-猜你喜欢 1-最新发布 2-最多回复 3-最多点赞 4-最多收藏 5-最多阅读量 6-最新更新
-	Tag       string `form:"tag"`
-	StartTime string `form:"startTime"` // format "2006-01-02 15:04:05"
-	EndTime   string `form:"endTime"`
+	Type int8   `form:"type" binding:"oneof=0 1 2 3 4 5 6"` // 0-猜你喜欢 1-最新发布 2-最多回复 3-最多点赞 4-最多收藏 5-最多阅读量 6-最新更新
+	Tag  string `form:"tag"`
 }
 
 type ArticleBaseInfo struct {
@@ -178,23 +176,23 @@ func (SearchApi) ArticleSearchView(c *gin.Context) {
 		}
 
 		if len(uc.Tags) > 0 {
-			tagQuery := elastic.NewBoolQuery()
-			var tags []interface{}
+			var shouldQueries []elastic.Query
 			for _, tag := range uc.Tags {
-				// 将 uc.Tags 转化为 []interface{}，适配 NewTermsQuery 方法
-				tags = append(tags, tag)
+				fmt.Println("es 搜索加入标签： ", tag)
+				shouldQueries = append(shouldQueries, elastic.NewMatchQuery("title", tag))
+				//query.Should(elastic.NewMatchQuery("tittle", tag))
+				//query.Should(elastic.NewMatchQuery("abstract", tag))
 			}
-			// 文章的 tag 中搜索是否有 keyword（精确）匹配
-			// tag 之间是 or 的关系，所以用 should
-			tagQuery.Should(elastic.NewTermsQuery("tags", tags...))
-			query.Must(tagQuery) // tagQuery 与 之前的模糊匹配是 and 的关系，所以用 must
+			query.Should(shouldQueries...)
 		}
 	}
 
 	// 设置高亮显示
 	highlight := elastic.NewHighlight()
-	highlight.Field("title")
-	highlight.Field("abstract")
+	if req.Type != 0 {
+		highlight.Field("title")
+		highlight.Field("abstract")
+	}
 
 	result, err := global.ESClient.
 		Search(models.ArticleModel{}.GetIndex()). // 搜索的是哪一个 index

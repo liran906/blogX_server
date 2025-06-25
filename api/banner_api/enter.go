@@ -74,10 +74,11 @@ func (BannerApi) BannerListView(c *gin.Context) {
 			Activated: req.Activated,
 		},
 		common.Options{
-			PageInfo: req.PageInfo,
-			Likes:    []string{"url"},
-			Where:    query,
-			Debug:    false,
+			PageInfo:     req.PageInfo,
+			Likes:        []string{"url"},
+			Where:        query,
+			DefaultOrder: "updated_at desc",
+			Debug:        false,
 		})
 	if err != nil {
 		res.Fail(err, "查询失败", c)
