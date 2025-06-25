@@ -20,6 +20,7 @@ type BannerCreateReq struct {
 	Activated bool   `json:"activated"`
 	URL       string `json:"url" binding:"required"`
 	Href      string `json:"href"`
+	Type      int8   `json:"type" binding:"required,oneof=1 2"`
 }
 
 type BannerUpdateReq struct {
@@ -42,6 +43,7 @@ func (BannerApi) BannerCreateView(c *gin.Context) {
 		Activated: req.Activated,
 		URL:       req.URL,
 		Href:      req.Href,
+		Type:      req.Type,
 	}
 	fmt.Println(model)
 	err := global.DB.Create(&model).Error
@@ -55,6 +57,7 @@ func (BannerApi) BannerCreateView(c *gin.Context) {
 type BannerListReq struct {
 	common.PageInfo
 	Activated bool `form:"activated"`
+	Type      int8 `form:"type"`
 }
 
 func (BannerApi) BannerListView(c *gin.Context) {
@@ -72,6 +75,7 @@ func (BannerApi) BannerListView(c *gin.Context) {
 	list, count, err := common.ListQuery(
 		models.BannerModel{
 			Activated: req.Activated,
+			Type:      req.Type,
 		},
 		common.Options{
 			PageInfo:     req.PageInfo,

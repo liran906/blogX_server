@@ -150,6 +150,8 @@ func (SearchApi) ArticleSearchView(c *gin.Context) {
 		)
 	}
 
+	highlight := elastic.NewHighlight()
+
 	// 3. 关键词搜索（Should 条件，提高相关性评分）
 	if req.Key != "" {
 		// Should 条件类似 SQL 中的 OR
@@ -163,45 +165,42 @@ func (SearchApi) ArticleSearchView(c *gin.Context) {
 		)
 		// 注：可以通过 Boost() 方法调整各字段的权重
 		// 例如：elastic.NewMatchQuery("title", req.Key).Boost(3) 让标题匹配的权重更高
-	}
 
-	// 查询type 为“猜你喜欢”，并且登录了
-	if req.Type == 0 && claims != nil {
-		// 找用户感兴趣的标签
-		var uc models.UserConfigModel
-		err = global.DB.Take(&uc, "user_id = ?", claims.UserID).Error
-		if err != nil {
-			res.Fail(err, "读取用户配置失败", c)
-			return
-		}
-
-		if len(uc.Tags) > 0 {
-			var shouldQueries []elastic.Query
-			for _, tag := range uc.Tags {
-				fmt.Println("es 搜索加入标签： ", tag)
-				shouldQueries = append(shouldQueries, elastic.NewMatchQuery("title", tag))
-				//query.Should(elastic.NewMatchQuery("tittle", tag))
-				//query.Should(elastic.NewMatchQuery("abstract", tag))
-			}
-			query.Should(shouldQueries...)
-		}
-	}
-
-	// 设置高亮显示
-	highlight := elastic.NewHighlight()
-	if req.Type != 0 {
+		// 设置高亮显示
 		highlight.Field("title")
 		highlight.Field("abstract")
+	} else {
+		// 没有搜索 key，才会按照个人 tag 搜索
+		// 查询type 为“猜你喜欢”，并且登录了
+		if req.Type == 0 && claims != nil {
+			// 找用户感兴趣的标签
+			var uc models.UserConfigModel
+			err = global.DB.Take(&uc, "user_id = ?", claims.UserID).Error
+			if err != nil {
+				res.Fail(err, "读取用户配置失败", c)
+				return
+			}
+
+			if len(uc.Tags) > 0 {
+				var shouldQueries []elastic.Query
+				for _, tag := range uc.Tags {
+					shouldQueries = append(shouldQueries, elastic.NewMatchQuery("title", tag))
+					//query.Should(elastic.NewMatchQuery("tittle", tag))
+					//query.Should(elastic.NewMatchQuery("abstract", tag))
+				}
+				query.Should(shouldQueries...)
+			}
+		}
 	}
 
 	result, err := global.ESClient.
 		Search(models.ArticleModel{}.GetIndex()). // 搜索的是哪一个 index
-		Query(query).                             // 什么类型的查询以及具体查询条件
-		Highlight(highlight).                     // 高亮关键词
-		From(req.GetOffset()).                    // 从哪一条开始显示
-		Size(req.GetLimit()).                     // 往后显示多少条
-		Sort(sortKey, false).                     // 排序
-		Do(context.Background())                  // 执行
+		Query(query). // 什么类型的查询以及具体查询条件
+		Highlight(highlight). // 高亮关键词
+		From(req.GetOffset()). // 从哪一条开始显示
+		Size(req.GetLimit()). // 往后显示多少条
+		Sort(sortKey, false). // 排序
+		Do(context.Background()) // 执行
 	if err != nil {
 		res.Fail(err, "查询失败", c)
 		return
@@ -216,7 +215,7 @@ func (SearchApi) ArticleSearchView(c *gin.Context) {
 		err = json.Unmarshal(hit.Source, &abi) // 将 ES 文档源数据（_source）解析为 ArticleBaseInfo 结构体
 		if err != nil {
 			logrus.Errorf("json 解析失败: %v", err) // 如果解析失败，记录错误
-			continue                            // 继续处理下一条
+			continue                                // 继续处理下一条
 		}
 
 		// 如果存在标题的高亮结果，使用高亮后的标题替换原标题
