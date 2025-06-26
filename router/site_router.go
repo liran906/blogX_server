@@ -17,4 +17,6 @@ func SiteRouter(rg *gin.RouterGroup) {
 	rg.GET("/site/qq_url", app.SiteInfoQQView)
 	rg.GET("/site/:name", app.SiteInfoView)
 	rg.PUT("/site/:name", mdw.AdminMiddleware, app.SiteUpdateView)
+
+	rg.GET("site/ai_info", app.SiteInfoAiView)
 }

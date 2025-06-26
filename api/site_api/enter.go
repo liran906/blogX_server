@@ -279,3 +279,19 @@ func UpdateSite(site conf.Site) error {
 	}
 	return nil
 }
+
+type AiResponse struct {
+	Enable   bool   `json:"enable"`
+	Nickname string `json:"nickname"`
+	Avatar   string `json:"avatar"`
+	Abstract string `json:"abstract"`
+}
+
+func (SiteApi) SiteInfoAiView(c *gin.Context) {
+	res.SuccessWithData(AiResponse{
+		Enable:   global.Config.Ai.Enable,
+		Nickname: global.Config.Ai.Nickname,
+		Avatar:   global.Config.Ai.AvatarURL,
+		Abstract: global.Config.Ai.Abstract,
+	}, c)
+}
