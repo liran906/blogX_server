@@ -19,8 +19,6 @@ import (
 
 type TextSearchReq struct {
 	common.PageInfo
-	StartTime string `form:"startTime"` // format "2006-01-02 15:04:05"
-	EndTime   string `form:"endTime"`
 }
 
 // buyongfengzhuangleba?
@@ -29,6 +27,7 @@ type TextSearchResp struct {
 	ArticleID uint   `json:"articleID"`
 	Head      string `json:"head"`
 	Body      string `json:"body"`
+	Flag      string `json:"flag"`
 }
 
 func (SearchApi) TextSearchView(c *gin.Context) {
@@ -66,6 +65,7 @@ func (SearchApi) TextSearchView(c *gin.Context) {
 				ArticleID: t.ArticleID,
 				Head:      t.Head,
 				Body:      t.Body,
+				Flag:      t.Head,
 			}
 			list = append(list, item)
 		}
@@ -114,6 +114,7 @@ func (SearchApi) TextSearchView(c *gin.Context) {
 			continue                            // 继续处理下一条
 		}
 
+		head := item.Head
 		// 如果存在高亮结果，使用高亮后的标题替换原标题
 		if len(hit.Highlight["head"]) > 0 {
 			item.Head = hit.Highlight["head"][0] // 高亮结果是一个数组，取第一个元素
@@ -128,6 +129,7 @@ func (SearchApi) TextSearchView(c *gin.Context) {
 			ArticleID: item.ArticleID,
 			Head:      item.Head,
 			Body:      item.Body,
+			Flag:      head,
 		})
 	}
 

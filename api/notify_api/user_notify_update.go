@@ -13,7 +13,6 @@ import (
 // 这个方法在 user config 的相关方法中已经实现了
 
 type UserNotifyConfUpdateReq struct {
-	UserID                 uint `json:"userID"`
 	ReceiveCommentNotify   bool `json:"receiveCommentNotify"`
 	ReceiveLikeNotify      bool `json:"receiveLikeNotify"`
 	ReceiveCollectNotify   bool `json:"receiveCollectNotify"`
@@ -25,15 +24,24 @@ func (NotifyApi) UserNotifyConfUpdateView(c *gin.Context) {
 	req := c.MustGet("bindReq").(UserNotifyConfUpdateReq)
 	claims := jwts.MustGetClaimsFromRequest(c)
 
-	if claims.UserID != req.UserID {
-		res.FailWithMsg("只能更新自己的配置信息", c)
-		return
-	}
-
 	var un models.UserMessageConfModel
 	err := global.DB.Take(&un, "user_id = ?", claims.UserID).Error
 	if err != nil {
 		res.Fail(err, "用户配置不存在", c)
 		return
 	}
+
+	umap := map[string]interface{}{
+		"receive_comment_notify":   req.ReceiveCommentNotify,
+		"receive_like_notify":      req.ReceiveLikeNotify,
+		"receive_collect_notify":   req.ReceiveCollectNotify,
+		"receive_private_message":  req.ReceivePrivateMessage,
+		"receive_stranger_message": req.ReceiveStrangerMessage,
+	}
+	err = global.DB.Model(&un).Updates(umap).Error
+	if err != nil {
+		res.Fail(err, "更新失败", c)
+		return
+	}
+	res.SuccessWithMsg("更新成功", c)
 }

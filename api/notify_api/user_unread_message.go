@@ -13,7 +13,7 @@ import (
 
 type UserUnreadMessageResp struct {
 	CommentMsgCount int `json:"commentMsgCount"`
-	LikeMsgCount    int `json:"likeMsgCount"`
+	LikeMsgCount    int `json:"diggMsgCount"`
 	PrivateMsgCount int `json:"privateMsgCount"`
 	SystemMsgCount  int `json:"systemMsgCount"`
 }

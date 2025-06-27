@@ -8,7 +8,8 @@ type SiteInfo struct {
 	EnglishTitle string `yaml:"englishTitle" json:"englishTitle"`     // 英文标题
 	Slogan       string `yaml:"slogan" json:"slogan"`                 // 标语
 	LogoURL      string `yaml:"logoURL" json:"logoURL"`               // logo url
-	Archive      string `yaml:"archive" json:"archive"`               // 备案号
+	EnableICP    bool   `yaml:"enableICP" json:"enableICP"`           // 是否开启 icp 备案
+	ICP          string `yaml:"icp" json:"icp"`                       // 备案号
 	Mode         int8   `yaml:"mode" json:"mode" binding:"oneof=1 2"` // 1 社区模式 2 博客模式
 }
 

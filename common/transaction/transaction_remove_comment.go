@@ -33,7 +33,7 @@ func RemoveComment(cmt *models.CommentModel) error {
 
 		// 取当前缓存评论数
 		// 如果缓存中没有（已经备份到 db），则会返回 0，也没问题
-		currentReplyCount := redis_comment.GetCommentReplyCount(cmt.ID)
+		currentReplyCount := redis_comment.GetCommentReplyCount(cmt.ID) + cmt.ReplyCount
 
 		// 更新祖先评论评论数
 		if cmt.ParentID != nil {

@@ -15,9 +15,8 @@ import (
 )
 
 type NotifyRemoveReq struct {
-	RemoveAll  bool `json:"removeAll"`  // 一键全删
-	NotifyID   uint `json:"notifyID"`   // 非一键全删的前提下，删一篇
-	NotifyType int8 `json:"notifyType"` // 一键全删的前提下，1-评论与回复 2-赞和收藏 3-系统通知
+	NotifyID   uint `json:"id"` // 删一篇（留空则代表是批量读取）
+	NotifyType int8 `json:"t"`  // 批量删除特定类型的消息：1-评论与回复 2-赞和收藏 3-系统通知
 }
 
 func (NotifyApi) NotifyRemoveView(c *gin.Context) {
@@ -25,7 +24,12 @@ func (NotifyApi) NotifyRemoveView(c *gin.Context) {
 	claims := jwts.MustGetClaimsFromRequest(c)
 
 	query := global.DB.Debug().Where("receive_user_id = ?", claims.UserID)
-	if req.RemoveAll {
+	if req.NotifyID != 0 {
+		// 只要传入了 id，就按照删一篇操作
+		query = query.Where("id = ?", req.NotifyID)
+		// 不需要验证是否是自己的消息以及是否已读了，因为上面已经在 where 中作为条件被限定了
+		// 如果不和规矩，结果就是搜不出来
+	} else if req.NotifyType != 0 {
 		// 一键全删
 		switch req.NotifyType {
 		case 1: // 评论与回复
@@ -38,11 +42,6 @@ func (NotifyApi) NotifyRemoveView(c *gin.Context) {
 			res.FailWithMsg("type 必须是 1 or 2 or 3", c)
 			return
 		}
-	} else {
-		// 删一篇
-		query = query.Where("id = ?", req.NotifyID)
-		// 不需要验证是否是自己的消息以及是否已读了，因为上面已经在 where 中作为条件被限定了
-		// 如果不和规矩，结果就是搜不出来
 	}
 
 	tx := query.Delete(&models.NotifyModel{})
