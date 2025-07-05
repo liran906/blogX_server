@@ -7,6 +7,7 @@ import (
 	"blogX_server/api/article_api"
 	mdw "blogX_server/middleware"
 	"blogX_server/models"
+	"blogX_server/service/redis_service/redis_cache"
 	"github.com/gin-gonic/gin"
 )
 
@@ -17,7 +18,7 @@ func ArticleRouter(rg *gin.RouterGroup) {
 	rg.POST("article", mdw.BindJsonMiddleware[article_api.ArticleCreateReq], mdw.CaptchaMiddleware, mdw.AuthMiddleware, mdw.VerifySiteModeMiddleware, app.ArticleCreateView)
 	rg.PUT("article", mdw.BindJsonMiddleware[article_api.ArticleUpdateReq], mdw.AuthMiddleware, mdw.VerifySiteModeMiddleware, app.ArticleUpdateView)
 	rg.GET("article", mdw.BindQueryMiddleware[article_api.ArticleListReq], app.ArticleListView)
-	rg.GET("article/:id", mdw.BindUriMiddleware[models.IDRequest], app.ArticleDetailView)
+	rg.GET("article/:id", mdw.BindUriMiddleware[models.IDRequest], mdw.CacheMiddleware(redis_cache.NewArticleDetailCacheOption()), app.ArticleDetailView)
 	rg.DELETE("article/:id", mdw.BindUriMiddleware[models.IDRequest], mdw.AuthMiddleware, app.ArticleRemoveView)
 	rg.DELETE("article", mdw.BindJsonMiddleware[models.IDListRequest], mdw.AdminMiddleware, app.ArticleBatchRemoveView)
 

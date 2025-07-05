@@ -154,4 +154,5 @@ func InitLogrus() {
 	logrus.SetLevel(logrus.DebugLevel)   //设置最低的Level
 	l := global.Config.Logrus
 	InitFile(l.Dir, l.App)
+	logrus.Info("logrus init success")
 }

@@ -3,10 +3,10 @@ package models
 type CommentModel struct {
 	Model
 	Content    string `gorm:"not null" json:"content"`
-	UserID     uint   `gorm:"not null" json:"userID"`
-	ArticleID  uint   `gorm:"not null" json:"articleID"`
-	ParentID   *uint  `json:"parentID"`                              // 父评论
-	RootID     *uint  `json:"rootID"`                                // 根评论 自己为根时为 nil
+	UserID     uint   `gorm:"index;not null" json:"userID"`
+	ArticleID  uint   `gorm:"index;not null" json:"articleID"`
+	ParentID   *uint  `gorm:"index" json:"parentID"`                 // 父评论
+	RootID     *uint  `gorm:"index" json:"rootID"`                   // 根评论 自己为根时为 nil
 	Depth      int    `gorm:"not null" json:"depth"`                 // 评论深度
 	ReplyCount int    `gorm:"not null; default:0" json:"replyCount"` // 所有子孙回复数
 	LikeCount  int    `gorm:"not null; default:0" json:"likeCount"`  // 点赞数

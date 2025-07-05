@@ -5,6 +5,7 @@ package transaction
 import (
 	"blogX_server/global"
 	"blogX_server/models"
+	"blogX_server/service/redis_service/redis_cache"
 	"fmt"
 	"gorm.io/gorm"
 )
@@ -43,6 +44,9 @@ func RemoveArticleAndRelated(a *models.ArticleModel) (logs map[string]any, err e
 		if err := tx.Delete(a).Error; err != nil {
 			return err
 		}
+
+		// 缓存的文章详情
+		redis_cache.CacheCloseCertain(fmt.Sprintf("%s%d", redis_cache.CacheArticleDetailPrefix, a.ID))
 
 		logs = map[string]any{
 			fmt.Sprintf("删除文章 %d", a.ID):              a,

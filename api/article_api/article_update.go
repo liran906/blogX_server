@@ -9,9 +9,11 @@ import (
 	"blogX_server/models/ctype"
 	"blogX_server/models/enum"
 	"blogX_server/service/log_service"
+	"blogX_server/service/redis_service/redis_cache"
 	"blogX_server/utils/jwts"
 	"blogX_server/utils/markdown"
 	"blogX_server/utils/xss"
+	"fmt"
 	"github.com/gin-gonic/gin"
 )
 
@@ -111,5 +113,6 @@ func (ArticleApi) ArticleUpdateView(c *gin.Context) {
 		res.Fail(err, "文章修改失败", c)
 		return
 	}
+	redis_cache.CacheCloseCertain(fmt.Sprintf("%s%d", redis_cache.CacheArticleDetailPrefix, a.ID))
 	res.SuccessWithMsg("文章修改成功", c)
 }

@@ -8,8 +8,10 @@ import (
 	"blogX_server/global"
 	"blogX_server/models"
 	"blogX_server/models/enum"
+	"blogX_server/service/redis_service/redis_cache"
 	"blogX_server/utils/jwts"
 	"errors"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
@@ -41,6 +43,7 @@ func (ArticleApi) ArticleNewAdminPinView(c *gin.Context) {
 		res.Fail(err, "修改置顶失败", c)
 		return
 	}
+	redis_cache.CacheCloseCertain(fmt.Sprintf("%s%d", redis_cache.CacheArticleDetailPrefix, a.ID))
 	res.SuccessWithMsg("修改置顶成功", c)
 }
 
@@ -72,5 +75,6 @@ func (ArticleApi) ArticleNewUserPinView(c *gin.Context) {
 		res.Fail(err, "修改置顶失败", c)
 		return
 	}
+	redis_cache.CacheCloseCertain(fmt.Sprintf("%s%d", redis_cache.CacheArticleDetailPrefix, a.ID))
 	res.SuccessWithMsg("修改置顶成功", c)
 }

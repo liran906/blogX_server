@@ -7,6 +7,7 @@ import (
 	"blogX_server/api/search_api"
 	"blogX_server/common"
 	mdw "blogX_server/middleware"
+	"blogX_server/service/redis_service/redis_cache"
 	"github.com/gin-gonic/gin"
 )
 
@@ -15,5 +16,5 @@ func SearchRouter(rg *gin.RouterGroup) {
 
 	rg.GET("search/article", mdw.BindQueryMiddleware[search_api.ArticleSearchReq], app.ArticleSearchView)
 	rg.GET("search/text", mdw.BindQueryMiddleware[search_api.TextSearchReq], app.TextSearchView)
-	rg.GET("search/tags", mdw.BindQueryMiddleware[common.PageInfo], app.TagAggView)
+	rg.GET("search/tags", mdw.BindQueryMiddleware[common.PageInfo], mdw.CacheMiddleware(redis_cache.NewTagsCacheOption()), app.TagAggView)
 }

@@ -8,6 +8,7 @@ import (
 	"blogX_server/global"
 	"blogX_server/models"
 	"blogX_server/service/log_service"
+	"blogX_server/service/redis_service/redis_cache"
 	"fmt"
 	"github.com/gin-gonic/gin"
 )
@@ -51,6 +52,7 @@ func (BannerApi) BannerCreateView(c *gin.Context) {
 		res.FailWithError(err, c)
 		return
 	}
+	redis_cache.CacheCloseAll(redis_cache.CacheBannerPrefix)
 	res.SuccessWithMsg("成功添加 banner", c)
 }
 
@@ -101,24 +103,25 @@ func (BannerApi) BannerRemoveView(c *gin.Context) {
 	for _, item := range removeList {
 		validIDList = append(validIDList, item.ID)
 	}
-
-	if len(removeList) > 0 {
-		err := global.DB.Delete(&removeList).Error
-		if err != nil {
-			res.FailWithError(err, c)
-			return
-		}
-		// 日志
-		log := log_service.GetActionLog(c)
-		log.ShowAll()
-		log.SetTitle("删除 banner")
-		log.SetItem("删除列表: ", removeList)
-
-		msg := fmt.Sprintf("banner 删除: 请求 %d 条，成功删除 %d 条，已删除列表: %v", len(req.IDList), len(removeList), validIDList)
-		res.SuccessWithMsg(msg, c)
-	} else {
+	if len(removeList) == 0 {
 		res.FailWithMsg("无匹配 banner", c)
+		return
 	}
+
+	err := global.DB.Delete(&removeList).Error
+	if err != nil {
+		res.FailWithError(err, c)
+		return
+	}
+	// 日志
+	log := log_service.GetActionLog(c)
+	log.ShowAll()
+	log.SetTitle("删除 banner")
+	log.SetItem("删除列表: ", removeList)
+
+	msg := fmt.Sprintf("banner 删除: 请求 %d 条，成功删除 %d 条，已删除列表: %v", len(req.IDList), len(removeList), validIDList)
+	redis_cache.CacheCloseAll(redis_cache.CacheBannerPrefix)
+	res.SuccessWithMsg(msg, c)
 }
 
 func (BannerApi) BannerUpdateView(c *gin.Context) {
@@ -163,5 +166,6 @@ func (BannerApi) BannerUpdateView(c *gin.Context) {
 		}
 	}
 	log.SetTitle("banner更新成功")
+	redis_cache.CacheCloseAll(redis_cache.CacheBannerPrefix)
 	res.Success(model, fmt.Sprintf("banner[%d] 更新成功", id), c)
 }

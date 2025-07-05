@@ -10,6 +10,7 @@ import (
 	"blogX_server/service/log_service"
 	"blogX_server/service/message_service"
 	"blogX_server/service/redis_service/redis_article"
+	"blogX_server/service/redis_service/redis_cache"
 	"blogX_server/utils/jwts"
 	"errors"
 	"fmt"
@@ -96,6 +97,7 @@ func (ArticleApi) ArticleCollectView(c *gin.Context) {
 			global.DB.Model(&cf).Update("article_count", gorm.Expr("article_count - 1"))
 			redis_article.SubArticleCollect(req.ArticleID)
 			log.SetTitle(fmt.Sprintf("取消收藏[%d]", req.ArticleID))
+			redis_cache.CacheCloseCertain(fmt.Sprintf("%s%d", redis_cache.CacheArticleDetailPrefix, a.ID))
 			res.SuccessWithMsg("取消收藏成功", c)
 			return
 		} else {
@@ -106,6 +108,7 @@ func (ArticleApi) ArticleCollectView(c *gin.Context) {
 	// 更新数量
 	global.DB.Model(&cf).Update("article_count", gorm.Expr("article_count + 1"))
 	redis_article.AddArticleCollect(req.ArticleID)
+	redis_cache.CacheCloseCertain(fmt.Sprintf("%s%d", redis_cache.CacheArticleDetailPrefix, a.ID))
 	res.SuccessWithMsg("收藏成功", c)
 
 	// 通知点赞

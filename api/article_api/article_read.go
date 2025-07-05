@@ -7,8 +7,10 @@ import (
 	"blogX_server/global"
 	"blogX_server/models"
 	"blogX_server/service/redis_service/redis_article"
+	"blogX_server/service/redis_service/redis_cache"
 	"blogX_server/utils/jwts"
 	"errors"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"time"
@@ -70,6 +72,7 @@ func (ArticleApi) ArticleCountReadView(c *gin.Context) {
 		// 写入逻辑
 		redis_article.SetUserArticleHistoryCacheToday(a.ID, claims.UserID)
 		redis_article.AddArticleRead(req.ArticleID)
+		redis_cache.CacheCloseCertain(fmt.Sprintf("%s%d", redis_cache.CacheArticleDetailPrefix, a.ID))
 		res.SuccessWithMsg("成功", c)
 		return
 	} else {

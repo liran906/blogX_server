@@ -9,6 +9,8 @@ import (
 	"blogX_server/models"
 	"blogX_server/models/enum"
 	"blogX_server/service/log_service"
+	"blogX_server/service/redis_service/redis_cache"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"time"
 )
@@ -84,6 +86,7 @@ func (ArticleApi) ArticleAdminPinListView(c *gin.Context) {
 			AuthorID:        a.ArticleModel.UserID,
 		}
 		list = append(list, article)
+		redis_cache.CacheCloseCertain(fmt.Sprintf("%s%d", redis_cache.CacheArticleDetailPrefix, a.ArticleID))
 	}
 	res.SuccessWithList(list, len(list), c)
 }

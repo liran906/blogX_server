@@ -6,6 +6,7 @@ import (
 	"blogX_server/global"
 	"blogX_server/models"
 	"blogX_server/service/redis_service/redis_article"
+	"blogX_server/service/redis_service/redis_cache"
 	"fmt"
 	"gorm.io/gorm"
 )
@@ -61,6 +62,7 @@ func RemoveCollectionsTx(collections []models.ArticleCollectionModel) error {
 	// 被收藏文章的收藏数-1（redis）在事务结束后进行
 	for _, collection := range collections {
 		redis_article.SubArticleCollect(collection.ArticleID)
+		redis_cache.CacheCloseCertain(fmt.Sprintf("%s%d", redis_cache.CacheArticleDetailPrefix, collection.ArticleID))
 	}
 	return nil
 }

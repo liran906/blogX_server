@@ -10,6 +10,7 @@ import (
 	"blogX_server/service/log_service"
 	"blogX_server/service/message_service"
 	"blogX_server/service/redis_service/redis_article"
+	"blogX_server/service/redis_service/redis_cache"
 	"blogX_server/utils/jwts"
 	"errors"
 	"fmt"
@@ -56,6 +57,7 @@ func (ArticleApi) ArticleLikeView(c *gin.Context) {
 			}
 			// redis文章点赞数+1
 			redis_article.AddArticleLike(req.ID)
+			redis_cache.CacheCloseCertain(fmt.Sprintf("%s%d", redis_cache.CacheArticleDetailPrefix, a.ID))
 			res.SuccessWithMsg("点赞成功", c)
 
 			// 通知点赞
@@ -77,6 +79,7 @@ func (ArticleApi) ArticleLikeView(c *gin.Context) {
 	// redis文章点赞数-1
 	redis_article.SubArticleLike(req.ID)
 	log.SetTitle(fmt.Sprintf("文章[%d]点赞-", req.ID))
+	redis_cache.CacheCloseCertain(fmt.Sprintf("%s%d", redis_cache.CacheArticleDetailPrefix, a.ID))
 	res.SuccessWithMsg("取消点赞成功", c)
 	return
 }

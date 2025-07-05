@@ -4,8 +4,10 @@ package models
 
 type UserFocusModel struct {
 	Model
-	UserID         uint      `json:"userID"` // 用户id
+	UserID      uint `gorm:"uniqueIndex:idx_uniq_focus_uid" json:"userID"`      // 用户id
+	FocusUserID uint `gorm:"uniqueIndex:idx_uniq_focus_uid" json:"focusUserID"` // 关注的用户
+
+	// FK
 	UserModel      UserModel `gorm:"foreignKey:UserID" json:"-"`
-	FocusUserID    uint      `json:"focusUserID"` // 关注的用户
 	FocusUserModel UserModel `gorm:"foreignKey:FocusUserID" json:"-"`
 }

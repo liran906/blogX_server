@@ -9,6 +9,7 @@ import (
 	"blogX_server/models/enum"
 	"blogX_server/service/log_service"
 	"blogX_server/service/message_service"
+	"blogX_server/service/redis_service/redis_cache"
 	"fmt"
 	"github.com/gin-gonic/gin"
 )
@@ -63,5 +64,6 @@ func (ArticleApi) ArticleReviewView(c *gin.Context) {
 			return
 		}
 	}
+	redis_cache.CacheCloseCertain(fmt.Sprintf("%s%d", redis_cache.CacheArticleDetailPrefix, a.ID))
 	res.SuccessWithMsg("审核提交成功", c)
 }

@@ -2,8 +2,8 @@ package models
 
 type UserArticleHistoryModel struct {
 	Model
-	UserID     uint  `gorm:"not null" json:"userID"`
-	ArticleID  uint  `gorm:"not null" json:"articleID"`
+	UserID     uint  `gorm:"index;not null" json:"userID"`
+	ArticleID  uint  `gorm:"index;not null" json:"articleID"`
 	Percentage uint8 `gorm:"not null" json:"percentage"`
 
 	// FK

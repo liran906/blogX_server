@@ -14,10 +14,10 @@ type ArticleModel struct {
 	Abstract       string             `gorm:"size:256" json:"abstract"`
 	CoverURL       string             `gorm:"size:256" json:"coverURL"`
 	Content        string             `gorm:"not null" json:"content"`
-	CategoryID     *uint              `json:"categoryID"`                // 自定义分类
-	Tags           ctype.List         `gorm:"type:longtext" json:"tags"` // 标签
-	UserID         uint               `gorm:"not null" json:"userID"`    // 发布者
-	Status         enum.ArticleStatus `json:"status"`                    // 草稿 审核中 已发布
+	CategoryID     *uint              `gorm:"index" json:"categoryID"`      // 自定义分类
+	Tags           ctype.List         `gorm:"type:longtext" json:"tags"`    // 标签
+	UserID         uint               `gorm:"index;not null" json:"userID"` // 发布者
+	Status         enum.ArticleStatus `json:"status"`                       // 草稿 审核中 已发布
 	ReadCount      int                `gorm:"not null; default:0" json:"readCount"`
 	LikeCount      int                `gorm:"not null; default:0" json:"likeCount"`
 	CommentCount   int                `gorm:"not null; default:0" json:"commentCount"`
