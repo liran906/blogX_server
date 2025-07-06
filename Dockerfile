@@ -5,10 +5,10 @@ FROM golang:alpine AS builder
 ENV CGO_ENABLED 0
 
 # 设置 Go 模块代理，加快依赖下载速度（可选：直连）
-ENV GOPROXY https://goproxy.cn,direct
+ENV GOPROXY=https://proxy.golang.org,direct
 
 # 替换 Alpine 的默认软件源为阿里云，提高 apk 安装速度
-RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
+#RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
 
 # 设置工作目录为 /build（构建目录）
 WORKDIR /build

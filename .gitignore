@@ -13,3 +13,4 @@ todo.md
 count_go_lines.sh
 count_log.txt
 var/*
+init/deploy/nginx/cert/*

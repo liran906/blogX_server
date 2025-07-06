@@ -54,7 +54,7 @@ func CacheMiddleware(option redis_cache.CacheOption) gin.HandlerFunc {
 			// 中止请求，阻止进入后续 handler
 			c.Abort()
 
-			fmt.Println("!!!!!!!!!!!!!!!!!!!!!走缓存了")
+			//fmt.Println("!!!!!!!!!!!!!!!!!!!!!走缓存了")
 
 			// 设置响应头为 JSON
 			c.Header("Content-Type", "application/json; charset=utf-8")

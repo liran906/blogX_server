@@ -1,0 +1,1 @@
+import{q as e}from"./index.6906a985.js";function o(t){return e.get("/api/comment",{params:t})}function m(t){return e.delete("/api/comment/"+t.toString())}function i(t){return e.post("/api/comment",t)}function r(t){return e.get("/api/comment/tree/"+t.toString())}function c(t){return e.post("/api/comment/"+t.toString())}export{o as a,m as b,i as c,c as d,r as e};
