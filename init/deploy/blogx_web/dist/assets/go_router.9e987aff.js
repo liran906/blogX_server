@@ -1,1 +1,0 @@
-import{m as r}from"./index.6906a985.js";function e(a){r.push({name:"articleDetail",params:{id:a}})}function i(a){r.push({name:"platformArticleEdit",params:{id:a}})}function s(a){r.push({name:"userArticle",params:{id:a}})}export{e as a,i as b,s as g};

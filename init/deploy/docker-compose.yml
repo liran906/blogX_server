@@ -1,5 +1,4 @@
 # docker-compose.yml
-version: '3.2'
 services:
   mysql-master:
     image: "mysql:8.0"
@@ -27,40 +26,6 @@ services:
     networks:
       blogx_network:
         ipv4_address: 10.2.0.2
-  mysql-slave:
-    image: "mysql:8.0"
-    container_name: mysql-slave
-    restart: always
-    privileged: true
-    environment:
-      MYSQL_ROOT_PASSWORD: 123456  #从库root用户的密码
-    command:
-      --default-authentication-plugin=mysql_native_password
-      --character-set-server=utf8mb4
-      --collation-server=utf8mb4_general_ci
-      --explicit_defaults_for_timestamp=true
-      --lower_case_table_names=1
-      --max_allowed_packet=128M;
-    volumes:  #宿主机配置目录或文件挂载到容器
-      - ./slave/my.cnf:/etc/mysql/my.cnf
-      - ./slave/mysql-files:/var/lib/mysql-files
-      - ./slave/data:/var/lib/mysql
-      - ./slave/log:/var/log/
-    networks:
-      blogx_network:
-        ipv4_address: 10.2.0.3
-  es:
-    image: "elasticsearch:7.12.0"
-    restart: always
-    privileged: true
-    environment:
-      discovery.type: single-node
-      ES_JAVA_OPTS: "-Xms512m -Xmx512m"
-    volumes:
-      - ./es/data:/usr/share/elasticsearch/data
-    networks:
-      blogx_network:
-        ipv4_address: 10.2.0.5
   redis:
     restart: always
     image: redis:5.0.5
@@ -77,28 +42,14 @@ services:
       TZ: Asia/Shanghai
     depends_on:
       - mysql-master
-      - es
       - redis
     volumes:
       - ./blogx_server/settings.yaml:/app/settings.yaml
       - ./blogx_server/uploads:/app/uploads
       - ./blogx_server/logs:/app/logs
       - ./blogx_web/dist:/app/web
+      - ./blogx_server/ip2region.xdb:/app/init/ip2region.xdb
     command: "/app/main"
-  blogx_web:
-    image: nginx:latest
-    restart: always
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./nginx/logs:/var/log/nginx/
-      - ./blogx_web/dist:/usr/share/nginx/blogx_web
-      - ./nginx/cert/:/usr/share/nginx/cert
-    networks:
-      blogx_network:
-        ipv4_address: 10.2.0.8
-    ports:
-      - "80:80"
-      - "443:443"
 networks:  #定义容器连接网络
   blogx_network:
     driver: bridge

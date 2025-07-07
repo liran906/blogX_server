@@ -166,8 +166,7 @@ func (SiteApi) SiteUpdateView(c *gin.Context) {
 	case conf.Site:
 		err = UpdateSite(s)
 		if err != nil {
-			res.FailWithError(err, c)
-			return
+			logrus.Errorf("前端文件更新失败: %s", err)
 		}
 		global.Config.Site = s
 	case conf.Ai:

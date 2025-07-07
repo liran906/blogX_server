@@ -14,6 +14,7 @@ func main() {
 	flags.Parse()                              // 解析命令行
 	global.Config = core.ReadConf()            // 读取配置文件
 	core.InitLogrus()                          // 初始化日志文件
+	core.InitIPDB()                            // 初始化 ip 搜索
 	global.DB, global.DBMaster = core.InitDB() // 连接 mysql
 	global.Redis = core.InitRedis()            // 连接 redis
 	global.ESClient = core.InitES()            // 连接 es

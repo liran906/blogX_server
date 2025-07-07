@@ -30,7 +30,7 @@ WORKDIR /app
 COPY --from=builder /build/main /app
 
 # 同样替换软件源为阿里云，提高 apk 安装速度
-RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
+#RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
 
 # 安装时区数据包，以支持设置时区（如 Asia/Shanghai）
 RUN apk add tzdata
