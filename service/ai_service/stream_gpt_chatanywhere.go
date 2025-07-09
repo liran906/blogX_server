@@ -29,7 +29,7 @@ type AIChatStreamResponse struct {
 }
 
 func ChatStream(msg string) (msgChan chan string, err error) {
-	res, err := baseRequest(msg, true)
+	res, err := baseRequest(msg, streamAiRequest)
 	if err != nil {
 		return
 	}

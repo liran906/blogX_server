@@ -33,12 +33,27 @@ func (AiApi) ArticleAiView(c *gin.Context) {
 
 	var match string
 	if global.ESClient == nil {
+		kw := req.Content
+		if len(kw) > 4 {
+			var err error
+			kw, err = ai_service.Summarize(req.Content)
+			if err != nil {
+				res.Fail(err, "搜索失败", c)
+				return
+			}
+			if kw == "" {
+				res.FailWithMsg("提示词错误", c)
+				return
+			}
+		}
 		// 未开启 es，用 mysql 搜索
-		list, _, err := common.ListQuery(&models.ArticleModel{
+		_list, _, err := common.ListQuery(&models.ArticleModel{
 			Status: enum.ArticleStatusPublish,
 		}, common.Options{
 			Likes: []string{"title", "abstract"},
+			Debug: true,
 			PageInfo: common.PageInfo{
+				Key:   kw,
 				Page:  1,
 				Limit: 5, // 限制 5 条
 			},
@@ -47,12 +62,21 @@ func (AiApi) ArticleAiView(c *gin.Context) {
 			res.Fail(err, "搜索失败", c)
 			return
 		}
-		byteData, err := json.Marshal(list)
-		if err != nil {
-			res.Fail(err, "搜索失败", c)
-			return
+
+		// 直接返回数据量太大，把有用没用的都一起发了
+		// 所以这里要先用 search_api.ArticleBaseInfo 筛选出有用的信息，再发送
+		var list []string
+		for _, article := range _list { // 遍历每一个搜索命中的文档
+			abi := search_api.ArticleBaseInfo{
+				ID:       article.ID,
+				Title:    article.Title,
+				Abstract: article.Abstract,
+			}
+
+			jmsg, _ := json.Marshal(abi)
+			list = append(list, string(jmsg))
 		}
-		match = string(byteData)
+		match = "json data: [" + strings.Join(list, ",") + "]"
 	} else {
 		// 采用 es 搜索
 		// 创建一个布尔查询对象，用于组合多个查询条件

@@ -42,8 +42,8 @@ type AIChatResponse struct {
 	SystemFingerprint interface{} `json:"system_fingerprint"`
 }
 
-func Chat(msg string) (resp string, err error) {
-	res, err := baseRequest(msg, false)
+func chat(msg string, reqType requestType) (resp string, err error) {
+	res, err := baseRequest(msg, reqType)
 	if err != nil {
 		return
 	}
@@ -62,4 +62,12 @@ func Chat(msg string) (resp string, err error) {
 	}
 
 	return aiRes.Choices[0].Message.Content, nil
+}
+
+func Chat(msg string) (resp string, err error) {
+	return chat(msg, chatAiRequest)
+}
+
+func Summarize(msg string) (resp string, err error) {
+	return chat(msg, summarizeAiRequest)
 }

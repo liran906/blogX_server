@@ -15,3 +15,4 @@ count_log.txt
 var/*
 init/deploy/nginx/cert/*
 docker
+init/deploy/blogx_web

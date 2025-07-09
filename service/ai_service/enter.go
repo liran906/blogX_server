@@ -16,6 +16,9 @@ const baseURL = "https://api.chatanywhere.tech/v1/chat/completions"
 //go:embed prompt_chat.prompt
 var chatPrompt string
 
+//go:embed prompt_summarize.prompt
+var summarizePrompt string
+
 //go:embed prompt_stream.prompt
 var streamPrompt string
 
@@ -30,12 +33,27 @@ type Message struct {
 	Content string `json:"content"`
 }
 
-func baseRequest(msg string, stream bool) (res *http.Response, err error) {
+type requestType int8
+
+const (
+	chatAiRequest      requestType = 1
+	summarizeAiRequest requestType = 2
+	streamAiRequest    requestType = 3
+)
+
+func baseRequest(msg string, reqType requestType) (res *http.Response, err error) {
 	method := "POST"
 
-	prompt := chatPrompt
-	if stream {
+	var prompt string
+	var stream = false
+	switch reqType {
+	case chatAiRequest:
+		prompt = chatPrompt
+	case summarizeAiRequest:
+		prompt = summarizePrompt
+	case streamAiRequest:
 		prompt = streamPrompt
+		stream = true
 	}
 
 	var m = AIChatRequest{
