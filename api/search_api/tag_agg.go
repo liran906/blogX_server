@@ -13,6 +13,7 @@ import (
 	"github.com/olivere/elastic/v7"
 	"github.com/sirupsen/logrus"
 	"sort"
+	"strings"
 )
 
 // TagAggResponse 定义了接口返回的结构：每个标签及其对应的文章数量
@@ -31,25 +32,44 @@ func (SearchApi) TagAggView(c *gin.Context) {
 
 	// 如果 ES 未连接，使用数据库进行 fallback 查询
 	if global.ESClient == nil {
-		var articleList []models.ArticleModel
-		global.DB.Find(&articleList, "tags <> ''")
+		type ArticleTags struct {
+			Tags string `gorm:"column:tags"` // 改为 string
+		}
 
-		var tagMap = map[string]int{}
-		for _, model := range articleList {
-			for _, tag := range model.Tags {
+		var results []ArticleTags
+
+		if err := global.DB.Model(&models.ArticleModel{}).
+			Select("tags").
+			Where("tags <> ''").
+			Find(&results).Error; err != nil {
+			res.Fail(err, "数据库查询失败", c)
+			return
+		}
+
+		tagMap := make(map[string]int)
+		for _, r := range results {
+			tags := parsePGArray(r.Tags)
+			for _, tag := range tags {
 				tagMap[tag]++
 			}
 		}
+
 		for tag, count := range tagMap {
 			list = append(list, TagAggResponse{
 				Tag:          tag,
 				ArticleCount: count,
 			})
 		}
+
 		// 根据文章数量降序排序
 		sort.Slice(list, func(i, j int) bool {
 			return list[i].ArticleCount > list[j].ArticleCount
 		})
+
+		if len(list) > req.Limit {
+			list = list[:req.Limit]
+		}
+
 		res.SuccessWithList(list, len(list), c)
 		return
 	}
@@ -126,4 +146,12 @@ type AggType struct {
 // Agg1Type 用于反序列化 cardinality 聚合结果（标签总数）
 type Agg1Type struct {
 	Value int `json:"value"` // 标签去重后的总数量
+}
+
+func parsePGArray(s string) []string {
+	s = strings.Trim(s, "{}") // 去掉首尾的 {}
+	if s == "" {
+		return nil
+	}
+	return strings.Split(s, ",")
 }

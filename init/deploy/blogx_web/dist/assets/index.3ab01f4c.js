@@ -1,1 +1,0 @@
-import{d as s,l as t,o as r,e as c,m as a}from"./index.540d1321.js";const i={class:"login_view"},d=s({__name:"index",setup(u){const o=t();async function n(){const e=o.query.code;if(!!e){if(window.opener===null){a.push("/");return}window.opener.postMessage({code:e},"*")}}return n(),(e,p)=>(r(),c("div",i))}});export{d as default};

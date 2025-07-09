@@ -1,1 +1,0 @@
-import{d as n,o,c as a,v as c,e as t,n as r}from"./index.540d1321.js";const m=n({__name:"f_component",props:{is:{}},setup(s){const e=s;return(p,i)=>typeof e.is=="object"?(o(),a(c(e.is),{key:0})):(o(),t("i",{key:1,class:r(e.is)},null,2))}});export{m as _};
