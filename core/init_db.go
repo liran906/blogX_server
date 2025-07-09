@@ -71,7 +71,7 @@ func InitDB() (db *gorm.DB, masterDB *gorm.DB) {
 func createDB() *gorm.DB {
 	// 创建数据库
 	d := global.Config.DB[0]
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/?charset=utf8&parseTime=true&loc=Local", d.User, d.Password, d.Host, d.Port)
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/?charset=utf8mb4&parseTime=true&loc=Local", d.User, d.Password, d.Host, d.Port)
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{DisableForeignKeyConstraintWhenMigrating: true})
 	if err != nil {
 		logrus.Fatalln("DB open error: ", err)
