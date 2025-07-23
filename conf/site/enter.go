@@ -62,3 +62,7 @@ type Article struct {
 	MaxPin       int  `yaml:"maxPin" json:"maxPin"`             // 用户最高置顶数
 	CommentDepth int  `yaml:"commentDepth" json:"commentDepth"` // 评论的层级
 }
+
+type AutoGen struct {
+	UserID uint `yaml:"userID" json:"userID"`
+}

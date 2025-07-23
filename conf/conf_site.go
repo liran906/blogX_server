@@ -13,4 +13,5 @@ type Site struct {
 	Login      site.Login      `yaml:"login" json:"login"`
 	IndexRight site.IndexRight `yaml:"indexRight" json:"indexRight"`
 	Article    site.Article    `yaml:"article" json:"article"`
+	AutoGen    site.AutoGen    `yaml:"autoGen" json:"autoGen"`
 }

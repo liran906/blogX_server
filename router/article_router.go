@@ -22,6 +22,9 @@ func ArticleRouter(rg *gin.RouterGroup) {
 	rg.DELETE("article/:id", mdw.BindUriMiddleware[models.IDRequest], mdw.AuthMiddleware, app.ArticleRemoveView)
 	rg.DELETE("article", mdw.BindJsonMiddleware[models.IDListRequest], mdw.AdminMiddleware, app.ArticleBatchRemoveView)
 
+	// 自动发布
+	rg.POST("article_autogen", mdw.BindJsonMiddleware[article_api.ArticleCreateReq], app.ArticleAutoGenView)
+
 	// 置顶
 	rg.GET("article/admin_pin", app.ArticleAdminPinListView)
 	rg.GET("article/pin/:id", mdw.BindUriMiddleware[models.IDRequest], app.ArticlePinListView)

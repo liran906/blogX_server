@@ -22,6 +22,9 @@ var summarizePrompt string
 //go:embed prompt_stream.prompt
 var streamPrompt string
 
+//go:embed prompt_autogen.prompt
+var autoGenPrompt string
+
 type AIChatRequest struct {
 	Model    string    `json:"model"`
 	Messages []Message `json:"messages"`
@@ -39,6 +42,7 @@ const (
 	chatAiRequest      requestType = 1
 	summarizeAiRequest requestType = 2
 	streamAiRequest    requestType = 3
+	autogenAiRequest   requestType = 4
 )
 
 func baseRequest(msg string, reqType requestType) (res *http.Response, err error) {
@@ -51,6 +55,8 @@ func baseRequest(msg string, reqType requestType) (res *http.Response, err error
 		prompt = chatPrompt
 	case summarizeAiRequest:
 		prompt = summarizePrompt
+	case autogenAiRequest:
+		prompt = autoGenPrompt
 	case streamAiRequest:
 		prompt = streamPrompt
 		stream = true

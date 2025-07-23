@@ -71,3 +71,7 @@ func Chat(msg string) (resp string, err error) {
 func Summarize(msg string) (resp string, err error) {
 	return chat(msg, summarizeAiRequest)
 }
+
+func Autogen(msg string) (resp string, err error) {
+	return chat(msg, autogenAiRequest)
+}
