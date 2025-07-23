@@ -8,15 +8,17 @@ import (
 	"blogX_server/flags"
 	"blogX_server/global"
 	"fmt"
+	"os"
+
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
-	"os"
 )
 
 // ReadConf 读取 settings.yaml 设置文件并解析配置
 // 如果读取或解析过程中出现错误，将会触发panic
 func ReadConf() (c *conf.Config) {
 	// 从指定的配置文件路径读取内容
+	logrus.Info("读取配置文件: ", flags.FlagOptions.File)
 	byteData, err := os.ReadFile(flags.FlagOptions.File)
 	if err != nil {
 		panic(err)
