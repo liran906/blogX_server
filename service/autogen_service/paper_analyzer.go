@@ -76,7 +76,10 @@ func (s *AutogenService) AnalyzePaper(paper *crawler_service.ArxivPaper) (*Paper
 	cleanResponse = strings.TrimSuffix(cleanResponse, "```")
 	cleanResponse = strings.TrimSpace(cleanResponse)
 
-	// 5. 解析AI返回的JSON结果
+	// 5. 清理无效的JSON转义序列
+	cleanResponse = cleanInvalidJSONEscapes(cleanResponse)
+
+	// 6. 解析AI返回的JSON结果
 	var aiResult AIAnalysisResponse
 	err = json.Unmarshal([]byte(cleanResponse), &aiResult)
 	if err != nil {
@@ -84,7 +87,7 @@ func (s *AutogenService) AnalyzePaper(paper *crawler_service.ArxivPaper) (*Paper
 		return nil, fmt.Errorf("AI返回结果解析失败: %v", err)
 	}
 
-	// 6. 构建最终结果
+	// 7. 构建最终结果
 	result := &PaperAnalysisResult{
 		ArxivID:          paper.ArxivID,
 		Title:            paper.Title,
@@ -100,7 +103,7 @@ func (s *AutogenService) AnalyzePaper(paper *crawler_service.ArxivPaper) (*Paper
 		HtmlURL:          fmt.Sprintf("https://arxiv.org/abs/%s", paper.ArxivID),
 	}
 
-	// 7. 自动保存到缓存
+	// 8. 自动保存到缓存
 	s.saveAnalysisToCache(result)
 
 	logrus.Infof("论文 %s 分析完成，评分: %d（已缓存）", paper.ArxivID, result.Score)
@@ -210,11 +213,11 @@ func FormatAnalysisReport(results []*PaperAnalysisResult, category string) strin
 	for i, paper := range results {
 		// 👥 作者名称截断处理
 		authors := paper.Authors
-		if len(authors) > 30 {
-			authors = authors[:30] + "..."
+		if len(authors) > 100 {
+			authors = authors[:100] + "..."
 		}
 
-		body.WriteString(fmt.Sprintf("### %s\n\n", paper.Title))
+		body.WriteString(fmt.Sprintf("### %02d %s\n\n", i, paper.Title))
 		body.WriteString(fmt.Sprintf("**作者**: %s  \n", authors))
 		// 📋 标签展示
 		if len(paper.Tags) > 0 {
@@ -229,11 +232,10 @@ func FormatAnalysisReport(results []*PaperAnalysisResult, category string) strin
 		}
 		body.WriteString(fmt.Sprintf("**分析时间**: %s  \n", paper.AnalyzedAt))
 		body.WriteString(fmt.Sprintf("**论文源**: [ ArXiv ](%s) | [ PDF ](%s)  \n", paper.HtmlURL, paper.PdfURL))
-		body.WriteString(fmt.Sprintf("**本站评分**: `%d/100`\n", paper.Score))
-		body.WriteString(fmt.Sprintf("**本站分析**: %s  \n", paper.Justification))
-
 		body.WriteString(fmt.Sprintf("**AI摘要**: %s\n\n", paper.Abstract))
-
+		body.WriteString(fmt.Sprintf("**本站评分**: `%d/100`\n", paper.Score))
+		body.WriteString(fmt.Sprintf("**评分分析**: %s  \n", paper.Justification))
+		
 		// 分隔符（最后一篇不添加）
 		if i < len(results)-1 {
 			body.WriteString("---\n\n")
@@ -448,4 +450,65 @@ func getScoreEmoji(score int) string {
 	default:
 		return "📝" // 普通
 	}
+}
+
+// cleanInvalidJSONEscapes 清理无效的JSON转义序列
+func cleanInvalidJSONEscapes(jsonStr string) string {
+	// 定义有效的JSON转义字符
+	validEscapes := map[string]bool{
+		"\\\"": true, // 引号
+		"\\\\": true, // 反斜杠
+		"\\/":  true, // 斜杠
+		"\\b":  true, // 退格
+		"\\f":  true, // 换页
+		"\\n":  true, // 换行
+		"\\r":  true, // 回车
+		"\\t":  true, // 制表符
+	}
+
+	var result strings.Builder
+	i := 0
+
+	for i < len(jsonStr) {
+		if jsonStr[i] == '\\' && i+1 < len(jsonStr) {
+			// 检查是否是Unicode转义 \uXXXX
+			if jsonStr[i+1] == 'u' && i+5 < len(jsonStr) {
+				// 检查后面4个字符是否都是十六进制
+				isValidUnicode := true
+				for j := i + 2; j < i+6; j++ {
+					c := jsonStr[j]
+					if !((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')) {
+						isValidUnicode = false
+						break
+					}
+				}
+
+				if isValidUnicode {
+					// 有效的Unicode转义，保留
+					result.WriteString(jsonStr[i : i+6])
+					i += 6
+					continue
+				}
+			}
+
+			// 检查是否是有效的2字符转义序列
+			escapeSeq := jsonStr[i : i+2]
+			if validEscapes[escapeSeq] {
+				// 有效转义，保留
+				result.WriteString(escapeSeq)
+				i += 2
+			} else {
+				// 无效转义，移除反斜杠
+				logrus.Warnf("清理无效JSON转义序列: %s", escapeSeq)
+				result.WriteByte(jsonStr[i+1]) // 只保留转义后的字符
+				i += 2
+			}
+		} else {
+			// 普通字符，直接添加
+			result.WriteByte(jsonStr[i])
+			i++
+		}
+	}
+
+	return result.String()
 }
