@@ -17,15 +17,17 @@ func Cron() {
 	crontab := cron.New(cron.WithSeconds(), cron.WithLocation(timezone))
 
 	// 每天固定时间 去同步文章数据
-	_, err1 := crontab.AddFunc(global.Config.Redis.ArticleSyncTime, SyncArticle)
-	_, err2 := crontab.AddFunc(global.Config.Redis.CommentSyncTime, SyncComment)
-	_, err3 := crontab.AddFunc(global.Config.Redis.SiteDataSyncTime, SyncData)
-	_, err4 := crontab.AddFunc(global.Config.Redis.UserDataSyncTime, SyncUser)
-	if err1 != nil || err2 != nil || err3 != nil || err4 != nil {
+	_, err1 := crontab.AddFunc(global.Config.Redis.ArticleGenTime, AutoGenerateArxivAbstract)
+	_, err2 := crontab.AddFunc(global.Config.Redis.ArticleSyncTime, SyncArticle)
+	_, err3 := crontab.AddFunc(global.Config.Redis.CommentSyncTime, SyncComment)
+	_, err4 := crontab.AddFunc(global.Config.Redis.SiteDataSyncTime, SyncData)
+	_, err5 := crontab.AddFunc(global.Config.Redis.UserDataSyncTime, SyncUser)
+	if err1 != nil || err2 != nil || err3 != nil || err4 != nil || err5 != nil {
 		logrus.Panicln("crontab.AddFunc err:", err1)
 		logrus.Panicln("crontab.AddFunc err:", err2)
 		logrus.Panicln("crontab.AddFunc err:", err3)
 		logrus.Panicln("crontab.AddFunc err:", err4)
+		logrus.Panicln("crontab.AddFunc err:", err5)
 		return
 	}
 	crontab.Start()

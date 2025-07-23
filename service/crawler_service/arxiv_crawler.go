@@ -1,14 +1,11 @@
-package crawlerservice
+package crawler_service
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"regexp"
 	"strings"
 	"time"
-
-	"blogX_server/global"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/sirupsen/logrus"
@@ -17,10 +14,6 @@ import (
 const (
 	ArxivBaseURL = "https://arxiv.org"
 	UserAgent    = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-
-	// Redis键前缀
-	RedisKeyPrefix = "arxiv:papers:"
-	RedisListKey   = "arxiv:papers:list"
 )
 
 // ArxivPaper 简化的ArXiv论文结构体
@@ -303,137 +296,41 @@ func (ac *ArxivCrawler) CrawlPaperDetails(arxivID string) (*ArxivPaper, error) {
 	return paper, nil
 }
 
-// SaveToRedis 保存论文列表到Redis
-func (ac *ArxivCrawler) SaveToRedis(papers []ArxivPaper) error {
-	if global.Redis == nil {
-		logrus.Warn("Redis未连接，跳过保存")
-		return fmt.Errorf("redis未连接")
-	}
+// 移除了Redis存储功能 - AI分析结果将单独缓存
 
-	if len(papers) == 0 {
-		logrus.Warn("没有论文需要保存到Redis")
-		return nil
-	}
-
-	// 清除旧的列表
-	err := global.Redis.Del(RedisListKey).Err()
-	if err != nil {
-		logrus.Errorf("清除Redis列表失败: %v", err)
-	}
-
-	successCount := 0
-
-	for _, paper := range papers {
-		// 将论文转换为JSON
-		paperJSON, err := json.Marshal(paper)
-		if err != nil {
-			logrus.Errorf("序列化论文失败 %s: %v", paper.ArxivID, err)
-			continue
-		}
-
-		// 保存单个论文
-		redisKey := RedisKeyPrefix + paper.ArxivID
-		err = global.Redis.Set(redisKey, paperJSON, 24*time.Hour).Err() // 24小时过期
-		if err != nil {
-			logrus.Errorf("保存论文到Redis失败 %s: %v", paper.ArxivID, err)
-			continue
-		}
-
-		// 添加到列表
-		err = global.Redis.LPush(RedisListKey, paper.ArxivID).Err()
-		if err != nil {
-			logrus.Errorf("添加到Redis列表失败 %s: %v", paper.ArxivID, err)
-			continue
-		}
-
-		successCount++
-	}
-
-	// 设置列表过期时间
-	global.Redis.Expire(RedisListKey, 24*time.Hour)
-
-	logrus.Infof("成功保存 %d 篇论文到Redis", successCount)
-	return nil
-}
-
-// GetFromRedis 从Redis获取论文列表
-func (ac *ArxivCrawler) GetFromRedis(limit int) ([]ArxivPaper, error) {
-	if global.Redis == nil {
-		return nil, fmt.Errorf("redis未连接")
-	}
-
-	// 获取论文ID列表
-	arxivIDs, err := global.Redis.LRange(RedisListKey, 0, int64(limit-1)).Result()
-	if err != nil {
-		return nil, fmt.Errorf("获取Redis列表失败: %v", err)
-	}
-
-	var papers []ArxivPaper
-
-	for _, arxivID := range arxivIDs {
-		redisKey := RedisKeyPrefix + arxivID
-		paperJSON, err := global.Redis.Get(redisKey).Result()
-		if err != nil {
-			logrus.Errorf("获取论文失败 %s: %v", arxivID, err)
-			continue
-		}
-
-		var paper ArxivPaper
-		err = json.Unmarshal([]byte(paperJSON), &paper)
-		if err != nil {
-			logrus.Errorf("反序列化论文失败 %s: %v", arxivID, err)
-			continue
-		}
-
-		papers = append(papers, paper)
-	}
-
-	logrus.Infof("从Redis获取到 %d 篇论文", len(papers))
-	return papers, nil
-}
-
-// CrawlAndSave 爬取论文并保存到Redis
-func (ac *ArxivCrawler) CrawlAndSave() ([]ArxivPaper, error) {
+// CrawlWithDetails 爬取论文并获取详细信息
+func (ac *ArxivCrawler) CrawlWithDetails(maxDetails int) ([]ArxivPaper, error) {
 	// 爬取论文列表
-	papers, err := ac.CrawlRecentAIPapers()
+	papers, err := ac.CrawlRecentPapers()
 	if err != nil {
 		return nil, err
 	}
 
 	// 为前几篇论文获取额外详细信息（异步处理）
-	go func() {
-		maxDetails := 5 // 最多详细爬取5篇，因为摘要已经有了
-		if len(papers) < maxDetails {
-			maxDetails = len(papers)
-		}
-
-		for i := 0; i < maxDetails; i++ {
-			// 获取额外的详细信息，如DOI、详细分类等
-			detailedPaper, err := ac.CrawlPaperDetails(papers[i].ArxivID)
-			if err != nil {
-				logrus.Errorf("爬取论文详情失败 %s: %v", papers[i].ArxivID, err)
-				continue
+	if maxDetails > 0 && len(papers) > 0 {
+		go func() {
+			if len(papers) < maxDetails {
+				maxDetails = len(papers)
 			}
 
-			// 如果详情页面有更完整的摘要，则更新
-			if len(detailedPaper.Abstract) > len(papers[i].Abstract) {
-				papers[i].Abstract = detailedPaper.Abstract
+			for i := 0; i < maxDetails; i++ {
+				// 获取额外的详细信息，如DOI、详细分类等
+				detailedPaper, err := ac.CrawlPaperDetails(papers[i].ArxivID)
+				if err != nil {
+					logrus.Errorf("爬取论文详情失败 %s: %v", papers[i].ArxivID, err)
+					continue
+				}
+
+				// 如果详情页面有更完整的摘要，则更新
+				if len(detailedPaper.Abstract) > len(papers[i].Abstract) {
+					papers[i].Abstract = detailedPaper.Abstract
+				}
+
+				logrus.Infof("已获取论文 %s 的详细信息", papers[i].ArxivID)
+				// 控制频率，避免过快请求
+				time.Sleep(2 * time.Second)
 			}
-
-			logrus.Infof("已获取论文 %s 的详细信息", papers[i].ArxivID)
-			// 控制频率，避免过快请求
-			time.Sleep(2 * time.Second) // 增加间隔，因为是额外请求
-		}
-
-		// 保存更新后的论文到Redis
-		if err := ac.SaveToRedis(papers); err != nil {
-			logrus.Errorf("保存论文到Redis失败: %v", err)
-		}
-	}()
-
-	// 先保存基本信息到Redis
-	if err := ac.SaveToRedis(papers); err != nil {
-		logrus.Errorf("保存论文到Redis失败: %v", err)
+		}()
 	}
 
 	return papers, nil

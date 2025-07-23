@@ -1,4 +1,4 @@
-package crawlerservice
+package crawler_service
 
 import "fmt"
 

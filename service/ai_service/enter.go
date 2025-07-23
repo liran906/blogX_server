@@ -6,9 +6,10 @@ import (
 	"blogX_server/global"
 	_ "embed"
 	"encoding/json"
-	"github.com/sirupsen/logrus"
 	"net/http"
 	"strings"
+
+	"github.com/sirupsen/logrus"
 )
 
 const baseURL = "https://api.chatanywhere.tech/v1/chat/completions"
@@ -63,7 +64,7 @@ func baseRequest(msg string, reqType requestType) (res *http.Response, err error
 	}
 
 	var m = AIChatRequest{
-		Model: "gpt-3.5-turbo",
+		Model: "gpt-4o-mini", // 使用高性价比模型
 		Messages: []Message{
 			{
 				Role:    "system",

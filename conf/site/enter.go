@@ -64,5 +64,8 @@ type Article struct {
 }
 
 type AutoGen struct {
-	UserID uint `yaml:"userID" json:"userID"`
+	UserID     uint     `yaml:"userID" json:"userID"`
+	Categories []string `yaml:"categories" json:"categories"`
+	Limit      int      `yaml:"limit" json:"limit"`
+	Top        int      `yaml:"top" json:"top"`
 }
