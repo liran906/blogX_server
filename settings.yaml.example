@@ -1,0 +1,167 @@
+system:
+    ip: 127.0.0.1
+    port: 18080
+    env: dev
+    gin_mode: debug
+jwt:
+    expire: ""
+    secret: ""
+    issuer: ""
+logrus:
+    app: "your app name"
+    dir: logs
+filter:
+    invalidUsername:
+        - admin
+        - superuser
+        - test
+        - guest
+    validImageSuffix:
+        - jpg
+        - jpeg
+        - png
+        - webp
+        - gif
+redis:
+    addr: 127.0.0.1:6379
+    password: ""
+    db: 1
+    articleGenTime: 0 0 1 * * *
+    articleSyncTime: 0 0 2 * * *
+    commentSyncTime: 0 0 3 * * *
+    siteDataSyncTime: 0 0 4 * * *
+    userDataSyncTime: 0 0 5 * * *
+db:
+    - name: master
+      user: root
+      password: "password"
+      host: 127.0.0.1
+      port: 3306
+      dbname: blogx
+      debug: false
+      source: mysql
+    - name: slave
+      user: root
+      password: "password"
+      host: 127.0.0.1
+      port: 3307
+      dbname: blogx
+      debug: false
+      source: mysql
+es:
+    addr: ""
+    isHttps: false
+    username: ""
+    password: ""
+river:
+    enable: true
+    serverID: 1001
+    flavor: mysql
+    dataDir: ./var
+    sources:
+        - schema: blogx
+          tables:
+            - article_models
+            - text_models
+    rule:
+        - schema: blogx
+          table: article_models
+          index: article_index
+          type: _doc
+          field:
+            tags: tags,list
+        - schema: blogx
+          table: text_models
+          index: text_index
+          type: _doc
+          field: {}
+    bulkSize: 128
+site:
+    siteInfo:
+        title: ""
+        englishTitle: ""
+        slogan: ""
+        logoURL: ""
+        enableICP: ""
+        icp: ""
+        mode: 1
+    project:
+        title: ""
+        icon: ""
+        webPath: ""
+    seo:
+        keywords: ""
+        description: ""
+    about:
+        siteDate: ""
+        qqURL: ""
+        wechatURL: ""
+        gitee: ""
+        bilibili: ""
+        github: ""
+    login:
+        qqLogin: false
+        usernamePwdLogin: true
+        emailRegister: true
+        captcha: false
+    indexRight:
+        list:
+            - title: 标签云
+              enable: false
+            - title: 文章推荐
+              enable: false
+            - title: 用户反馈
+              enable: false
+            - title: 关于本站
+              enable: true
+            - title: 独家推广
+              enable: false
+            - title: 作者推荐
+              enable: false
+    article:
+        autoApprove: true
+        maxPin: 3
+        commentDepth: 3
+    autoGen:
+        userID:
+        categories:
+          - ""
+        limit: 100
+        top: 20
+ai:
+    enable: true
+    secretKey: "secret key"
+    nickname: ""
+    avatarURL: ""
+    abstract: ""
+    chatModel: gpt-4o-mini
+    thinkModel: deepseek-r1
+cloud:
+    qny:
+        enable: false
+        localSave: false
+        accessKey: "accessKey"
+        secretKey: "secretKey"
+        bucket: ""
+        uri: ""
+        region: z0
+        prefix: ""
+        size:
+        expiry:
+qq:
+    appID: ""
+    appKey: ""
+    redirect: ""
+email:
+    domain: smtp.gmail.com
+    port: 587
+    sendEmail: email@address.com
+    authCode: "authCode"
+    alias: ""
+    ssl: false
+    tls: true
+    codeExpiry: 10
+upload:
+    imageSizeLimit: 10
+    validImageSuffixes: []
+    imageDir: images

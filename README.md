@@ -1,4 +1,4 @@
-# Generation Blog
+# BlogX
 
 [![Go Version](https://img.shields.io/badge/Go-1.24-blue)](https://golang.org/)
 [![Vue.js](https://img.shields.io/badge/Vue.js-3.x-brightgreen)](https://vuejs.org/)
@@ -10,7 +10,9 @@
 
 ## 📖 项目简介
 
-Generation Blog 是一个功能完整的全栈博客项目，历时两个月开发完成。从 API 设计、数据库建模，到用户身份认证、文章发布、评论系统，再到搜索推荐、标签管理等一整套功能的实现。
+### [Live Demo](https://blog.golir.top)
+
+BlogX 是一个功能完整的全栈博客项目，历时两个月开发完成。从 API 设计、数据库建模，到用户身份认证、文章发布、评论系统，再到搜索推荐、标签管理等一整套功能的实现。
 
 这个博客承载了对"技术表达"的思考：构建一个既快速、稳定，又结构清晰的系统，让写作回归简单纯粹。
 
@@ -68,23 +70,23 @@ Generation Blog 是一个功能完整的全栈博客项目，历时两个月开�
 
 ### 后端技术
 
-| 技术 | 版本 | 说明 |
-|------|------|------|
-| Go | 1.24 | 核心开发语言 |
+| 技术 | 版本    | 说明 |
+|------|-------|------|
+| Go | 1.24  | 核心开发语言 |
 | Gin | 1.10+ | Web 框架 |
 | GORM | 1.30+ | ORM 框架 |
-| MySQL | 8.0 | 主数据库 |
-| Redis | 6.0+ | 缓存和会话 |
-| Elasticsearch | 7.x | 搜索引擎 |
-| JWT | - | 身份认证 |
-| Docker | - | 容器化部署 |
+| MySQL | 8.0   | 主数据库 |
+| Redis | 6.0+  | 缓存和会话 |
+| Elasticsearch | 7.12  | 搜索引擎 |
+| JWT | -     | 身份认证 |
+| Docker | -     | 容器化部署 |
 
 ### 第三方服务
 
-- **AI 服务**：ChatGPT 3.5 (计划迁移至 DeepSeek v3)
-- **对象存储**：七牛云存储
-- **邮件服务**：SMTP 邮件发送
-- **IP 定位**：ip2region 库
+- **AI 服务**：[ChatAnywhere](https://github.com/chatanywhere/GPT_API_free)
+- **对象存储**：[七牛云存储](https://sso.qiniu.com/)
+- **邮件服务**：[Gmail](https://mail.google.com)
+- **IP 定位**：[ip2region](https://github.com/lionsoul2014/ip2region)
 
 ## 📦 快速开始
 
@@ -649,10 +651,6 @@ A: 在 `settings.yaml` 中配置 `cloud.qny` 相关参数，支持七牛云存�
 - 环境信息
 - 错误日志
 
-## 📄 许可证
-
-本项目采用 MIT 许可证。详见 [LICENSE](LICENSE) 文件。
-
 ## 🙏 致谢
 
 感谢所有使用和贡献本项目的开发者！
@@ -666,10 +664,10 @@ A: 在 `settings.yaml` 中配置 `cloud.qny` 相关参数，支持七牛云存�
 
 ## 🔗 相关链接
 
-- **项目主页**: [Generation Blog](https://your-blog-url.com)
-- **API 文档**: [API Documentation](https://your-api-docs.com)
-- **前端项目**: [Vue Frontend Repository](https://github.com/your-frontend-repo)
-- **作者博客**: [LIR's Blog](https://your-personal-blog.com)
+- **项目主页**: [Generation Blog](https://blog.golir.top)
+- **API 文档**: [API Documentation](https://blog.golir.top/uploads/apidoc_postman.json)
+- **前端项目**: [Vue Frontend Repository](https://github.com/liran906/blogX_web)
+- **作者博客**: [LIR's Blog](https://blog.golir.top)
 
 ---
 
