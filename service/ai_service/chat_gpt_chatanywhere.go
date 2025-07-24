@@ -6,8 +6,9 @@ package ai_service
 
 import (
 	"encoding/json"
-	"github.com/sirupsen/logrus"
 	"io"
+
+	"github.com/sirupsen/logrus"
 )
 
 // 响应体
@@ -74,4 +75,8 @@ func Summarize(msg string) (resp string, err error) {
 
 func Autogen(msg string) (resp string, err error) {
 	return chat(msg, autogenAiRequest)
+}
+
+func BatchScoring(msg string) (resp string, err error) {
+	return chat(msg, batchScoringAiRequest)
 }

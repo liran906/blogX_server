@@ -26,6 +26,9 @@ var streamPrompt string
 //go:embed prompt_autogen.prompt
 var autoGenPrompt string
 
+//go:embed prompt_batch_scoring.prompt
+var batchScoringPrompt string
+
 type AIChatRequest struct {
 	Model    string    `json:"model"`
 	Messages []Message `json:"messages"`
@@ -40,10 +43,11 @@ type Message struct {
 type requestType int8
 
 const (
-	chatAiRequest      requestType = 1
-	summarizeAiRequest requestType = 2
-	streamAiRequest    requestType = 3
-	autogenAiRequest   requestType = 4
+	chatAiRequest         requestType = 1
+	summarizeAiRequest    requestType = 2
+	streamAiRequest       requestType = 3
+	autogenAiRequest      requestType = 4
+	batchScoringAiRequest requestType = 5
 )
 
 func baseRequest(msg string, reqType requestType) (res *http.Response, err error) {
@@ -61,6 +65,8 @@ func baseRequest(msg string, reqType requestType) (res *http.Response, err error
 	case streamAiRequest:
 		prompt = streamPrompt
 		stream = true
+	case batchScoringAiRequest:
+		prompt = batchScoringPrompt
 	}
 
 	var m = AIChatRequest{
