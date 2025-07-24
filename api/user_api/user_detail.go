@@ -54,6 +54,7 @@ type UserDetailResponse struct {
 	ReceivePrivateMessage  bool                    `json:"receivePrivateMessage"`
 	ReceiveStrangerMessage bool                    `json:"receiveStrangerMessage"`
 	HomepageVisitCount     int                     `json:"homepageVisitCount"`
+	Subscribe              bool                    `json:"subscribe"`
 }
 type OtherUserDetailResponse struct {
 	ID                 uint       `json:"id"`
@@ -151,6 +152,7 @@ func (UserApi) UserDetailView(c *gin.Context) {
 			resp.DisplayFans = u.UserConfigModel.DisplayFans
 			resp.DisplayFollowing = u.UserConfigModel.DisplayFollowing
 			resp.HomepageVisitCount = u.UserConfigModel.HomepageVisitCount
+			resp.Subscribe = u.UserConfigModel.Subscribe
 		}
 		if u.UserMessageConfModel != nil {
 			resp.ReceiveCommentNotify = u.UserMessageConfModel.ReceiveCommentNotify

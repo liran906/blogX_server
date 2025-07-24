@@ -11,9 +11,7 @@ import (
 	"blogX_server/service/log_service"
 	"blogX_server/utils/jwts"
 	"blogX_server/utils/pwd"
-	"fmt"
 	"github.com/gin-gonic/gin"
-	"math/rand"
 	"time"
 )
 
@@ -91,7 +89,7 @@ func (UserApi) RegisterEmailView(c *gin.Context) {
 	// 创建
 	user := models.UserModel{
 		Username:       req.Username,
-		Nickname:       fmt.Sprintf("用户%05d", rand.Intn(100000)),
+		Nickname:       req.Username,
 		Email:          emailAddr.(string),
 		Password:       hashPwd,
 		RegisterSource: enum.RegisterSourceEmailType,
