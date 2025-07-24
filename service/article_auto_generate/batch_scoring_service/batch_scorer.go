@@ -2,7 +2,7 @@ package batch_scoring_service
 
 import (
 	"blogX_server/service/ai_service"
-	"blogX_server/service/crawler_service"
+	"blogX_server/service/article_auto_generate/crawler_service"
 	"encoding/json"
 	"fmt"
 	"math"
@@ -44,17 +44,20 @@ type BatchScoringResponse struct {
 
 // PaperBatchScore 论文批次评分结果
 type PaperBatchScore struct {
-	ArxivID   string // ArXiv ID
-	Score     int    // 分数
-	Reasoning string // 评分理由
+	ArxivID    string // ArXiv ID
+	Innovation int    // 创新性分数 (0-40)
+	Technical  int    // 技术深度分数 (0-30)
+	Practical  int    // 实用性分数 (0-30)
+	Total      int    // 总分 (0-100)
 }
 
 // AI返回的JSON结构
 type batchScoringAIResponse struct {
 	Papers []struct {
-		PaperID   string `json:"paper_id"`
-		Score     int    `json:"score"`
-		Reasoning string `json:"reasoning"`
+		PaperID    string `json:"paper_id"`
+		Innovation int    `json:"innovation"`
+		Technical  int    `json:"technical"`
+		Practical  int    `json:"practical"`
 	} `json:"papers"`
 }
 
@@ -180,10 +183,13 @@ func (bs *BatchScorer) parseAIResponse(rawResponse string, papers []crawler_serv
 			continue
 		}
 
+		total := aiResult.Innovation + aiResult.Technical + aiResult.Practical
 		results = append(results, PaperBatchScore{
-			ArxivID:   arxivID,
-			Score:     aiResult.Score,
-			Reasoning: aiResult.Reasoning,
+			ArxivID:    arxivID,
+			Innovation: aiResult.Innovation,
+			Technical:  aiResult.Technical,
+			Practical:  aiResult.Practical,
+			Total:      total,
 		})
 	}
 
@@ -198,15 +204,24 @@ func (bs *BatchScorer) validateBatchResults(results []PaperBatchScore, papers []
 
 	// 检查分数范围
 	for _, result := range results {
-		if result.Score < 0 || result.Score > 100 {
-			return fmt.Errorf("论文 %s 的分数 %d 超出范围[0,100]", result.ArxivID, result.Score)
+		if result.Total < 0 || result.Total > 100 {
+			return fmt.Errorf("论文 %s 的总分 %d 超出范围[0,100]", result.ArxivID, result.Total)
+		}
+		if result.Innovation < 0 || result.Innovation > 40 {
+			return fmt.Errorf("论文 %s 的创新性分数 %d 超出范围[0,40]", result.ArxivID, result.Innovation)
+		}
+		if result.Technical < 0 || result.Technical > 30 {
+			return fmt.Errorf("论文 %s 的技术深度分数 %d 超出范围[0,30]", result.ArxivID, result.Technical)
+		}
+		if result.Practical < 0 || result.Practical > 30 {
+			return fmt.Errorf("论文 %s 的实用性分数 %d 超出范围[0,30]", result.ArxivID, result.Practical)
 		}
 	}
 
 	// 检查分数区分度
 	scores := make([]int, len(results))
 	for i, result := range results {
-		scores[i] = result.Score
+		scores[i] = result.Total
 	}
 	sort.Ints(scores)
 
@@ -223,83 +238,97 @@ func (bs *BatchScorer) validateBatchResults(results []PaperBatchScore, papers []
 	return nil
 }
 
-// DetectScoreConflict 检测两个分数是否存在冲突
-func (bs *BatchScorer) DetectScoreConflict(score1, score2 int) bool {
-	diff := int(math.Abs(float64(score1 - score2)))
-	return diff > bs.config.ScoreDiffThreshold
+// DetectScoreConflict 检测两个详细分数是否存在冲突
+func (bs *BatchScorer) DetectScoreConflict(score1, score2 *DetailedScore) bool {
+	if score1 == nil || score2 == nil {
+		return false
+	}
+
+	// 检查总分差异
+	totalDiff := int(math.Abs(float64(score1.Total - score2.Total)))
+	if totalDiff > bs.config.ScoreDiffThreshold {
+		return true
+	}
+
+	// 检查各项分数差异（相对阈值）
+	innovationDiff := int(math.Abs(float64(score1.Innovation - score2.Innovation)))
+	technicalDiff := int(math.Abs(float64(score1.Technical - score2.Technical)))
+	practicalDiff := int(math.Abs(float64(score1.Practical - score2.Practical)))
+
+	// 如果任何一项差异超过该项满分的50%，认为有冲突
+	return innovationDiff > 20 || technicalDiff > 15 || practicalDiff > 15
 }
 
-// ScoreIndividualPaper 对单篇论文进行第三次评分
-func (bs *BatchScorer) ScoreIndividualPaper(paper crawler_service.ArxivPaper) (*int, error) {
-	logrus.Infof("开始第三次评分：论文 %s", paper.ArxivID)
+// ScoreThirdRoundBatch 对需要第三次评分的论文进行批次评分
+func (bs *BatchScorer) ScoreThirdRoundBatch(papers []crawler_service.ArxivPaper) (map[string]*DetailedScore, error) {
+	if len(papers) == 0 {
+		return make(map[string]*DetailedScore), nil
+	}
 
-	// 构建单篇论文的输入
-	inputText := fmt.Sprintf("标题：%s\n内容：%s", paper.Title, paper.Abstract)
+	logrus.Infof("开始第三次批次评分：%d篇论文", len(papers))
 
-	// 调用AI进行单独评分
-	rawResponse, err := ai_service.Autogen(inputText)
+	// 构建批次评分请求
+	request := BatchScoringRequest{
+		BatchID: 9999, // 特殊的第三次评分BatchID
+		Papers:  papers,
+		Attempt: 1,
+	}
+
+	// 执行批次评分
+	response, err := bs.ScoreBatch(request)
 	if err != nil {
-		return nil, fmt.Errorf("AI调用失败: %v", err)
+		return nil, fmt.Errorf("第三次批次评分失败: %v", err)
 	}
 
-	// 解析单独评分的响应（使用autogen的JSON格式）
-	score, err := bs.parseIndividualScore(rawResponse)
-	if err != nil {
-		return nil, fmt.Errorf("解析单独评分失败: %v", err)
+	if !response.Success {
+		return nil, fmt.Errorf("第三次批次评分不成功: %s", response.Error)
 	}
 
-	logrus.Infof("第三次评分完成：论文 %s, 分数 %d", paper.ArxivID, *score)
-	return score, nil
-}
-
-// parseIndividualScore 解析单独评分的响应
-func (bs *BatchScorer) parseIndividualScore(rawResponse string) (*int, error) {
-	// 清理响应文本，提取JSON部分
-	jsonStart := strings.Index(rawResponse, "{")
-	jsonEnd := strings.LastIndex(rawResponse, "}") + 1
-
-	if jsonStart == -1 || jsonEnd == 0 || jsonStart >= jsonEnd {
-		return nil, fmt.Errorf("响应中未找到有效的JSON: %s", rawResponse)
+	// 转换结果格式
+	result := make(map[string]*DetailedScore)
+	for _, batchScore := range response.Results {
+		result[batchScore.ArxivID] = &DetailedScore{
+			Innovation: batchScore.Innovation,
+			Technical:  batchScore.Technical,
+			Practical:  batchScore.Practical,
+			Total:      batchScore.Total,
+		}
 	}
 
-	jsonStr := rawResponse[jsonStart:jsonEnd]
-
-	// 解析autogen的JSON格式
-	var response struct {
-		Score int `json:"score"`
-	}
-
-	if err := json.Unmarshal([]byte(jsonStr), &response); err != nil {
-		return nil, fmt.Errorf("JSON解析失败: %v, 原始数据: %s", err, jsonStr)
-	}
-
-	return &response.Score, nil
+	logrus.Infof("第三次批次评分完成：成功评分%d篇论文", len(result))
+	return result, nil
 }
 
 // MergeFinalScore 合并最终分数
-func (bs *BatchScorer) MergeFinalScore(score1, score2 int, score3 *int) float64 {
+func (bs *BatchScorer) MergeFinalScore(score1, score2 *DetailedScore, score3 *DetailedScore) float64 {
+	if score1 == nil || score2 == nil {
+		return 0.0
+	}
+
 	if score3 == nil {
 		// 无冲突，直接平均
-		return float64(score1+score2) / 2.0
+		return float64(score1.Total+score2.Total) / 2.0
 	}
 
 	// 有冲突，选择最接近的两个分数的平均值
-	scores := []int{score1, score2, *score3}
-	sort.Ints(scores)
-
-	// 计算相邻分数的差距
-	diff1 := scores[1] - scores[0]
-	diff2 := scores[2] - scores[1]
+	// 计算两两之间的总分差异
+	diff12 := math.Abs(float64(score1.Total - score2.Total))
+	diff13 := math.Abs(float64(score1.Total - score3.Total))
+	diff23 := math.Abs(float64(score2.Total - score3.Total))
 
 	var finalScore float64
-	if diff1 <= diff2 {
-		// 选择前两个分数的平均值
-		finalScore = float64(scores[0]+scores[1]) / 2.0
-		logrus.Infof("选择最接近的两个分数: %d, %d, 平均值: %.1f", scores[0], scores[1], finalScore)
+	if diff12 <= diff13 && diff12 <= diff23 {
+		// score1和score2最接近
+		finalScore = float64(score1.Total+score2.Total) / 2.0
+		logrus.Infof("选择最接近的两个分数: %d, %d, 平均值: %.1f", score1.Total, score2.Total, finalScore)
+	} else if diff13 <= diff23 {
+		// score1和score3最接近
+		finalScore = float64(score1.Total+score3.Total) / 2.0
+		logrus.Infof("选择最接近的两个分数: %d, %d, 平均值: %.1f", score1.Total, score3.Total, finalScore)
 	} else {
-		// 选择后两个分数的平均值
-		finalScore = float64(scores[1]+scores[2]) / 2.0
-		logrus.Infof("选择最接近的两个分数: %d, %d, 平均值: %.1f", scores[1], scores[2], finalScore)
+		// score2和score3最接近
+		finalScore = float64(score2.Total+score3.Total) / 2.0
+		logrus.Infof("选择最接近的两个分数: %d, %d, 平均值: %.1f", score2.Total, score3.Total, finalScore)
 	}
 
 	return finalScore

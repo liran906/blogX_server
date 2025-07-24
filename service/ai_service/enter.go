@@ -54,7 +54,9 @@ func baseRequest(msg string, reqType requestType) (res *http.Response, err error
 	method := "POST"
 
 	var prompt string
-	var stream = false
+	var stream = false                     // 默认非流式
+	var model = global.Config.Ai.ChatModel // 默认使用高性价比模型
+
 	switch reqType {
 	case chatAiRequest:
 		prompt = chatPrompt
@@ -67,10 +69,11 @@ func baseRequest(msg string, reqType requestType) (res *http.Response, err error
 		stream = true
 	case batchScoringAiRequest:
 		prompt = batchScoringPrompt
+		model = global.Config.Ai.ThinkModel
 	}
 
 	var m = AIChatRequest{
-		Model: "gpt-4o-mini", // 使用高性价比模型
+		Model: model,
 		Messages: []Message{
 			{
 				Role:    "system",

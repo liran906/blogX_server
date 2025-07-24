@@ -1,7 +1,7 @@
 package autogen_service
 
 import (
-	"blogX_server/service/crawler_service"
+	"blogX_server/service/article_auto_generate/crawler_service"
 )
 
 // AutogenService AI自动分析服务

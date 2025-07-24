@@ -2,7 +2,7 @@ package redis_ai_cache
 
 import (
 	"blogX_server/global"
-	"blogX_server/service/batch_scoring_service"
+	"blogX_server/service/article_auto_generate/batch_scoring_service"
 	"crypto/md5"
 	"encoding/json"
 	"fmt"

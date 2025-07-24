@@ -6,7 +6,7 @@ import (
 	"blogX_server/core"
 	"blogX_server/flags"
 	"blogX_server/global"
-	"blogX_server/service/crawler_service"
+	"blogX_server/service/article_auto_generate/crawler_service"
 
 	"github.com/sirupsen/logrus"
 )

@@ -1,3 +1,8 @@
+// Package autogen_service 提供论文自动分析服务
+//
+// **重要提示**: 本文件中的分析函数已被新的批次评分系统取代
+// 推荐使用: service/batch_scoring_service 进行论文评分和分析
+// 当前文件仅保留缓存管理功能，分析功能标记为 @deprecated
 package autogen_service
 
 import (
@@ -9,7 +14,8 @@ import (
 
 	"blogX_server/global"
 	"blogX_server/service/ai_service"
-	"blogX_server/service/crawler_service"
+	"blogX_server/service/article_auto_generate/crawler_service"
+	"blogX_server/service/common_utils"
 
 	"github.com/sirupsen/logrus"
 )
@@ -18,7 +24,7 @@ const (
 	// AI分析结果Redis缓存键前缀
 	AnalysisResultPrefix = "ai_analysis:"
 	// 分析结果缓存时间（7天）
-	AnalysisCacheExpiration = 7 * 24 * time.Hour
+	AnalysisCacheExpiration = 23 * time.Hour
 )
 
 // PaperAnalysisResult AI分析结果结构体
@@ -46,6 +52,7 @@ type AIAnalysisResponse struct {
 }
 
 // AnalyzePaper 分析单篇论文（自动处理缓存）
+// @deprecated 推荐使用 batch_scoring_service.TwoStageAnalyzer 进行批次评分
 func (s *AutogenService) AnalyzePaper(paper *crawler_service.ArxivPaper) (*PaperAnalysisResult, error) {
 	if paper == nil {
 		return nil, fmt.Errorf("论文数据为空")
@@ -111,6 +118,7 @@ func (s *AutogenService) AnalyzePaper(paper *crawler_service.ArxivPaper) (*Paper
 }
 
 // AnalyzePapers 批量分析论文（自动缓存）
+// @deprecated 推荐使用 batch_scoring_service.TwoStageAnalyzer 进行批次评分
 func (s *AutogenService) AnalyzePapers(papers []crawler_service.ArxivPaper) ([]*PaperAnalysisResult, error) {
 	if len(papers) == 0 {
 		return nil, fmt.Errorf("论文列表为空")
@@ -141,6 +149,7 @@ func (s *AutogenService) AnalyzePapers(papers []crawler_service.ArxivPaper) ([]*
 }
 
 // AnalyzePapersWithCache 带缓存的批量论文分析（简化版）
+// @deprecated 推荐使用 batch_scoring_service.TwoStageAnalyzer 进行批次评分
 func (s *AutogenService) AnalyzePapersWithCache(papers []crawler_service.ArxivPaper) ([]*PaperAnalysisResult, error) {
 	logrus.Infof("开始分析 %d 篇论文（自动缓存）", len(papers))
 
@@ -180,6 +189,7 @@ func GetTopScoredPapers(results []*PaperAnalysisResult, topN int) []*PaperAnalys
 }
 
 // FormatAnalysisReport 格式化分析报告为 Markdown 格式
+// @deprecated 推荐使用 article_autogen.formatTwoStageAnalysisReport
 func FormatAnalysisReport(results []*PaperAnalysisResult, category string) string {
 	if len(results) == 0 {
 		return "## 📊 AI论文分析报告\n\n> ❌ 没有分析结果"
@@ -199,9 +209,9 @@ func FormatAnalysisReport(results []*PaperAnalysisResult, category string) strin
 	for _, result := range results {
 		scores = append(scores, result.Score)
 	}
-	avgScore := calculateAverage(scores)
-	maxScore := findMax(scores)
-	minScore := findMin(scores)
+	avgScore := common_utils.CalculateAverage(scores)
+	maxScore := common_utils.FindMax(scores)
+	minScore := common_utils.FindMin(scores)
 
 	body.WriteString(fmt.Sprintf("- **最高分**: `%d`  \n", maxScore))
 	body.WriteString(fmt.Sprintf("- **平均分**: `%.1f`  \n", avgScore))
@@ -212,10 +222,7 @@ func FormatAnalysisReport(results []*PaperAnalysisResult, category string) strin
 	// 📝 论文详情
 	for i, paper := range results {
 		// 👥 作者名称截断处理
-		authors := paper.Authors
-		if len(authors) > 100 {
-			authors = authors[:100] + "..."
-		}
+		authors := common_utils.TruncateAuthor(paper.Authors, 100)
 
 		body.WriteString(fmt.Sprintf("### %02d %s\n\n", i, paper.Title))
 		body.WriteString(fmt.Sprintf("**作者**: %s  \n", authors))
@@ -235,7 +242,7 @@ func FormatAnalysisReport(results []*PaperAnalysisResult, category string) strin
 		body.WriteString(fmt.Sprintf("**AI摘要**: %s\n\n", paper.Abstract))
 		body.WriteString(fmt.Sprintf("**本站评分**: `%d/100`\n", paper.Score))
 		body.WriteString(fmt.Sprintf("**评分分析**: %s  \n", paper.Justification))
-		
+
 		// 分隔符（最后一篇不添加）
 		if i < len(results)-1 {
 			body.WriteString("---\n\n")
@@ -246,6 +253,7 @@ func FormatAnalysisReport(results []*PaperAnalysisResult, category string) strin
 }
 
 // AnalyzePapersForWriting 专门用于写文章的论文分析（推荐使用）
+// @deprecated 推荐使用 batch_scoring_service.TwoStageAnalyzer 进行批次评分
 func (s *AutogenService) AnalyzePapersForWriting(category crawler_service.ArxivCategory, limit int, topN int) ([]*PaperAnalysisResult, error) {
 	// 1. 实时爬取最新论文
 	crawler := crawler_service.NewArxivCrawlerWithCategory(category)
@@ -273,6 +281,7 @@ func (s *AutogenService) AnalyzePapersForWriting(category crawler_service.ArxivC
 }
 
 // AnalyzePapersFromList 从给定论文列表中分析并选择高分论文
+// @deprecated 推荐使用 batch_scoring_service.TwoStageAnalyzer 进行批次评分
 func (s *AutogenService) AnalyzePapersFromList(papers []crawler_service.ArxivPaper, topN int) ([]*PaperAnalysisResult, error) {
 	// 1. 批量分析（不缓存，确保评分标准一致）
 	results, err := s.AnalyzePapers(papers)
@@ -391,65 +400,27 @@ func (s *AutogenService) GetCacheStats() (map[string]interface{}, error) {
 }
 
 // calculateAverage 计算平均值
+// @deprecated 使用 common_utils.CalculateAverage 替代
 func calculateAverage(scores []int) float64 {
-	if len(scores) == 0 {
-		return 0
-	}
-
-	sum := 0
-	for _, score := range scores {
-		sum += score
-	}
-
-	return float64(sum) / float64(len(scores))
+	return common_utils.CalculateAverage(scores)
 }
 
 // findMax 找最大值
+// @deprecated 使用 common_utils.FindMax 替代
 func findMax(scores []int) int {
-	if len(scores) == 0 {
-		return 0
-	}
-
-	max := scores[0]
-	for _, score := range scores {
-		if score > max {
-			max = score
-		}
-	}
-
-	return max
+	return common_utils.FindMax(scores)
 }
 
 // findMin 找最小值
+// @deprecated 使用 common_utils.FindMin 替代
 func findMin(scores []int) int {
-	if len(scores) == 0 {
-		return 0
-	}
-
-	min := scores[0]
-	for _, score := range scores {
-		if score < min {
-			min = score
-		}
-	}
-
-	return min
+	return common_utils.FindMin(scores)
 }
 
 // getScoreEmoji 根据评分返回表情符号
+// @deprecated 使用 common_utils.GetScoreEmoji 替代
 func getScoreEmoji(score int) string {
-	switch {
-	case score >= 90:
-		return "🔥" // 优秀
-	case score >= 80:
-		return "⭐" // 良好
-	case score >= 70:
-		return "👍" // 不错
-	case score >= 60:
-		return "👌" // 一般
-	default:
-		return "📝" // 普通
-	}
+	return common_utils.GetScoreEmoji(float64(score))
 }
 
 // cleanInvalidJSONEscapes 清理无效的JSON转义序列

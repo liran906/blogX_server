@@ -2,7 +2,7 @@ package batch_scoring_service
 
 import (
 	"blogX_server/service/ai_service"
-	"blogX_server/service/crawler_service"
+	"blogX_server/service/article_auto_generate/crawler_service"
 	"encoding/json"
 	"fmt"
 	"sort"
@@ -46,13 +46,13 @@ type TwoStageAnalysisResult struct {
 
 // DetailedAnalysis 详细分析结果
 type DetailedAnalysis struct {
-	ArxivID   string   `json:"arxiv_id"`
-	Title     string   `json:"title"`
-	Abstract  string   `json:"abstract"`
-	Score     int      `json:"score"`
-	Tags      []string `json:"tags"`
-	Reasoning string   `json:"reasoning"`
-	Summary   string   `json:"summary"`
+	ArxivID    string   `json:"arxiv_id"`
+	Title      string   `json:"title"`
+	Authors    string   `json:"authors"`
+	Abstract   string   `json:"abstract"`
+	Tags       []string `json:"tags"`
+	Evaluation string   `json:"evaluation"` // 专业评价
+	Summary    string   `json:"summary"`    // 中文摘要
 }
 
 // AnalysisStatistics 分析统计信息
@@ -224,6 +224,7 @@ func (tsa *TwoStageAnalyzer) scoreBatchWithRetry(batchID int, papers []crawler_s
 // mergeBatchResults 合并批次结果，处理冲突检测和第三次评分
 func (tsa *TwoStageAnalyzer) mergeBatchResults(batchResults map[int]*BatchScoringResponse, papers []crawler_service.ArxivPaper, allocation *BatchAllocation) ([]PaperScore, error) {
 	paperScores := make([]PaperScore, 0, len(papers))
+	conflictPapers := make([]crawler_service.ArxivPaper, 0)
 	paperMap := make(map[string]crawler_service.ArxivPaper)
 
 	// 建立论文映射
@@ -231,7 +232,14 @@ func (tsa *TwoStageAnalyzer) mergeBatchResults(batchResults map[int]*BatchScorin
 		paperMap[paper.ArxivID] = paper
 	}
 
-	// 为每篇论文收集分数
+	// 第一步：收集所有论文的前两次评分，并识别冲突论文
+	paperFirstTwoScores := make(map[string]*struct {
+		Score1   *DetailedScore
+		Score2   *DetailedScore
+		BatchIDs []int
+		Paper    crawler_service.ArxivPaper
+	})
+
 	for paperIndex, paper := range papers {
 		batches := allocation.PaperToBatches[paperIndex]
 		if len(batches) != 2 {
@@ -244,32 +252,83 @@ func (tsa *TwoStageAnalyzer) mergeBatchResults(batchResults map[int]*BatchScorin
 			return nil, fmt.Errorf("获取论文 %s 的批次评分失败: %v", paper.ArxivID, err)
 		}
 
-		// 检测冲突并处理第三次评分
-		var score3 *int
+		paperFirstTwoScores[paper.ArxivID] = &struct {
+			Score1   *DetailedScore
+			Score2   *DetailedScore
+			BatchIDs []int
+			Paper    crawler_service.ArxivPaper
+		}{
+			Score1:   score1,
+			Score2:   score2,
+			BatchIDs: batches,
+			Paper:    paper,
+		}
+
+		// 检测冲突
+		if tsa.batchScorer.DetectScoreConflict(score1, score2) {
+			logrus.Warnf("论文 %s 分数冲突：总分 %d vs %d，需要第三次评分",
+				paper.ArxivID, score1.Total, score2.Total)
+			conflictPapers = append(conflictPapers, paper)
+		}
+	}
+
+	// 第二步：对冲突论文进行第三次批次评分
+	var thirdRoundScores map[string]*DetailedScore
+	if len(conflictPapers) > 0 {
+		logrus.Infof("开始第三次批次评分，共%d篇冲突论文", len(conflictPapers))
+
+		// 按batch size分组处理第三次评分
+		thirdRoundScores = make(map[string]*DetailedScore)
+		batchSize := tsa.config.ThirdRoundBatchSize
+
+		for i := 0; i < len(conflictPapers); i += batchSize {
+			end := i + batchSize
+			if end > len(conflictPapers) {
+				end = len(conflictPapers)
+			}
+
+			subBatch := conflictPapers[i:end]
+			scores, err := tsa.batchScorer.ScoreThirdRoundBatch(subBatch)
+			if err != nil {
+				logrus.Errorf("第三次批次评分失败: %v", err)
+				// 对于失败的论文，设置为nil
+				for _, paper := range subBatch {
+					thirdRoundScores[paper.ArxivID] = nil
+				}
+			} else {
+				// 合并结果
+				for arxivID, score := range scores {
+					thirdRoundScores[arxivID] = score
+				}
+			}
+		}
+	}
+
+	// 第三步：合并所有评分结果
+	for _, paperData := range paperFirstTwoScores {
+		var score3 *DetailedScore
 		status := StatusCompleted
 
-		if tsa.batchScorer.DetectScoreConflict(score1, score2) {
-			logrus.Warnf("论文 %s 分数冲突：%d vs %d，进行第三次评分", paper.ArxivID, score1, score2)
-			thirdScore, err := tsa.batchScorer.ScoreIndividualPaper(paper)
-			if err != nil {
-				logrus.Errorf("论文 %s 第三次评分失败: %v", paper.ArxivID, err)
-				status = StatusFailed
-			} else {
-				score3 = thirdScore
+		// 检查是否需要第三次评分
+		if _, hasConflict := thirdRoundScores[paperData.Paper.ArxivID]; hasConflict {
+			score3 = thirdRoundScores[paperData.Paper.ArxivID]
+			if score3 != nil {
 				status = StatusThirdRound
+			} else {
+				status = StatusFailed
 			}
 		}
 
 		// 计算最终分数
-		finalScore := tsa.batchScorer.MergeFinalScore(score1, score2, score3)
+		finalScore := tsa.batchScorer.MergeFinalScore(paperData.Score1, paperData.Score2, score3)
 
 		paperScores = append(paperScores, PaperScore{
-			ArxivID:    paper.ArxivID,
-			Score1:     score1,
-			Score2:     score2,
+			ArxivID:    paperData.Paper.ArxivID,
+			Score1:     paperData.Score1,
+			Score2:     paperData.Score2,
 			Score3:     score3,
 			FinalScore: finalScore,
-			BatchIDs:   batches,
+			BatchIDs:   paperData.BatchIDs,
 			Status:     status,
 		})
 	}
@@ -278,28 +337,33 @@ func (tsa *TwoStageAnalyzer) mergeBatchResults(batchResults map[int]*BatchScorin
 }
 
 // getBatchScoresForPaper 获取论文在两个批次中的评分
-func (tsa *TwoStageAnalyzer) getBatchScoresForPaper(arxivID string, batchIDs []int, batchResults map[int]*BatchScoringResponse) (int, int, error) {
+func (tsa *TwoStageAnalyzer) getBatchScoresForPaper(arxivID string, batchIDs []int, batchResults map[int]*BatchScoringResponse) (*DetailedScore, *DetailedScore, error) {
 	if len(batchIDs) != 2 {
-		return 0, 0, fmt.Errorf("论文 %s 的批次数量异常: %d", arxivID, len(batchIDs))
+		return nil, nil, fmt.Errorf("论文 %s 的批次数量异常: %d", arxivID, len(batchIDs))
 	}
 
 	batch1Result, exists1 := batchResults[batchIDs[0]]
 	if !exists1 || !batch1Result.Success {
-		return 0, 0, fmt.Errorf("批次 %d 结果不存在或失败", batchIDs[0])
+		return nil, nil, fmt.Errorf("批次 %d 结果不存在或失败", batchIDs[0])
 	}
 
 	batch2Result, exists2 := batchResults[batchIDs[1]]
 	if !exists2 || !batch2Result.Success {
-		return 0, 0, fmt.Errorf("批次 %d 结果不存在或失败", batchIDs[1])
+		return nil, nil, fmt.Errorf("批次 %d 结果不存在或失败", batchIDs[1])
 	}
 
 	// 在批次结果中查找论文评分
-	var score1, score2 int
+	var score1, score2 *DetailedScore
 	var found1, found2 bool
 
 	for _, result := range batch1Result.Results {
 		if result.ArxivID == arxivID {
-			score1 = result.Score
+			score1 = &DetailedScore{
+				Innovation: result.Innovation,
+				Technical:  result.Technical,
+				Practical:  result.Practical,
+				Total:      result.Total,
+			}
 			found1 = true
 			break
 		}
@@ -307,14 +371,19 @@ func (tsa *TwoStageAnalyzer) getBatchScoresForPaper(arxivID string, batchIDs []i
 
 	for _, result := range batch2Result.Results {
 		if result.ArxivID == arxivID {
-			score2 = result.Score
+			score2 = &DetailedScore{
+				Innovation: result.Innovation,
+				Technical:  result.Technical,
+				Practical:  result.Practical,
+				Total:      result.Total,
+			}
 			found2 = true
 			break
 		}
 	}
 
 	if !found1 || !found2 {
-		return 0, 0, fmt.Errorf("论文 %s 在批次结果中未找到: batch1=%v, batch2=%v", arxivID, found1, found2)
+		return nil, nil, fmt.Errorf("论文 %s 在批次结果中未找到: batch1=%v, batch2=%v", arxivID, found1, found2)
 	}
 
 	return score1, score2, nil
@@ -415,12 +484,11 @@ func (tsa *TwoStageAnalyzer) parseDetailedAnalysis(rawResponse string, paper cra
 
 	jsonStr := rawResponse[jsonStart:jsonEnd]
 
-	// 解析autogen的JSON格式
+	// 解析autogen的JSON格式（新格式：只有摘要、评价、标签）
 	var response struct {
-		Abstract string   `json:"abstract"`
-		Score    int      `json:"score"`
-		Just     string   `json:"just"`
-		Tags     []string `json:"tags"`
+		Abstract   string   `json:"abstract"`
+		Evaluation string   `json:"evaluation"`
+		Tags       []string `json:"tags"`
 	}
 
 	if err := json.Unmarshal([]byte(jsonStr), &response); err != nil {
@@ -428,13 +496,13 @@ func (tsa *TwoStageAnalyzer) parseDetailedAnalysis(rawResponse string, paper cra
 	}
 
 	return &DetailedAnalysis{
-		ArxivID:   paper.ArxivID,
-		Title:     paper.Title,
-		Abstract:  paper.Abstract,
-		Score:     response.Score,
-		Tags:      response.Tags,
-		Reasoning: response.Just,
-		Summary:   response.Abstract,
+		ArxivID:    paper.ArxivID,
+		Title:      paper.Title,
+		Authors:    paper.Authors,
+		Abstract:   paper.Abstract,
+		Tags:       response.Tags,
+		Evaluation: response.Evaluation,
+		Summary:    response.Abstract,
 	}, nil
 }
 
