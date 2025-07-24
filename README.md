@@ -308,6 +308,8 @@ POST /api/ai/chat                # AI 对话
 POST /api/ai/article_analysis    # 文章分析
 ```
 
+### [**全部 API json**](https://blog.golir.top/uploads/apidoc_postman.json)
+
 ## 🧠 AI 功能详解
 
 ### 1. 论文自动生成系统
