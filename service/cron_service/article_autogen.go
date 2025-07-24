@@ -10,9 +10,12 @@ import (
 	"blogX_server/service/article_auto_generate/batch_scoring_service"
 	"blogX_server/service/article_auto_generate/crawler_service"
 	"blogX_server/service/common_utils"
+	"blogX_server/service/email_service"
 	"blogX_server/service/redis_service/redis_ai_cache"
+	"blogX_server/utils/markdown"
 	"fmt"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -273,5 +276,45 @@ func articleGen(content, category string) error {
 		return err
 	}
 	logrus.Info("文章自动生成发布成功")
+
+	sendToSubscribers(&article, category)
 	return nil
+}
+
+func sendToSubscribers(article *models.ArticleModel, category string) {
+	content := injectLink(article.Content, article.ID)
+	html := markdown.MdToHTML(content)
+	var emails []string
+	var subs []models.UserConfigModel
+	err := global.DB.Preload("UserModel").Where("subscribe = ?", true).Find(&subs).Error
+	if err != nil {
+		logrus.Errorf("获取订阅用户失败: %v", err)
+		return
+	}
+	for _, sub := range subs {
+		emails = append(emails, sub.UserModel.Email)
+	}
+	err = email_service.SendSubscribe(emails, category, html)
+	if err != nil {
+		logrus.Errorf("订阅邮件发送失败: %v", err)
+	}
+	logrus.Info("订阅邮件发送成功")
+}
+
+func TestFunc(content, category string) {
+	to := []string{"liran900620@gmail.com"}
+	email_service.SendSubscribe(to, category, content)
+}
+
+func injectLink(md string, articleID uint) string {
+	lines := strings.SplitN(md, "\n", 2) // 只拆前两部分
+	if len(lines) == 0 {
+		return md
+	}
+	date := time.Now().Format("01月02日 ")
+	link := fmt.Sprintf("[[原文]](https://blog.golir.top/article/%d)\n", articleID)
+
+	header := "# " + date + string([]byte(lines[0])[1:]) + link
+
+	return header + lines[1]
 }

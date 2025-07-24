@@ -9,7 +9,6 @@ import (
 	"blogX_server/service/log_service"
 	"blogX_server/utils/jwts"
 	"blogX_server/utils/mps"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"time"
 )
@@ -31,6 +30,7 @@ type UserInfoUpdateReq struct {
 	DisplayFans        *bool     `json:"displayFans" s-u-c:"display_fans"`
 	DisplayFollowing   *bool     `json:"displayFollowing" s-u-c:"display_following"`
 	ThemeID            *uint8    `json:"themeID" s-u-c:"theme_id"`
+	Subscribe          *bool     `json:"subscribe" s-u-c:"subscribe"`
 
 	ReceiveCommentNotify   *bool `json:"receiveCommentNotify" s-m-c:"receive_comment_notify"`
 	ReceiveLikeNotify      *bool `json:"receiveLikeNotify" s-m-c:"receive_like_notify"`
@@ -87,7 +87,7 @@ func (UserApi) UserInfoUpdateView(c *gin.Context) {
 		}
 	}
 
-	fmt.Println(userConfMap)
+	//fmt.Println(userConfMap)
 
 	// 更新 config 表
 	if len(userConfMap) > 0 {

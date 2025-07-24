@@ -6,13 +6,14 @@ import "time"
 
 type UserConfigModel struct {
 	UserID             uint       `gorm:"primaryKey" json:"userID"`
-	UpdatedAt          *time.Time `json:"updatedAt"`                                        // 上次修改时间，可能为空，所以是指针
-	Tags               []string   `gorm:"type:longtext; serializer:json" json:"tags"`       // 兴趣标签
-	ThemeID            uint8      `gorm:"not null; default:1" json:"themeID"`               // 主页样式 id
-	DisplayCollections bool       `gorm:"not null; default:true" json:"displayCollections"` // 公开我的收藏
-	DisplayFans        bool       `gorm:"not null; default:true" json:"displayFans"`        // 公开我的粉丝
-	DisplayFollowing   bool       `gorm:"not null; default:true" json:"displayFollowing"`   // 公开我的关注
-	HomepageVisitCount int        `gorm:"not null; default:0" json:"homepageVisitCount"`    // 主页访问量
+	UpdatedAt          *time.Time `json:"updatedAt"`                                       // 上次修改时间，可能为空，所以是指针
+	Tags               []string   `gorm:"type:longtext; serializer:json" json:"tags"`      // 兴趣标签
+	ThemeID            uint8      `gorm:"not null;default:1" json:"themeID"`               // 主页样式 id
+	DisplayCollections bool       `gorm:"not null;default:true" json:"displayCollections"` // 公开我的收藏
+	DisplayFans        bool       `gorm:"not null;default:true" json:"displayFans"`        // 公开我的粉丝
+	DisplayFollowing   bool       `gorm:"not null;default:true" json:"displayFollowing"`   // 公开我的关注
+	HomepageVisitCount int        `gorm:"not null;default:0" json:"homepageVisitCount"`    // 主页访问量
+	Subscribe          bool       `gorm:"not null;default:false" json:"subscribe"`         // 订阅每日分析
 
 	// FK
 	UserModel UserModel `gorm:"foreignKey:UserID;references:ID" json:"userModel"` // 外键关联到 User, ref 如果不写会自动关联到 ID
