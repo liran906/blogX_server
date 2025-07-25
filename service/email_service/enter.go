@@ -12,6 +12,8 @@ import (
 	"strings"
 )
 
+var template = "<!DOCTYPE html>\n<html lang=\"zh-CN\">\n<head>\n  <meta charset=\"UTF-8\" />\n  <title>%s %s</title>\n</head>\n<body style=\"margin:0;padding:80px 0;background-color:#f5f7fa;font-family:'Segoe UI','Microsoft Yahei',sans-serif;\">\n  <div style=\"max-width:600px;margin:0 auto;background-color:#ffffff;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.05);overflow:hidden;\">\n    \n    <!-- Header -->\n    <div style=\"background-color:#4f46e5;color:#ffffff;text-align:center;padding:36px 20px;\">\n      <h1 style=\"margin:0;font-size:24px;\">%s</h1>\n    </div>\n    \n    <!-- Content -->\n    <div style=\"padding:30px 28px;color:#333333;\">\n      <h2 style=\"font-size:20px;margin-bottom:16px;color:#333333;\">您好，</h2>\n      <p style=\"font-size:16px;line-height:1.7;margin:12px 0;color:#333333;\">您正在%s <strong>%s</strong>%s，这是我们为您生成的验证码：</p>\n      <p style=\"text-align:center;margin:20px 0;\">\n        <span style=\"display:inline-block;font-size:28px;font-weight:bold;color:#4f46e5;background-color:#f0f2ff;padding:12px 24px;border-radius:6px;\">%s</span>\n      </p>\n      <p style=\"font-size:16px;line-height:1.7;margin:12px 0;\">请在 <strong>%d 分钟内</strong> 输入验证码完成%s。验证码仅在当前%s流程中有效，请勿泄露给他人。</p>\n      <p style=\"font-size:16px;line-height:1.7;margin:12px 0;\">如非本人操作，请忽略本邮件，无需任何处理。</p>\n    </div>\n    \n    <!-- Footer -->\n    <div style=\"font-size:12px;color:#999999;text-align:center;padding:24px;background-color:#fafafa;\">\n      本邮件由系统自动发送，请勿回复。<br>\n      &copy; 2025 %s 版权所有\n    </div>\n    \n  </div>\n</body>\n</html>"
+
 func SendSubscribe(tos []string, category, content string) error {
 	subject := fmt.Sprintf("最新%s论文精选推荐", category)
 	alias := "Daily Generation"
@@ -20,23 +22,40 @@ func SendSubscribe(tos []string, category, content string) error {
 
 // SendRegisterCode 注册验证码
 func SendRegisterCode(to, code string) error {
+	var siteName = global.Config.Site.SiteInfo.EnglishTitle
+	var expiry = global.Config.Email.CodeExpiry
+
 	subject := fmt.Sprintf("%s 注册验证码", global.Config.Site.SiteInfo.EnglishTitle)
-	text := fmt.Sprintf("您正在注册 %s 会员，验证码: %s，%d分钟内有效", global.Config.Site.SiteInfo.EnglishTitle, code, global.Config.Email.CodeExpiry)
-	return SendEmail(to, subject, text, false)
+	action := "注册"
+	head := fmt.Sprintf("欢迎加入 %s 🎉", siteName)
+	text := fmt.Sprintf(template, siteName, action, head, action, siteName, "", code, expiry, action, action, siteName)
+	return SendEmail(to, subject, text, true)
 }
 
 // SendResetPasswordCode 重置密码
 func SendResetPasswordCode(to, code string, uid uint) error {
+	var siteName = global.Config.Site.SiteInfo.EnglishTitle
+	var expiry = global.Config.Email.CodeExpiry
+
 	subject := fmt.Sprintf("%s 密码重置", global.Config.Site.SiteInfo.EnglishTitle)
-	text := fmt.Sprintf("您正在重置 %s 密码，会员id: %d，验证码: %s，%d分钟内有效", global.Config.Site.SiteInfo.EnglishTitle, uid, code, global.Config.Email.CodeExpiry)
-	return SendEmail(to, subject, text, false)
+	action := "重置"
+	userInfo := fmt.Sprintf(" 的密码（用户id：%d）", uid)
+	head := fmt.Sprintf("%s 密码重置", siteName)
+	text := fmt.Sprintf(template, siteName, action, head, action, siteName, userInfo, code, expiry, action, action, siteName)
+	return SendEmail(to, subject, text, true)
 }
 
 // SendVerifyCode 绑定邮箱
 func SendVerifyCode(to, code string, uid uint) error {
+	var siteName = global.Config.Site.SiteInfo.EnglishTitle
+	var expiry = global.Config.Email.CodeExpiry
+
 	subject := fmt.Sprintf("%s 绑定邮箱", global.Config.Site.SiteInfo.EnglishTitle)
-	text := fmt.Sprintf("您正在绑定 %s 邮箱，会员id: %d，验证码: %s，%d分钟内有效", global.Config.Site.SiteInfo.EnglishTitle, uid, code, global.Config.Email.CodeExpiry)
-	return SendEmail(to, subject, text, false)
+	action := "绑定"
+	userInfo := fmt.Sprintf(" 的邮箱（用户id：%d）", uid)
+	head := fmt.Sprintf("%s 绑定邮箱", siteName)
+	text := fmt.Sprintf(template, siteName, action, head, action, siteName, userInfo, code, expiry, action, action, siteName)
+	return SendEmail(to, subject, text, true)
 }
 
 func SendEmail(to, subject, text string, isHTML bool) error {
