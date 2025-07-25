@@ -249,7 +249,10 @@ func (tsa *TwoStageAnalyzer) mergeBatchResults(batchResults map[int]*BatchScorin
 		// 获取两个批次的评分
 		score1, score2, err := tsa.getBatchScoresForPaper(paper.ArxivID, batches, batchResults)
 		if err != nil {
-			return nil, fmt.Errorf("获取论文 %s 的批次评分失败: %v", paper.ArxivID, err)
+
+			logrus.Warnf("获取论文 %s 的批次评分失败: %v, 丢弃本篇论文", paper.ArxivID, err)
+
+			continue
 		}
 
 		paperFirstTwoScores[paper.ArxivID] = &struct {

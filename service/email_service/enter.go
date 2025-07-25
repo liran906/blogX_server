@@ -56,7 +56,11 @@ func SendEmails(tos []string, subject, text string, isHTML bool) error {
 	em := global.Config.Email
 	e := email.NewEmail()
 	e.From = fmt.Sprintf("%s <%s>", em.Alias, em.SendEmail)
-	e.To = validEmails
+	if len(tos) == 1 {
+		e.To = validEmails
+	} else {
+		e.Bcc = validEmails // 密送
+	}
 	e.Subject = subject
 	if isHTML {
 		e.Headers.Add("Content-Type", "text/html; charset=UTF-8")
@@ -65,6 +69,7 @@ func SendEmails(tos []string, subject, text string, isHTML bool) error {
 	} else {
 		e.Text = []byte(text)
 	}
+
 	err := e.Send(fmt.Sprintf("%s:%d", em.Domain, em.Port), smtp.PlainAuth("", em.SendEmail, em.AuthCode, em.Domain))
 	if err != nil && !strings.Contains(err.Error(), "short response:") {
 		logrus.Error("send email error: ", err)
