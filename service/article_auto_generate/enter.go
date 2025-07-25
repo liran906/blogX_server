@@ -17,7 +17,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 	"sort"
-	"strings"
 	"time"
 )
 
@@ -103,15 +102,15 @@ func formatTwoStageAnalysisReport(result *batch_scoring_service.TwoStageAnalysis
 	var content string
 
 	// 标题和统计概要
-	content += fmt.Sprintf("# %s 领域论文智能分析报告\n\n", categoryName)
+	content += fmt.Sprintf("## 论文报告总览\n\n")
 	content += fmt.Sprintf("🎯 **分析概要**\n")
-	content += fmt.Sprintf("- 📊 总论文数：%d 篇\n", result.Statistics.TotalPapers)
+	content += fmt.Sprintf("- 📝 总论文数：%d 篇\n", result.Statistics.TotalPapers)
 	content += fmt.Sprintf("- ⭐ 平均评分：%.1f 分\n", result.Statistics.AverageScore)
 	content += fmt.Sprintf("- 🏆 最高评分：%.1f 分\n", result.Statistics.MaxScore)
-	content += fmt.Sprintf("- 📈 详细分析：%d 篇高质量论文\n\n", result.Statistics.Stage2SelectedCount)
+	content += fmt.Sprintf("- 🔍 详细分析：%d 篇高质量论文\n\n", result.Statistics.Stage2SelectedCount)
 
 	// 分数分布统计
-	content += "📈 **评分分布**\n"
+	content += "📊 **评分分布**\n"
 	for scoreRange, count := range result.Statistics.ScoreDistribution {
 		content += fmt.Sprintf("- %s分：%d 篇\n", scoreRange, count)
 	}
@@ -119,7 +118,7 @@ func formatTwoStageAnalysisReport(result *batch_scoring_service.TwoStageAnalysis
 
 	// 高质量论文详细分析
 	if len(result.Stage2Results) > 0 {
-		content += "## 🏆 高质量论文详细分析\n\n"
+		content += "## 🏆 推荐论文\n\n"
 
 		// 按照第一阶段的分数排序第二阶段结果
 		sortedStage2 := make([]batch_scoring_service.DetailedAnalysis, len(result.Stage2Results))
@@ -149,7 +148,7 @@ func formatTwoStageAnalysisReport(result *batch_scoring_service.TwoStageAnalysis
 			// 添加论文源链接
 			htmlURL := fmt.Sprintf("https://arxiv.org/abs/%s", analysis.ArxivID)
 			pdfURL := fmt.Sprintf("https://arxiv.org/pdf/%s.pdf", analysis.ArxivID)
-			content += fmt.Sprintf("**论文源**: [`%s`](%s) | [`PDF`](%s)\n\n", analysis.ArxivID, htmlURL, pdfURL)
+			content += fmt.Sprintf("**论文源**: [%s](%s) | [PDF](%s)\n\n", analysis.ArxivID, htmlURL, pdfURL)
 
 			// 关键词
 			if len(analysis.Tags) > 0 {
@@ -281,8 +280,9 @@ func articleGen(content, category string) error {
 }
 
 func sendToSubscribers(article *models.ArticleModel, category string) {
-	content := injectLink(article.Content, article.ID)
-	html := markdown.MdToHTML(content)
+	date := time.Now().Format("01月02日 ")
+	head := fmt.Sprintf("# %s %s 智能分析报告[[原文]](https://blog.golir.top/article/%d)\n\n", date, category, article.ID)
+	html := markdown.MdToHTML(head + article.Content)
 	var emails []string
 	var subs []models.UserConfigModel
 	err := global.DB.Preload("UserModel").Where("subscribe = ?", true).Find(&subs).Error
@@ -298,22 +298,4 @@ func sendToSubscribers(article *models.ArticleModel, category string) {
 		logrus.Errorf("订阅邮件发送失败: %v", err)
 	}
 	logrus.Info("订阅邮件发送成功")
-}
-
-func TestFunc(content, category string) {
-	to := []string{"liran900620@gmail.com"}
-	email_service.SendSubscribe(to, category, content)
-}
-
-func injectLink(md string, articleID uint) string {
-	lines := strings.SplitN(md, "\n", 2) // 只拆前两部分
-	if len(lines) == 0 {
-		return md
-	}
-	date := time.Now().Format("01月02日 ")
-	link := fmt.Sprintf("[[原文]](https://blog.golir.top/article/%d)\n", articleID)
-
-	header := "# " + date + string([]byte(lines[0])[1:]) + link
-
-	return header + lines[1]
 }

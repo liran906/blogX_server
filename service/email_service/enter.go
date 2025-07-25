@@ -13,8 +13,9 @@ import (
 )
 
 func SendSubscribe(tos []string, category, content string) error {
-	subject := fmt.Sprintf("Generation Blog: %s最新论文推荐", category)
-	return SendEmails(tos, subject, content, true)
+	subject := fmt.Sprintf("最新%s论文精选推荐", category)
+	alias := "Daily Generation"
+	return SendEmails(tos, alias, subject, content, true)
 }
 
 // SendRegisterCode 注册验证码
@@ -39,10 +40,10 @@ func SendVerifyCode(to, code string, uid uint) error {
 }
 
 func SendEmail(to, subject, text string, isHTML bool) error {
-	return SendEmails([]string{to}, subject, text, isHTML)
+	return SendEmails([]string{to}, "", subject, text, isHTML)
 }
 
-func SendEmails(tos []string, subject, text string, isHTML bool) error {
+func SendEmails(tos []string, alias, subject, text string, isHTML bool) error {
 	var validEmails []string
 	for _, to := range tos {
 		if IsValidWithDomain(to) {
@@ -54,8 +55,11 @@ func SendEmails(tos []string, subject, text string, isHTML bool) error {
 	}
 
 	em := global.Config.Email
+	if alias == "" {
+		alias = em.Alias
+	}
 	e := email.NewEmail()
-	e.From = fmt.Sprintf("%s <%s>", em.Alias, em.SendEmail)
+	e.From = fmt.Sprintf("%s <%s>", alias, em.SendEmail)
 	if len(tos) == 1 {
 		e.To = validEmails
 	} else {
