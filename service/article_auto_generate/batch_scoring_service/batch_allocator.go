@@ -2,6 +2,7 @@ package batch_scoring_service
 
 import (
 	"fmt"
+	"math"
 	"math/rand"
 	"time"
 
@@ -22,8 +23,100 @@ func NewBatchAllocator(config *BatchScoringConfig) *BatchAllocator {
 	}
 }
 
-// AllocatePapersToBatches 使用真正随机算法分配论文到批次
 func (ba *BatchAllocator) AllocatePapersToBatches(paperCount int) (*BatchAllocation, error) {
+	if paperCount <= 0 {
+		return nil, fmt.Errorf("论文数量必须大于0")
+	}
+
+	// 1. 计算基本参数
+	estimatedBatchSize := float64(10)
+	totalPositions := float64(paperCount * 2)                       // 每篇论文需要2个位置
+	totalBatches := math.Round(totalPositions / estimatedBatchSize) // 总批次数
+
+	// 确保至少有2个批次（每篇论文需要分配到2个不同批次）
+	if totalBatches < 2 {
+		totalBatches = 2
+	}
+
+	// 计算理论批次大小，并添加一些容差以应对不均匀分配
+	theoreticalBatchSize := totalPositions / totalBatches
+	ba.config.BatchSize = int(math.Ceil(theoreticalBatchSize * 1.2)) // 增加20%容差
+
+	// 2. 初始化分配结果
+	allocation := &BatchAllocation{
+		Batches:        make([][]int, int(totalBatches)),
+		PaperToBatches: make(map[int][]int),
+		TotalBatches:   int(totalBatches),
+	}
+
+	// 3. 计算每轮的批次数，确保不为零
+	firstRoundBatches := int(totalBatches) / 2
+	secondRoundBatches := int(totalBatches) - firstRoundBatches
+
+	// 确保至少有一个批次
+	if firstRoundBatches == 0 {
+		firstRoundBatches = 1
+		secondRoundBatches = int(totalBatches) - 1
+	}
+	if secondRoundBatches == 0 {
+		secondRoundBatches = 1
+	}
+
+	// 4. 第一轮分配：使用前一半批次
+	allocation.PaperToBatches = ba.allocateOneRound(paperCount, firstRoundBatches, allocation.PaperToBatches, 0)
+
+	// 5. 第二轮分配：使用后一半批次
+	allocation.PaperToBatches = ba.allocateOneRound(paperCount, secondRoundBatches, allocation.PaperToBatches, firstRoundBatches)
+
+	// 6. 填充 Batches 数组
+	for paperID, batches := range allocation.PaperToBatches {
+		for _, batchID := range batches {
+			allocation.Batches[batchID] = append(allocation.Batches[batchID], paperID)
+		}
+	}
+
+	// 7. 检查并修复重复分配
+	if int(totalBatches) >= 4 {
+		ba.fixDuplicateAssignments(allocation, paperCount)
+	}
+
+	// 8. 验证分配结果
+	if err := ba.validateAllocation(allocation, paperCount); err != nil {
+		return nil, fmt.Errorf("分配验证失败: %v", err)
+	}
+
+	// 9. 输出分配统计
+	ba.logAllocationStats(allocation)
+
+	return allocation, nil
+}
+
+func (ba *BatchAllocator) allocateOneRound(paperCount, batchCount int, paperToBatches map[int][]int, batchOffset int) map[int][]int {
+	// 防止除零错误
+	if batchCount <= 0 {
+		logrus.Warnf("batchCount 不能为零或负数，设置为1")
+		batchCount = 1
+	}
+
+	// 创建论文ID列表并打乱
+	var paperIDs = make([]int, 0, paperCount)
+	for i := range paperCount {
+		paperIDs = append(paperIDs, i)
+	}
+	ba.shuffleSlice(paperIDs)
+
+	// 分配论文到批次
+	for i := 0; i < paperCount; i++ {
+		batchID := (i % batchCount) + batchOffset
+		paperToBatches[paperIDs[i]] = append(paperToBatches[paperIDs[i]], batchID)
+		logrus.Debugf("论文 %d 分配到 batch %d", paperIDs[i], batchID)
+	}
+	return paperToBatches
+}
+
+// AllocatePapersToBatchesDeprecated 使用真正随机算法分配论文到批次 已弃用
+// @deprecated 替换为 AllocatePapersToBatches
+func (ba *BatchAllocator) AllocatePapersToBatchesDeprecated(paperCount int) (*BatchAllocation, error) {
 	if paperCount <= 0 {
 		return nil, fmt.Errorf("论文数量必须大于0")
 	}
@@ -210,4 +303,46 @@ func (ba *BatchAllocator) logAllocationStats(allocation *BatchAllocation) {
 	} else {
 		logrus.Infof("✅ 分配验证通过，无重复分配")
 	}
+}
+
+// fixDuplicateAssignments 修复重复分配
+func (ba *BatchAllocator) fixDuplicateAssignments(allocation *BatchAllocation, paperCount int) {
+	for paperID, batches := range allocation.PaperToBatches {
+		if batches[0] == batches[1] {
+			// 找到一个不同的批次进行交换
+			newBatchID := ba.findAlternativeBatch(paperID, batches[0], allocation, paperCount)
+			if newBatchID != -1 {
+				// 从原批次中移除
+				allocation.Batches[batches[0]] = ba.removePaperFromBatch(allocation.Batches[batches[0]], paperID)
+				// 更新分配
+				allocation.PaperToBatches[paperID][1] = newBatchID
+				// 添加到新批次
+				allocation.Batches[newBatchID] = append(allocation.Batches[newBatchID], paperID)
+				logrus.Infof("论文 %d 重复分配已修复：从 [%d, %d] 改为 [%d, %d]",
+					paperID, batches[0], batches[0], batches[0], newBatchID)
+			} else {
+				logrus.Warnf("论文 %d 重复分配无法修复", paperID)
+			}
+		}
+	}
+}
+
+// findAlternativeBatch 寻找可替代的批次
+func (ba *BatchAllocator) findAlternativeBatch(paperID, currentBatch int, allocation *BatchAllocation, paperCount int) int {
+	for batchID := range allocation.Batches {
+		if batchID != currentBatch && len(allocation.Batches[batchID]) < ba.config.BatchSize {
+			return batchID
+		}
+	}
+	return -1
+}
+
+// removePaperFromBatch 从批次中移除论文
+func (ba *BatchAllocator) removePaperFromBatch(batch []int, paperID int) []int {
+	for i, id := range batch {
+		if id == paperID {
+			return append(batch[:i], batch[i+1:]...)
+		}
+	}
+	return batch
 }

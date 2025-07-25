@@ -7,6 +7,7 @@
 package flags
 
 import (
+	"blogX_server/service/article_auto_generate"
 	"flag"
 	"os"
 )
@@ -23,6 +24,11 @@ type Options struct {
 	// 可以通过 -db 参数控制，默认为 false
 	// 使用示例：./program -db
 	DB bool
+
+	// 爬取并分析配置文件中指定的 Arvix 类别
+	// 并自动发布文章、发送订阅邮件
+	// 使用示例：./program -ar
+	Arvix bool
 
 	// Version 是否显示版本信息
 	// 可以通过 -v 参数控制，默认为 false
@@ -66,6 +72,9 @@ func Parse() {
 	// 这是一个布尔类型参数，默认为 false
 	flag.BoolVar(&FlagOptions.DB, "db", false, "database migration")
 
+	// 分析爬取 arvix 数据并发布
+	flag.BoolVar(&FlagOptions.Arvix, "ar", false, "crawl arvix data and publish")
+
 	// 建立索引，如果之前有就把之前的删除（导出）重新建立（再导入之前的数据）
 	flag.BoolVar(&FlagOptions.ES, "es", false, "ES init index")
 
@@ -86,6 +95,11 @@ func Parse() {
 func Run() {
 	if FlagOptions.DB {
 		FlagDB()
+		os.Exit(0)
+	}
+
+	if FlagOptions.Arvix {
+		article_auto_generate.AutoGenerateArxivAbstract()
 		os.Exit(0)
 	}
 
