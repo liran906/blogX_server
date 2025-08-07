@@ -11,7 +11,7 @@ import (
 var searcher *xdb.Searcher
 
 func InitIPDB() {
-	var dbPath = "init/ip2region.xdb"
+	var dbPath = "ip2region.xdb"
 	_searcher, err := xdb.NewWithFileOnly(dbPath)
 	if err != nil {
 		logrus.Fatalf("failed to create IP searcher: %s\n", err.Error())

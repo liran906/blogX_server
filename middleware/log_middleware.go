@@ -82,4 +82,9 @@ func LogMiddleware(c *gin.Context) {
 	log.SetResponseHeader(resWriter.Head)
 
 	log.MiddlewareSave()
+
+	// 新增：AccessLog保存（每个请求都会记录）
+	accessLog := log_service.NewAccessLog(c)
+	accessLog.SetResponse(resWriter.Body)
+	accessLog.Save()
 }
