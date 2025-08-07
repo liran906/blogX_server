@@ -5,6 +5,7 @@ import (
 	"blogX_server/service/article_auto_generate/crawler_service"
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"sort"
 	"strings"
 	"sync"
@@ -182,7 +183,10 @@ func (tsa *TwoStageAnalyzer) executeBatchScoring(allocation *BatchAllocation, pa
 	wg.Wait()
 
 	if len(errors) > 0 {
-		return nil, nil, fmt.Errorf("有 %d 个批次失败: %v", len(errors), errors[0])
+		logrus.Errorf("有 %d 个批次失败，失败明细如下:\n", len(errors))
+		for i := range errors {
+			logrus.Errorln(errors[i])
+		}
 	}
 
 	return results, retryStats, nil
@@ -193,23 +197,30 @@ func (tsa *TwoStageAnalyzer) scoreBatchWithRetry(batchID int, papers []crawler_s
 	maxRetries := tsa.config.MaxRetries
 
 	for attempt := 0; attempt <= maxRetries; attempt++ {
+		retryNumber := attempt + 1
+
 		request := BatchScoringRequest{
 			BatchID: batchID,
 			Papers:  papers,
-			Attempt: attempt + 1,
+			Attempt: retryNumber,
 		}
 
 		result, err := tsa.batchScorer.ScoreBatch(request)
 		if err == nil && result.Success {
-			logrus.Infof("批次 %d 评分成功，尝试次数: %d", batchID, attempt+1)
+			logrus.Infof("批次 %d 评分成功，尝试次数: %d", batchID, retryNumber)
 			return result, attempt
 		}
 
 		if attempt < maxRetries {
-			logrus.Warnf("批次 %d 第 %d 次尝试失败，重试中: %v", batchID, attempt+1, err)
-			time.Sleep(time.Second * 2) // 等待2秒后重试
+			retryMinutes := 1 << attempt   // 指数退避：2^attempt 分钟
+			jitterSeconds := rand.Intn(60) // 抖动：0~59 秒
+
+			logrus.Warnf("批次 %d 第 %d 次尝试失败，重试中: %v", batchID, retryNumber, err)
+			logrus.Warnf("本次等待 %d 分 %d 秒后重试...", retryMinutes, jitterSeconds)
+
+			time.Sleep(time.Minute*time.Duration(retryMinutes) + time.Second*time.Duration(jitterSeconds))
 		} else {
-			logrus.Errorf("批次 %d 达到最大重试次数 %d，最终失败", batchID, maxRetries+1)
+			logrus.Errorf("批次 %d 达到最大重试次数 %d，最终失败", batchID, maxRetries)
 			return &BatchScoringResponse{
 				BatchID: batchID,
 				Success: false,
@@ -249,9 +260,7 @@ func (tsa *TwoStageAnalyzer) mergeBatchResults(batchResults map[int]*BatchScorin
 		// 获取两个批次的评分
 		score1, score2, err := tsa.getBatchScoresForPaper(paper.ArxivID, batches, batchResults)
 		if err != nil {
-
 			logrus.Warnf("获取论文 %s 的批次评分失败: %v, 丢弃本篇论文", paper.ArxivID, err)
-
 			continue
 		}
 
@@ -444,6 +453,7 @@ func (tsa *TwoStageAnalyzer) runStage2DetailedAnalysis(stage1Results []PaperScor
 			detailedResults = append(detailedResults, *analysis)
 			mu.Unlock()
 		}(paperScore)
+		time.Sleep(time.Second * 5) // 防止 api 调用过于频繁，5秒调用一次
 	}
 
 	wg.Wait()

@@ -18,7 +18,7 @@ func DefaultBatchScoringConfig() *BatchScoringConfig {
 	return &BatchScoringConfig{
 		BatchSize:           10,
 		ScoreDiffThreshold:  20,
-		MaxRetries:          3,
+		MaxRetries:          5,
 		TopN:                20,
 		ThirdRoundBatchSize: 8, // 第三次评分batch大小
 	}

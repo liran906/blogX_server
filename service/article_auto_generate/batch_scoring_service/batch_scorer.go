@@ -90,7 +90,7 @@ func (bs *BatchScorer) ScoreBatch(request BatchScoringRequest) (*BatchScoringRes
 		}, err
 	}
 
-	logrus.Debugf("BatchID=%d AI原始响应: %s", request.BatchID, rawResponse)
+	//logrus.Debugf("BatchID=%d AI原始响应: %s", request.BatchID, rawResponse)
 
 	// 3. 解析AI响应
 	results, err := bs.parseAIResponse(rawResponse, request.Papers)

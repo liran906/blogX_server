@@ -18,3 +18,4 @@ docker
 init/deploy/blogx_web
 service/crawler_service/logs
 service/autogen_service/logs
+deploy.sh

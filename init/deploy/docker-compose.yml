@@ -50,6 +50,23 @@ services:
       - ./blogx_web/dist:/app/web
       - ./blogx_server/ip2region.xdb:/app/init/ip2region.xdb
     command: "/app/main"
+  dialog_tree:
+    restart: always
+    image: dialog_tree:v1
+    networks:
+      blogx_network:
+        ipv4_address: 10.2.0.9
+    environment:
+      TZ: Asia/Shanghai
+    depends_on:
+      - mysql-master
+      - redis
+    volumes:
+      - /opt/dialog_tree/DialogTree/init/deploy/dialog_tree/config.yaml:/app/config.yaml
+      - /opt/dialog_tree/DialogTree/init/deploy/dialog_tree/sample_data.sql:/app/sample_data.sql
+      - /opt/dialog_tree/DialogTree/init/deploy/dialog_tree/logs:/app/logs
+      - /opt/dialog_tree/DialogTree/init/deploy/dialog_tree_web/dist:/app/web
+    command: "/app/main"
 networks:  #定义容器连接网络
   blogx_network:
     driver: bridge

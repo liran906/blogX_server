@@ -6,6 +6,8 @@ package ai_service
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io"
 
 	"github.com/sirupsen/logrus"
@@ -59,9 +61,11 @@ func chat(msg string, reqType requestType) (resp string, err error) {
 	var aiRes AIChatResponse
 	err = json.Unmarshal(body, &aiRes)
 	if err != nil {
-		logrus.Errorf("响应解析失败 %s\n原始数据 %s", err, string(body))
+		return "", errors.New(fmt.Sprintf("响应解析失败 %s\n原始数据 %s", err, string(body)))
 	}
-
+	if len(aiRes.Choices) == 0 {
+		return "", errors.New("AI 服务器响应体长度为 0")
+	}
 	return aiRes.Choices[0].Message.Content, nil
 }
 
